@@ -1,6 +1,6 @@
 //this tells java where the class lives in the project
 //package models;
-package com.example.releasethekraken.models;
+package com.example.releasethekraken.model;
 
 //event class
 // represents an event in the system
