@@ -1,3 +1,34 @@
 <resources>
     <string name="app_name">Release The Kraken</string>
+    <string name="title_activity_main2">MainActivity2</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="create_account_button">Register and\nCreate Account</string>
+    <string name="login_welcome">Welcome to SkeletonUI!</string>
+
+    <!-- Strings related to account creation -->
+    <string name="action_create_welcome">Create an Account</string>
+    <string name="action_create_account">Confirm Account</string>
+    <string name="action_cancel_account_creation">Cancel Account\nCreation</string>
+
+    <!-- Strings related to the main menu -->
+    <string name="sign_out_button">Sign Out</string>
+    <string name="view_profile_button">View Profile</string>
+
+
+    <!-- Strings related to the view profile screen -->
+    <string name="profile_to_main_button">Back to Main Menu</string>
+
+
+    <!-- Misc strings or strings that I don't know where to group yet (Hope to delete this section by proj end)-->
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>
