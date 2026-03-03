@@ -22,6 +22,7 @@
     <!-- Strings related to the main menu -->
     <string name="sign_out_button">Sign Out</string>
     <string name="view_profile_button">View Profile</string>
+    <string name="browse_events_button">Browse Events</string>
 
 
     <!-- Strings related to the view profile screen -->

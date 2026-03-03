@@ -32,10 +32,17 @@
             android:id="@+id/fullscreen_content_controls"
             style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="92dp"
             android:layout_gravity="bottom|center_horizontal"
             android:orientation="horizontal"
             tools:ignore="UselessParent">
+
+            <Button
+                android:id="@+id/browse_events_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/browse_events_button" />
 
             <Button
                 android:id="@+id/view_profile_button"

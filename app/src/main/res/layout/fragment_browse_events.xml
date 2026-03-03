@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Top Banner -->
+    <TextView
+        android:id="@+id/events_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="All Events"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="@color/black"
+        android:textColor="@android:color/white" />
+
+    <!-- List Area (RecyclerView Recommended) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/events_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp" />
+
+    <!-- Bottom Button -->
+    <Button
+        android:id="@+id/return_to_main_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Return to Main Menu"
+        android:layout_margin="16dp" />
+
+</LinearLayout>

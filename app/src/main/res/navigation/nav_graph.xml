@@ -37,6 +37,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_browseEventsFragment"
+            app:destination="@id/browseEventsFragment" />
     </fragment>
     <fragment
         android:id="@+id/accountCreateFragment"
@@ -49,5 +52,14 @@
         <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/browseEventsFragment"
+        android:name="com.example.releasethekraken.BrowseEventsFragment"
+        android:label="fragment_browse_events_list"
+        tools:layout="@layout/item_event" >
+        <action
+            android:id="@+id/action_browseEventsFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
     </fragment>
 </navigation>
