@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
-    tools:context=".ViewProfileFragment">
+    tools:context=".view.ViewProfileFragment">
 
     <ScrollView
         android:id="@+id/fullscreen_content"

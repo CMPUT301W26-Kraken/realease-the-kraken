@@ -1,4 +1,4 @@
-package com.example.releasethekraken.ui.login;
+package com.example.releasethekraken.view.ui.login;
 
 /**
  * Class exposing authenticated user details to the UI.

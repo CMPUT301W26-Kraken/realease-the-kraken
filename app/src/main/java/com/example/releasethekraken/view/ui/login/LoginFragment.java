@@ -1,4 +1,4 @@
-package com.example.releasethekraken.ui.login;
+package com.example.releasethekraken.view.ui.login;
 
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -22,14 +22,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
+import com.example.releasethekraken.databinding.FragmentLoginBinding;
 
 import com.example.releasethekraken.R;
 
-public class AccountCreateFragment extends Fragment {
+public class LoginFragment extends Fragment {
 
     private LoginViewModel loginViewModel;
-    private FragmentAccountCreateBinding binding;
+    private FragmentLoginBinding binding;
 
     @Nullable
     @Override
@@ -37,7 +37,7 @@ public class AccountCreateFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        binding = FragmentAccountCreateBinding.inflate(inflater, container, false);
+        binding = FragmentLoginBinding.inflate(inflater, container, false);
         return binding.getRoot();
 
     }
@@ -48,10 +48,10 @@ public class AccountCreateFragment extends Fragment {
         loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        final EditText usernameEditText = binding.usernameCreate;
-        final EditText passwordEditText = binding.passwordCreate;
-        final Button createAccountButton = binding.createAccount;
-        final Button cancelAccountButton = binding.cancelAccountCreation;
+        final EditText usernameEditText = binding.username;
+        final EditText passwordEditText = binding.password;
+        final Button loginButton = binding.login;
+        final Button registerButton = binding.createAccountButton;
         final ProgressBar loadingProgressBar = binding.loading;
 
         loginViewModel.getLoginFormState().observe(getViewLifecycleOwner(), new Observer<LoginFormState>() {
@@ -60,7 +60,7 @@ public class AccountCreateFragment extends Fragment {
                 if (loginFormState == null) {
                     return;
                 }
-                createAccountButton.setEnabled(loginFormState.isDataValid());
+                loginButton.setEnabled(loginFormState.isDataValid());
                 if (loginFormState.getUsernameError() != null) {
                     usernameEditText.setError(getString(loginFormState.getUsernameError()));
                 }
@@ -117,21 +117,25 @@ public class AccountCreateFragment extends Fragment {
             }
         });
 
-        createAccountButton.setOnClickListener(new View.OnClickListener() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+                Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_mainMenuFragment);
                 // Commented Out default behavior, wanted to just get navigability to work
                 //loadingProgressBar.setVisibility(View.VISIBLE);
                 //loginViewModel.login(usernameEditText.getText().toString(),
-                    //passwordEditText.getText().toString());
+                        //passwordEditText.getText().toString());
             }
         });
 
-        cancelAccountButton.setOnClickListener(new View.OnClickListener() {
+        registerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment);
+                Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_accountCreateFragment);
+                // Commented Out default behavior, wanted to just get navigability to work
+                //loadingProgressBar.setVisibility(View.VISIBLE);
+                //loginViewModel.login(usernameEditText.getText().toString(),
+                //passwordEditText.getText().toString());
             }
         });
     }

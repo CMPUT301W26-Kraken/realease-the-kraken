@@ -1,4 +1,4 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.view;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;

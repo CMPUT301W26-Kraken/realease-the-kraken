@@ -1,4 +1,4 @@
-package com.example.releasethekraken.ui.login;
+package com.example.releasethekraken.view.ui.login;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

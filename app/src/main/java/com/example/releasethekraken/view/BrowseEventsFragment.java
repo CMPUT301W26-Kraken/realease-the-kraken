@@ -1,4 +1,4 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.view;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -6,13 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.releasethekraken.R;
 import com.example.releasethekraken.placeholder.PlaceholderContent;
 
 public class BrowseEventsFragment extends Fragment {

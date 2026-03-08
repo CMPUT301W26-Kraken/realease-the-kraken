@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.releasethekraken.ui.login.LoginFragment"
+        android:name="com.example.releasethekraken.view.ui.login.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login" >
         <action
@@ -19,7 +19,7 @@
     </fragment>
     <fragment
         android:id="@+id/viewProfileFragment"
-        android:name="com.example.releasethekraken.ViewProfileFragment"
+        android:name="com.example.releasethekraken.view.ViewProfileFragment"
         android:label="fragment_view_profile"
         tools:layout="@layout/fragment_view_profile" >
         <action
@@ -28,7 +28,7 @@
     </fragment>
     <fragment
         android:id="@+id/mainMenuFragment"
-        android:name="com.example.releasethekraken.MainMenuFragment"
+        android:name="com.example.releasethekraken.view.MainMenuFragment"
         android:label="fragment_main_menu"
         tools:layout="@layout/fragment_main_menu" >
         <action
@@ -43,7 +43,7 @@
     </fragment>
     <fragment
         android:id="@+id/accountCreateFragment"
-        android:name="com.example.releasethekraken.ui.login.AccountCreateFragment"
+        android:name="com.example.releasethekraken.view.ui.login.AccountCreateFragment"
         android:label="fragment_account_create"
         tools:layout="@layout/fragment_account_create" >
         <action
@@ -55,7 +55,7 @@
     </fragment>
     <fragment
         android:id="@+id/browseEventsFragment"
-        android:name="com.example.releasethekraken.BrowseEventsFragment"
+        android:name="com.example.releasethekraken.view.BrowseEventsFragment"
         android:label="fragment_browse_events_list"
         tools:layout="@layout/item_event" >
         <action
