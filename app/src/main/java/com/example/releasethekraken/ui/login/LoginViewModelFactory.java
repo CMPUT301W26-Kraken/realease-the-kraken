@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.annotation.NonNull;
 
-import com.example.releasethekraken.data.LoginDataSource;
-import com.example.releasethekraken.data.LoginRepository;
+import com.example.releasethekraken.model.LoginDataSource;
+import com.example.releasethekraken.model.LoginRepository;
 
 /**
  * ViewModel provider factory to instantiate LoginViewModel.

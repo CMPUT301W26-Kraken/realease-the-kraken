@@ -1,10 +1,9 @@
-package com.example.releasethekraken.data;
-
-import com.example.releasethekraken.data.model.LoggedInUser;
+package com.example.releasethekraken.model;
 
 /**
  * Class that requests authentication and user information from the remote data source and
  * maintains an in-memory cache of login status and user credentials information.
+ * Default class made by Android Studio when creating login fragment.
  */
 public class LoginRepository {
 

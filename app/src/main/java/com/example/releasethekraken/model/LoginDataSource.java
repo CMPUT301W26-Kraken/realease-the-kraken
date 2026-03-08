@@ -1,11 +1,10 @@
-package com.example.releasethekraken.data;
-
-import com.example.releasethekraken.data.model.LoggedInUser;
+package com.example.releasethekraken.model;
 
 import java.io.IOException;
 
 /**
  * Class that handles authentication w/ login credentials and retrieves user information.
+ * Default class created by Android Studio.
  */
 public class LoginDataSource {
 

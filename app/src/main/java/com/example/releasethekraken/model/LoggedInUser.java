@@ -1,7 +1,8 @@
-package com.example.releasethekraken.data.model;
+package com.example.releasethekraken.model;
 
 /**
  * Data class that captures user information for logged in users retrieved from LoginRepository
+ * Default Class created by Android Studio
  */
 public class LoggedInUser {
 

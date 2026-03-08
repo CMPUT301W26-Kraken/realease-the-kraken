@@ -6,9 +6,9 @@ import androidx.lifecycle.ViewModel;
 
 import android.util.Patterns;
 
-import com.example.releasethekraken.data.LoginRepository;
-import com.example.releasethekraken.data.Result;
-import com.example.releasethekraken.data.model.LoggedInUser;
+import com.example.releasethekraken.model.LoginRepository;
+import com.example.releasethekraken.model.Result;
+import com.example.releasethekraken.model.LoggedInUser;
 import com.example.releasethekraken.R;
 
 public class LoginViewModel extends ViewModel {

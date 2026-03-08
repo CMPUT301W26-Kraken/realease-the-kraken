@@ -1,7 +1,9 @@
-package com.example.releasethekraken.data;
+package com.example.releasethekraken.model;
 
 /**
  * A generic class that holds a result success w/ data or an error exception.
+ * Added as a default for Android Studio when making certain views, will likely be made redundant
+ * later and deleted accordingly
  */
 public class Result<T> {
     // hide the private constructor to limit subclass types (Success, Error)
