@@ -19,4 +19,10 @@ public class WaitingListRepository {
         // TODO: replace with Firestore write
     }
 
+    //removes a waiting list entry for event as data in Firestore
+    public void removeFromWaitingList(String eventId, String entrantId) {
+        // TODO: replace with Firestore write
+
+    }
+
 }

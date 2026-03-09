@@ -11,7 +11,7 @@ import com.example.releasethekraken.model.Event;
 //store in Firestore
 //no UI
 
-public class  WaitingListService {
+public class WaitingListService {
 
     //repo that stores and retrieves waiting list data entries from firestore
     private final WaitingListRepository waitingListRepository;
@@ -29,8 +29,51 @@ public class  WaitingListService {
         SUCCESS,
         REGISTRATION_CLOSED,
         DUPLICATE_ENTRY,
-        INVALID_INPUT
+        INVALID_INPUT,
+    }
 
+    //possible outcomes of attempting to leave the waiting list
+    //used enum to make it simple for the View to show correct message,
+    public enum LeaveResult {
+        SUCCESS,
+        NOT_ON_WAITING_LIST,
+        INVALID_INPUT,
+    }
+
+    /**
+     * leave the waiting list for an event US 01.01.02
+     *  - Entrant can leave the waiting list
+     *  - Entrant is removed from the waiting list
+     *
+     * @param event event the entrant is trying to leave
+     * @param entrantId entrant/device identifier
+     * @return LeaveResult indicating what happened
+     */
+
+    public LeaveResult leaveWaitingList(Event event, String entrantId) {
+
+        //to avoid null or empty values causing crashes
+        if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
+            return LeaveResult.INVALID_INPUT;
+        }
+
+        // check if entrant is actually on the waiting list
+        boolean alreadyWaiting = waitingListRepository.isEntrantAlreadyWaiting(
+                event.getEventId(),
+                entrantId
+        );
+
+        if (!alreadyWaiting) {
+            return LeaveResult.NOT_ON_WAITING_LIST;
+        }
+
+        // remove entrant from waiting list
+        waitingListRepository.removeFromWaitingList(
+                event.getEventId(),
+                entrantId
+        );
+
+        return LeaveResult.SUCCESS;
     }
 
     /**
