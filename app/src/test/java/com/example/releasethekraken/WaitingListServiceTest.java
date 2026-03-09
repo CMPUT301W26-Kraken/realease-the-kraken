@@ -13,6 +13,7 @@ public class WaitingListServiceTest {
     //fake repo so we can control behavior and inspect what gets saved
     static class FakeWaitingListRepository extends WaitingListRepository {
         boolean alreadyWaiting = false;
+        boolean removed = false;
         WaitingListEntry savedEntry = null;
 
         @Override
@@ -23,6 +24,11 @@ public class WaitingListServiceTest {
         @Override
         public void addToWaitingList(WaitingListEntry entry) {
             savedEntry = entry;
+        }
+
+        @Override
+        public void removeFromWaitingList(String eventId, String entrantId) {
+            removed = true;
         }
     }
 
@@ -87,4 +93,42 @@ public class WaitingListServiceTest {
         long now = System.currentTimeMillis();
         return new Event("event123", now - 1000000, now + 1000000);
     }
+
+    @Test
+    public void leaveWaitingList_invalidInput_returnsInvalidInput() {
+        FakeWaitingListRepository repo = new FakeWaitingListRepository();
+        WaitingListService service = new WaitingListService(repo);
+
+        WaitingListService.LeaveResult result = service.leaveWaitingList(null, "device123");
+        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result);
+
+        WaitingListService.LeaveResult result2 = service.leaveWaitingList(makeOpenEvent(), "   ");
+        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result2);
+    }
+
+    @Test
+    public void leaveWaitingList_notOnWaitingList_returnsNotOnWaitingList() {
+        FakeWaitingListRepository repo = new FakeWaitingListRepository();
+        repo.alreadyWaiting = false;
+
+        WaitingListService service = new WaitingListService(repo);
+
+        WaitingListService.LeaveResult result = service.leaveWaitingList(makeOpenEvent(), "device123");
+        assertEquals(WaitingListService.LeaveResult.NOT_ON_WAITING_LIST, result);
+        assertFalse(repo.removed);
+    }
+
+    @Test
+    public void leaveWaitingList_success_removesEntrant() {
+        FakeWaitingListRepository repo = new FakeWaitingListRepository();
+        repo.alreadyWaiting = true;
+
+        WaitingListService service = new WaitingListService(repo);
+
+        WaitingListService.LeaveResult result = service.leaveWaitingList(makeOpenEvent(), "device123");
+        assertEquals(WaitingListService.LeaveResult.SUCCESS, result);
+        assertTrue(repo.removed);
+    }
+
+
 }
