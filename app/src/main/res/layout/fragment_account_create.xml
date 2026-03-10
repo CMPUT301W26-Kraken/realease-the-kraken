@@ -17,7 +17,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="@string/action_create_welcome"
+        android:textColor="@color/dark_blue_text"
         android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -25,7 +27,23 @@
     <EditText
         android:id="@+id/name_create"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="24dp"
+        android:ems="10"
+        android:hint="@string/prompt_name"
+        android:inputType="text"
+        app:layout_constraintBottom_toTopOf="@+id/username_create"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/account_creation_welcome" />
+
+    <EditText
+        android:id="@+id/username_create"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="72dp"
         android:layout_marginEnd="24dp"
@@ -46,23 +64,75 @@
         android:hint="@string/prompt_email"
         android:inputType="textEmailAddress"
         android:maxLines="1"
+        android:layout_marginEnd="24dp"
+        android:hint="@string/prompt_email"
+        android:inputType="textEmailAddress"
+        android:selectAllOnFocus="true"
+        app:layout_constraintBottom_toTopOf="@+id/phone_num_create"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/name_create" />
+        app:layout_constraintTop_toBottomOf="@+id/name_create" />
+
+    <EditText
+        android:id="@+id/phone_num_create"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:ems="10"
+        android:hint="@string/prompt_phone_number"
+        android:inputType="phone"
+        app:layout_constraintBottom_toTopOf="@+id/password_create"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/username_create" />
 
     <EditText
         android:id="@+id/phone_create"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
         android:hint="@string/prompt_phone_optional"
         android:inputType="phone"
         android:maxLines="1"
+        android:hint="@string/prompt_password"
+        android:imeActionLabel="@string/action_sign_in_short"
+        android:imeOptions="actionDone"
+        android:inputType="textPassword"
+        android:selectAllOnFocus="true"
+        app:layout_constraintBottom_toTopOf="@+id/imageButton"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/email_create" />
+        app:layout_constraintTop_toBottomOf="@+id/phone_num_create" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:padding="25dp"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/stat_sys_upload_done"
+        app:layout_constraintBottom_toTopOf="@+id/create_account"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/password_create"
+        app:tint="@color/dark_blue_text" />
+
+    <TextView
+        android:id="@+id/upload_photo_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/upload_profile_image_text"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
     <Button
         android:id="@+id/create_account"
@@ -74,6 +144,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/phone_create" />
+        android:layout_gravity="start"
+        android:layout_marginTop="50dp"
+        android:backgroundTint="@color/light_grey_button"
+        android:enabled="false"
+        android:text="@string/action_create_account"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/cancel_account_creation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
     <Button
         android:id="@+id/cancel_account_creation"
@@ -84,5 +165,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/create_account" />
+        android:layout_marginTop="50dp"
+        android:backgroundTint="@color/delete_cancel_button"
+        android:text="@string/action_cancel_account_creation"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/create_account"
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

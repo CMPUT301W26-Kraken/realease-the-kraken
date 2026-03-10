@@ -58,11 +58,25 @@ public class BrowseEventsFragment extends Fragment {
                 new MyItemRecyclerViewAdapter(PlaceholderContent.ITEMS)
         );
 
-        // Return to Main Menu
-        view.findViewById(R.id.return_to_main_button)
+        // Return to Main Menu from Toolbar
+        view.findViewById(R.id.home_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_browseEventsFragment_to_mainMenuFragment)
+                );
+
+        // Go to Profile View from Toolbar
+        view.findViewById(R.id.profile_toolbar_button)
+                .setOnClickListener(v ->
+                        Navigation.findNavController(v)
+                                .navigate(R.id.action_browseEventsFragment_to_viewProfileFragment)
+                );
+
+        // Navigate to Notifications
+        view.findViewById(R.id.notifications_toolbar_button)
+                .setOnClickListener(v ->
+                        Navigation.findNavController(v)
+                                .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
                 );
 
         return view;

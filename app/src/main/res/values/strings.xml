@@ -2,7 +2,7 @@
     <string name="app_name">Release The Kraken</string>
     <string name="title_activity_main2">MainActivity2</string>
 
-    <!-- Strings related to login -->
+    <!-- Strings related to login and account creation -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
@@ -28,11 +28,26 @@ Creation</string>
     <string name="error_email_required">Email is required</string>
     <string name="error_email_invalid">Enter a valid email address</string>
     <string name="error_phone_invalid">Enter a valid phone number or leave it blank</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="create_account_button">Create Account</string>
+    <string name="login_welcome">Release the Kraken!</string>
+    <string name="login_splash">An App to Easily Manage and Enroll\nin Various Events and Activities</string>
+
+    <!-- Strings related exclusively to account creation -->
+    <string name="action_create_welcome">Create An Account</string>
+    <string name="action_create_account">Create Account</string>
+    <string name="prompt_name">Name</string>
+    <string name="prompt_phone_number">Phone Number (Optional)</string>
+    <string name="action_cancel_account_creation">Cancel Account\nCreation</string>
+    <string name="upload_profile_image_text">Upload\nProfile Picture</string>
 
     <!-- Strings related to the main menu -->
-    <string name="sign_out_button">Sign Out</string>
     <string name="view_profile_button">View Profile</string>
     <string name="browse_events_button">Browse Events</string>
+    <string name="your_events_button">Your Events</string>
+    <string name="admin_browse_users_button">Browse Users</string>
+    <string name="admin_browse_images_button">Browse Images</string>
 
     <!-- Strings related to the view profile screen -->
     <string name="profile_to_main_button">Back to Main Menu</string>
@@ -40,6 +55,29 @@ Creation</string>
     <string name="profile_phone_not_provided">Not provided</string>
 
     <!-- Misc strings -->
+    <!-- Strings related to the bottom toolbar -->
+    <string name="profile_toolbar">Profile</string>
+    <string name="home_toolbar">Home</string>
+    <string name="notifications_toolbar">Notifications</string>
+
+    <!-- Strings related to the view profile screen -->
+    <string name="profile_to_main_button">Back to Main Menu</string>
+    <string name="profile_welcome">Your Profile</string>
+    <string name="profile_name_text">Your Name</string>
+    <string name="profile_email_text">Your Email</string>
+    <string name="profile_phone_text">Your Phone Number</string>
+    <string name="profile_edit_button">Edit Profile Information</string>
+    <string name="profile_account_delete_button">Delete Account</string>
+    <string name="sign_out_button">Sign Out</string>
+
+    <!-- Strings related to Your/Browse Events fragments -->
+    <string name="browse_events_welcome">Available Events</string>
+
+    <!-- Strings related to the notifications fragment -->
+    <string name="notification_welcome">Notifications</string>
+
+
+    <!-- Misc strings or strings that I don't know where to group yet (Hope to delete this section by proj end) -->
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY
 CONTENT</string>

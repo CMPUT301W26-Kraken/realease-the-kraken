@@ -50,8 +50,22 @@ public class ViewProfileFragment extends Fragment {
         binding.profilePhone.setText(getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided)));
 
         binding.backToMainButton.setOnClickListener(v ->
+        // Navigate back to main menu
+        binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
+        );
+
+        // Navigate to the notifications
+        binding.notificationsToolbarButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_viewProfileFragment_to_notificationFragment)
+        );
+
+        // Sign out and go to login screen
+        binding.profileSignoutButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_viewProfileFragment_to_loginFragment)
         );
     }
 
