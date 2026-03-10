@@ -17,6 +17,7 @@ lifecycleViewmodelKtx = "2.6.1"
 fragment = "1.8.9"
 legacySupportV4 = "1.0.0"
 recyclerview = "1.4.0"
+navigationRuntime = "2.9.7"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -43,6 +44,7 @@ lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-view
 fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+navigation-runtime = { group = "androidx.navigation", name = "navigation-runtime", version.ref = "navigationRuntime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
