@@ -22,15 +22,15 @@ import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
 
 /**
- * Fragment responsible for creating a user profile.
+ * Fragment responsible for creating or updating a user profile.
  *
- * This screen collects the entrant's name, email, and optional phone number.
- * The entered information is validated locally and then saved using
- * ProfileRepository. At the moment, local storage is used instead of Firebase.
+ * If a profile already exists, the form is pre-filled and the screen behaves
+ * as an update-profile screen. Otherwise, it behaves as a create-profile screen.
  */
 public class AccountCreateFragment extends Fragment {
 
     private FragmentAccountCreateBinding binding;
+    private boolean isEditMode = false;
 
     @Nullable
     @Override
@@ -48,8 +48,23 @@ public class AccountCreateFragment extends Fragment {
         final EditText nameEditText = binding.nameCreate;
         final EditText emailEditText = binding.emailCreate;
         final EditText phoneEditText = binding.phoneCreate;
-        final Button createProfileButton = binding.createAccount;
+        final Button saveProfileButton = binding.createAccount;
         final Button cancelAccountButton = binding.cancelAccountCreation;
+
+        ProfileRepository profileRepository = new ProfileRepository(requireContext());
+
+        // If a profile already exists, switch this screen into edit mode
+        if (profileRepository.hasProfile()) {
+            isEditMode = true;
+
+            Profile existingProfile = profileRepository.getProfile();
+            nameEditText.setText(existingProfile.getName());
+            emailEditText.setText(existingProfile.getEmail());
+            phoneEditText.setText(existingProfile.getPhone());
+
+            binding.accountCreationWelcome.setText(R.string.action_update_profile);
+            saveProfileButton.setText(R.string.action_update_profile);
+        }
 
         TextWatcher validationWatcher = new TextWatcher() {
             @Override
@@ -65,7 +80,7 @@ public class AccountCreateFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {
                 clearFieldErrors();
-                createProfileButton.setEnabled(isFormValid(false));
+                saveProfileButton.setEnabled(isFormValid(false));
             }
         };
 
@@ -73,7 +88,10 @@ public class AccountCreateFragment extends Fragment {
         emailEditText.addTextChangedListener(validationWatcher);
         phoneEditText.addTextChangedListener(validationWatcher);
 
-        createProfileButton.setOnClickListener(v -> {
+        // Enable button immediately if prefilled data is already valid
+        saveProfileButton.setEnabled(isFormValid(false));
+
+        saveProfileButton.setOnClickListener(v -> {
             if (!isFormValid(true)) {
                 return;
             }
@@ -84,20 +102,32 @@ public class AccountCreateFragment extends Fragment {
                     phoneEditText.getText().toString().trim()
             );
 
-            ProfileRepository profileRepository = new ProfileRepository(requireContext());
             profileRepository.saveProfile(profile);
 
-            Toast.makeText(requireContext(),
-                    R.string.profile_created_message,
-                    Toast.LENGTH_SHORT).show();
+            int messageResId = isEditMode
+                    ? R.string.profile_updated_message
+                    : R.string.profile_created_message;
 
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+            Toast.makeText(requireContext(), messageResId, Toast.LENGTH_SHORT).show();
+
+            if (isEditMode) {
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
+            } else {
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+            }
         });
 
-        cancelAccountButton.setOnClickListener(v ->
+        cancelAccountButton.setOnClickListener(v -> {
+            if (isEditMode) {
                 Navigation.findNavController(view)
-                        .navigate(R.id.action_accountCreateFragment_to_loginFragment));
+                        .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
+            } else {
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_accountCreateFragment_to_loginFragment);
+            }
+        });
     }
 
     /**

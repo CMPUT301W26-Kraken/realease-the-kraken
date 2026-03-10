@@ -19,12 +19,13 @@
     <string name="action_create_welcome">Create Your Profile</string>
     <string name="action_create_account">Confirm Account</string>
     <string name="action_create_profile">Create Profile</string>
+    <string name="action_update_profile">Update Profile</string>
     <string name="action_cancel_account_creation">Cancel Account Creation</string>
     <string name="prompt_name">Name</string>
     <string name="prompt_phone_optional">Phone Number (Optional)</string>
-    <string name="prompt_phone_number">Phone Number (Optional)</string>
     <string name="upload_profile_image_text">Upload&#10;Profile Picture</string>
     <string name="profile_created_message">Profile created successfully</string>
+    <string name="profile_updated_message">Profile updated successfully</string>
     <string name="error_name_required">Name is required</string>
     <string name="error_email_required">Email is required</string>
     <string name="error_email_invalid">Enter a valid email address</string>
