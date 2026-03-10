@@ -1,29 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/white"
     android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
     tools:context=".view.MainMenuFragment">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
-    <TextView
-        android:id="@+id/fullscreen_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:keepScreenOn="true"
-        android:text="MAIN MENU PLACEHOLDER"
-        android:textColor="?attr/fullscreenTextColor"
-        android:textSize="50sp"
-        android:textStyle="bold" />
-
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
@@ -35,14 +20,31 @@
             android:layout_height="92dp"
             android:layout_gravity="bottom|center_horizontal"
             android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
             tools:ignore="UselessParent">
 
-            <Button
-                android:id="@+id/browse_events_button"
+            <LinearLayout
+                android:id="@+id/Notification Layout"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/browse_events_button" />
+                android:orientation="vertical"></LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/Home Layout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/Profile Layout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"></LinearLayout>
 
             <Button
                 android:id="@+id/view_profile_button"
@@ -51,14 +53,27 @@
                 android:layout_weight="1"
                 android:text="@string/view_profile_button" />
 
-            <Button
-                android:id="@+id/sign_out_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/sign_out_button" />
-
         </LinearLayout>
-    </FrameLayout>
+
+        <Button
+            android:id="@+id/browse_events_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/browse_events_button"
+            android:textColor="@color/dark_blue_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/sign_out_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/sign_out_button"
+            app:layout_constraintStart_toEndOf="@+id/browse_events_button"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
