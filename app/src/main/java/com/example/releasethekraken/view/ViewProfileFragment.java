@@ -79,6 +79,12 @@ public class ViewProfileFragment extends Fragment {
                         .navigate(R.id.action_viewProfileFragment_to_notificationFragment)
         );
 
+        // Navigate to edit profile screen
+        binding.profileEditButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_viewProfileFragment_to_accountCreateFragment)
+        );
+
         // Sign out and return to login screen
         binding.profileSignoutButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
