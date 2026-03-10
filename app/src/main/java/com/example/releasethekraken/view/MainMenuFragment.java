@@ -42,7 +42,7 @@ public class MainMenuFragment extends Fragment {
         }
 
         // Navigate to View Profile
-        binding.viewProfileButton.setOnClickListener(v ->
+        binding.profileToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_viewProfileFragment)
         );

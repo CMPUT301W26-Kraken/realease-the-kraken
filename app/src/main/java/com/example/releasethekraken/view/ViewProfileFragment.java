@@ -47,7 +47,7 @@ public class ViewProfileFragment extends Fragment {
         binding.profilePhone.setText("(555) 123-4567");
 
         // Navigate back to main menu
-        binding.backToMainButton.setOnClickListener(v ->
+        binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
         );

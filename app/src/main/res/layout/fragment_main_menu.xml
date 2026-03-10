@@ -19,51 +19,170 @@
             android:layout_width="match_parent"
             android:layout_height="92dp"
             android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/white"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:ignore="UselessParent">
 
             <LinearLayout
-                android:id="@+id/Notification Layout"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical"></LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/Home Layout"
+                android:id="@+id/NotificationLayout"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
+                <ImageButton
+                    android:id="@+id/notifications_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_popup_reminder"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/notifications_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/notifications_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/Profile Layout"
+                android:id="@+id/HomeLayout"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:orientation="vertical"></LinearLayout>
+                android:orientation="vertical">
 
-            <Button
-                android:id="@+id/view_profile_button"
+                <ImageButton
+                    android:id="@+id/home_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_dialog_alert"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/home_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ProfileLayout"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/view_profile_button" />
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/profile_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_dialog_alert"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/profile_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
+            </LinearLayout>
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/browse_events_button"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/StandardButtonLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/browse_events_button"
-            android:textColor="@color/dark_blue_text"
+            android:layout_marginTop="150dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/qr_scan_button"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <Button
+                android:id="@+id/your_events_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:layout_marginBottom="20sp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/light_grey_button"
+                android:text="@string/your_events_button"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/browse_events_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:backgroundTint="@color/light_grey_button"
+                android:text="@string/browse_events_button"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/qr_scan_button"
+            android:layout_width="125dp"
+            android:layout_height="125dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/dark_blue_text"
+            android:src="@android:drawable/stat_sys_warning"
+            app:layout_constraintBottom_toTopOf="@+id/AdminButtonLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/StandardButtonLayout"
+            app:tint="@color/white" />
+
+        <LinearLayout
+            android:id="@+id/AdminButtonLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/qr_scan_button">
+
+            <Button
+                android:id="@+id/admin_browse_users_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:layout_marginBottom="20sp"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="@string/admin_browse_users_button"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/admin_browse_images_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="@string/admin_browse_images_button"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
         <Button
             android:id="@+id/sign_out_button"
@@ -71,7 +190,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/sign_out_button"
-            app:layout_constraintStart_toEndOf="@+id/browse_events_button"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

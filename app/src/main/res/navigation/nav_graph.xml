@@ -47,9 +47,6 @@
         android:label="fragment_account_create"
         tools:layout="@layout/fragment_account_create" >
         <action
-            android:id="@+id/action_accountCreateFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-        <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
