@@ -24,7 +24,6 @@
     <string name="upload_profile_image_text">Upload\nProfile Picture</string>
 
     <!-- Strings related to the main menu -->
-    <string name="sign_out_button">Sign Out</string>
     <string name="view_profile_button">View Profile</string>
     <string name="browse_events_button">Browse Events</string>
     <string name="your_events_button">Your Events</string>
@@ -44,6 +43,13 @@
     <string name="profile_phone_text">Your Phone Number</string>
     <string name="profile_edit_button">Edit Profile Information</string>
     <string name="profile_account_delete_button">Delete Account</string>
+    <string name="sign_out_button">Sign Out</string>
+
+    <!-- Strings related to Your/Browse Events fragments -->
+    <string name="browse_events_welcome">Available Events</string>
+
+    <!-- Strings related to the notifications fragment -->
+    <string name="notification_welcome">Notifications</string>
 
 
     <!-- Misc strings or strings that I don't know where to group yet (Hope to delete this section by proj end) -->

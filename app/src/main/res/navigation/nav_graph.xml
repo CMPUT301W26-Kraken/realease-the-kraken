@@ -25,6 +25,12 @@
         <action
             android:id="@+id/action_viewProfileFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+        <action
+            android:id="@+id/action_viewProfileFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
+        <action
+            android:id="@+id/action_viewProfileFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/mainMenuFragment"
@@ -35,11 +41,11 @@
             android:id="@+id/action_mainMenuFragment_to_viewProfileFragment"
             app:destination="@id/viewProfileFragment" />
         <action
-            android:id="@+id/action_mainMenuFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-        <action
             android:id="@+id/action_mainMenuFragment_to_browseEventsFragment"
             app:destination="@id/browseEventsFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
     </fragment>
     <fragment
         android:id="@+id/accountCreateFragment"
@@ -57,6 +63,24 @@
         tools:layout="@layout/item_event" >
         <action
             android:id="@+id/action_browseEventsFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_viewProfileFragment"
+            app:destination="@id/viewProfileFragment" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="com.example.releasethekraken.view.NotificationFragment"
+        android:label="fragment_notification"
+        tools:layout="@layout/fragment_notification" >
+        <action
+            android:id="@+id/action_notificationFragment_to_viewProfileFragment"
+            app:destination="@id/viewProfileFragment" />
+        <action
+            android:id="@+id/action_notificationFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
     </fragment>
 </navigation>

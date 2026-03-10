@@ -103,13 +103,27 @@
             android:id="@+id/profile_edit_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="61dp"
             android:backgroundTint="@color/light_grey_button"
             android:text="@string/profile_edit_button"
             android:textColor="@color/dark_blue_text"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@+id/profile_delete_button"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/profile_signout_button"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+        <Button
+            android:id="@+id/profile_signout_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/sign_out_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/profile_delete_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/profile_edit_button"
             app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
         <Button
@@ -129,7 +143,7 @@
             android:id="@+id/fullscreen_content_controls"
             style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"
             android:layout_width="match_parent"
-            android:layout_height="92dp"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
             android:background="@color/white"
             android:orientation="horizontal"

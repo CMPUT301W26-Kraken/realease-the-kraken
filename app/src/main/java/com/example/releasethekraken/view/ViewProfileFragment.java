@@ -51,6 +51,18 @@ public class ViewProfileFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
         );
+
+        // Navigate to the notifications
+        binding.notificationsToolbarButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_viewProfileFragment_to_notificationFragment)
+        );
+
+        // Sign out and go to login screen
+        binding.profileSignoutButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_viewProfileFragment_to_loginFragment)
+        );
     }
 
     @Override

@@ -4,14 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
-    tools:context=".view.MainMenuFragment">
+    tools:context=".view.NotificationFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10sp"
+            android:layout_marginTop="16dp"
+            android:text="@string/notification_welcome"
+            android:textAlignment="textStart"
+            android:textColor="@color/dark_blue_text"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
@@ -99,91 +112,5 @@
             </LinearLayout>
 
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/StandardButtonLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="150dp"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/qr_scan_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <Button
-                android:id="@+id/your_events_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:layout_marginBottom="20sp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/light_grey_button"
-                android:text="@string/your_events_button"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/browse_events_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:backgroundTint="@color/light_grey_button"
-                android:text="@string/browse_events_button"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <ImageButton
-            android:id="@+id/qr_scan_button"
-            android:layout_width="125dp"
-            android:layout_height="125dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="@color/dark_blue_text"
-            android:src="@android:drawable/stat_sys_warning"
-            app:layout_constraintBottom_toTopOf="@+id/AdminButtonLayout"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/StandardButtonLayout"
-            app:tint="@color/white" />
-
-        <LinearLayout
-            android:id="@+id/AdminButtonLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/qr_scan_button">
-
-            <Button
-                android:id="@+id/admin_browse_users_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:layout_marginBottom="20sp"
-                android:backgroundTint="@color/dark_blue_text"
-                android:text="@string/admin_browse_users_button"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/admin_browse_images_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:backgroundTint="@color/dark_blue_text"
-                android:text="@string/admin_browse_images_button"
-                android:textColor="@color/white"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </FrameLayout>
