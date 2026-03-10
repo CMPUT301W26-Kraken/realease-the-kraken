@@ -13,6 +13,8 @@ import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
+import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.repository.ProfileRepository;
 
 public class ViewProfileFragment extends Fragment {
 
@@ -33,7 +35,6 @@ public class ViewProfileFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ensure ActionBar is visible
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
             if (activity.getSupportActionBar() != null) {
@@ -41,11 +42,14 @@ public class ViewProfileFragment extends Fragment {
             }
         }
 
-        // Example: Set profile data (replace with real data source)
-        binding.profileName.setText("John Doe");
-        binding.profileEmail.setText("john@email.com");
-        binding.profilePhone.setText("(555) 123-4567");
+        ProfileRepository profileRepository = new ProfileRepository(requireContext());
+        Profile profile = profileRepository.getProfile();
 
+        binding.profileName.setText(getDisplayValue(profile.getName(), getString(R.string.profile_not_set)));
+        binding.profileEmail.setText(getDisplayValue(profile.getEmail(), getString(R.string.profile_not_set)));
+        binding.profilePhone.setText(getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided)));
+
+        binding.backToMainButton.setOnClickListener(v ->
         // Navigate back to main menu
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
@@ -63,6 +67,10 @@ public class ViewProfileFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_loginFragment)
         );
+    }
+
+    private String getDisplayValue(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
     }
 
     @Override

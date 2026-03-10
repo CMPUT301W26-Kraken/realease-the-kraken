@@ -1,34 +1,28 @@
 package com.example.releasethekraken.view.ui.login;
 
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.KeyEvent;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
-
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
+import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.repository.ProfileRepository;
 
 public class AccountCreateFragment extends Fragment {
 
-    private LoginViewModel loginViewModel;
     private FragmentAccountCreateBinding binding;
 
     @Nullable
@@ -39,84 +33,70 @@ public class AccountCreateFragment extends Fragment {
 
         binding = FragmentAccountCreateBinding.inflate(inflater, container, false);
         return binding.getRoot();
-
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        loginViewModel = new ViewModelProvider(this, new LoginViewModelFactory())
-                .get(LoginViewModel.class);
 
-        final EditText usernameEditText = binding.usernameCreate;
-        final EditText passwordEditText = binding.passwordCreate;
-        final Button createAccountButton = binding.createAccount;
+        final EditText nameEditText = binding.nameCreate;
+        final EditText emailEditText = binding.emailCreate;
+        final EditText phoneEditText = binding.phoneCreate;
+        final Button createProfileButton = binding.createAccount;
         final Button cancelAccountButton = binding.cancelAccountCreation;
-        final ProgressBar loadingProgressBar = binding.loading;
 
-        loginViewModel.getLoginFormState().observe(getViewLifecycleOwner(), new Observer<LoginFormState>() {
-            @Override
-            public void onChanged(@Nullable LoginFormState loginFormState) {
-                if (loginFormState == null) {
-                    return;
-                }
-                createAccountButton.setEnabled(loginFormState.isDataValid());
-                if (loginFormState.getUsernameError() != null) {
-                    usernameEditText.setError(getString(loginFormState.getUsernameError()));
-                }
-                if (loginFormState.getPasswordError() != null) {
-                    passwordEditText.setError(getString(loginFormState.getPasswordError()));
-                }
-            }
-        });
-
-        loginViewModel.getLoginResult().observe(getViewLifecycleOwner(), new Observer<LoginResult>() {
-            @Override
-            public void onChanged(@Nullable LoginResult loginResult) {
-                if (loginResult == null) {
-                    return;
-                }
-                loadingProgressBar.setVisibility(View.GONE);
-                if (loginResult.getError() != null) {
-                    showLoginFailed(loginResult.getError());
-                }
-                if (loginResult.getSuccess() != null) {
-                    updateUiWithUser(loginResult.getSuccess());
-                }
-            }
-        });
-
-        TextWatcher afterTextChangedListener = new TextWatcher() {
+        TextWatcher validationWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // ignore
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // ignore
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(usernameEditText.getText().toString(),
-                        passwordEditText.getText().toString());
+                clearFieldErrors();
+                createProfileButton.setEnabled(isFormValid(false));
             }
         };
-        usernameEditText.addTextChangedListener(afterTextChangedListener);
-        passwordEditText.addTextChangedListener(afterTextChangedListener);
-        passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    loginViewModel.login(usernameEditText.getText().toString(),
-                            passwordEditText.getText().toString());
-                }
-                return false;
+        nameEditText.addTextChangedListener(validationWatcher);
+        emailEditText.addTextChangedListener(validationWatcher);
+        phoneEditText.addTextChangedListener(validationWatcher);
+
+        createProfileButton.setOnClickListener(v -> {
+            if (!isFormValid(true)) {
+                return;
             }
+
+            Profile profile = new Profile(
+                    nameEditText.getText().toString().trim(),
+                    emailEditText.getText().toString().trim(),
+                    phoneEditText.getText().toString().trim()
+            );
+
+            ProfileRepository profileRepository = new ProfileRepository(requireContext());
+            profileRepository.saveProfile(profile);
+
+            Toast.makeText(requireContext(), R.string.profile_created_message, Toast.LENGTH_SHORT).show();
+            Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
         });
 
+        cancelAccountButton.setOnClickListener(v ->
+                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment));
+    }
+
+    private boolean isFormValid(boolean showErrors) {
+        String name = binding.nameCreate.getText().toString().trim();
+        String email = binding.emailCreate.getText().toString().trim();
+        String phone = binding.phoneCreate.getText().toString().trim();
+
+        boolean isValid = true;
+
+        if (name.isEmpty()) {
+            if (showErrors) {
+                binding.nameCreate.setError(getString(R.string.error_name_required));
         createAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,31 +108,35 @@ public class AccountCreateFragment extends Fragment {
                 //loginViewModel.login(usernameEditText.getText().toString(),
                     //passwordEditText.getText().toString());
             }
-        });
+            isValid = false;
+        }
 
-        cancelAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment);
+        if (email.isEmpty()) {
+            if (showErrors) {
+                binding.emailCreate.setError(getString(R.string.error_email_required));
             }
-        });
+            isValid = false;
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            if (showErrors) {
+                binding.emailCreate.setError(getString(R.string.error_email_invalid));
+            }
+            isValid = false;
+        }
+
+        if (!phone.isEmpty() && phone.length() < 7) {
+            if (showErrors) {
+                binding.phoneCreate.setError(getString(R.string.error_phone_invalid));
+            }
+            isValid = false;
+        }
+
+        return isValid;
     }
 
-    private void updateUiWithUser(LoggedInUserView model) {
-        String welcome = getString(R.string.welcome) + model.getDisplayName();
-        // TODO : initiate successful logged in experience
-        if (getContext() != null && getContext().getApplicationContext() != null) {
-            Toast.makeText(getContext().getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void showLoginFailed(@StringRes Integer errorString) {
-        if (getContext() != null && getContext().getApplicationContext() != null) {
-            Toast.makeText(
-                    getContext().getApplicationContext(),
-                    errorString,
-                    Toast.LENGTH_LONG).show();
-        }
+    private void clearFieldErrors() {
+        binding.nameCreate.setError(null);
+        binding.emailCreate.setError(null);
+        binding.phoneCreate.setError(null);
     }
 
     @Override
