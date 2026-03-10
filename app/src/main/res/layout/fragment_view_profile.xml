@@ -8,13 +8,13 @@
     android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
     tools:context=".view.ViewProfileFragment">
 
-    <ScrollView
-        android:id="@+id/fullscreen_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fitsSystemWindows="true">
 
         <LinearLayout
+            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -27,20 +27,29 @@
                 android:id="@+id/profile_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                android:text="Your Profile"
-                android:textColor="@color/light_blue_900"
+                android:text="@string/profile_welcome"
+                android:textColor="@color/dark_blue_text"
                 android:textSize="32sp"
                 android:textStyle="bold" />
 
             <!-- Name Section -->
 
+            <ImageView
+                android:id="@+id/profile_picture"
+                android:layout_width="125dp"
+                android:layout_height="125dp"
+                android:layout_marginTop="25sp"
+                android:layout_marginBottom="25sp"
+                android:background="@color/black"
+                android:src="@drawable/ic_launcher_foreground" />
+
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Your Name"
-                android:textColor="@color/light_blue_900"
-                android:textSize="18sp"
+                android:text="@string/profile_name_text"
+                android:textAlignment="textStart"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -56,9 +65,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Your Email"
-                android:textColor="@color/light_blue_900"
-                android:textSize="18sp"
+                android:text="@string/profile_email_text"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -74,9 +83,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Your Phone Number"
-                android:textColor="@color/light_blue_900"
-                android:textSize="18sp"
+                android:text="@string/profile_phone_text"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -88,14 +97,47 @@
                 android:textSize="20sp" />
 
         </LinearLayout>
-    </ScrollView>
 
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+
+        <Button
+            android:id="@+id/profile_edit_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="61dp"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/profile_edit_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/profile_delete_button"
+            app:layout_constraintEnd_toStartOf="@+id/profile_signout_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+        <Button
+            android:id="@+id/profile_signout_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/sign_out_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/profile_delete_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/profile_edit_button"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+        <Button
+            android:id="@+id/profile_delete_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/delete_cancel_button"
+            android:text="@string/profile_account_delete_button"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_edit_button" />
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
@@ -103,19 +145,87 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/white"
             android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:ignore="UselessParent">
 
-            <Button
-                android:id="@+id/back_to_main_button"
-                style="?android:attr/buttonBarButtonStyle"
+            <LinearLayout
+                android:id="@+id/NotificationLayout"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="@string/profile_to_main_button"
-                android:textColor="#FFFFFF" />
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/notifications_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_popup_reminder"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/notifications_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/notifications_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/HomeLayout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/home_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_dialog_alert"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/home_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/home_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ProfileLayout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/profile_toolbar_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="57dp"
+                    android:background="@color/white"
+                    android:src="@android:drawable/ic_dialog_alert"
+                    app:tint="@color/dark_blue_text" />
+
+                <TextView
+                    android:id="@+id/profile_toolbar_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_toolbar"
+                    android:textAlignment="center"
+                    android:textColor="@color/dark_blue_text" />
+            </LinearLayout>
 
         </LinearLayout>
-    </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

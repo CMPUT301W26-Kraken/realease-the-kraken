@@ -120,7 +120,9 @@ public class AccountCreateFragment extends Fragment {
         createAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment);
+                // Implement Database update with new user information
+
                 // Commented Out default behavior, wanted to just get navigability to work
                 //loadingProgressBar.setVisibility(View.VISIBLE);
                 //loginViewModel.login(usernameEditText.getText().toString(),
