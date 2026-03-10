@@ -8,9 +8,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.util.Log;
@@ -20,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
         setContentView(R.layout.activity_main);
         // Retrieve the FCM registration token and log it to verify Firebase is connected
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
