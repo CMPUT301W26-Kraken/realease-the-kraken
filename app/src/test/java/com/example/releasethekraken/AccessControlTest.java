@@ -5,6 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.example.releasethekraken.controller.AccessControl;
+import com.example.releasethekraken.model.Feature;
+import com.example.releasethekraken.model.UserRole;
+
 public class AccessControlTest {
 
     @Test

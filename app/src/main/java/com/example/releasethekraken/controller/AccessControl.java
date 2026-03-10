@@ -1,4 +1,4 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.controller;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -6,6 +6,9 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.example.releasethekraken.model.Feature;
+import com.example.releasethekraken.model.UserRole;
 
 public final class AccessControl {
     private static final Map<Feature, Set<UserRole>> ACCESS_MAP = buildAccessMap();

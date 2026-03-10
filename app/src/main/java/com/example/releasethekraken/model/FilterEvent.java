@@ -1,17 +1,17 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.model;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class Event {
+public class FilterEvent {
     private final String id;
     private final String title;
     private final Set<String> tags;
     private final String day;
 
-    public Event(String id, String title, Set<String> tags, String day) {
+    public FilterEvent(String id, String title, Set<String> tags, String day) {
         this.id = id;
         this.title = title;
         this.tags = normalize(tags);

@@ -1,7 +1,9 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.controller;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+
+import com.example.releasethekraken.model.UserRole;
 
 public class SessionManager {
     private static final String PREFS_NAME = "kraken_session";

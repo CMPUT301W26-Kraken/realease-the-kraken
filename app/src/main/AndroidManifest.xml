@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ReleaseTheKraken">
         <activity
+            android:name=".MainActivity2"
+            android:exported="false"
+            android:label="@string/title_activity_main2"
+            android:theme="@style/Theme.ReleaseTheKraken" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -20,6 +25,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".view.TicketTestActivity"
+            android:exported="false"
+            android:label="@string/ticket_test_title" />
     </application>
 
 </manifest>

@@ -6,6 +6,11 @@ import org.junit.Test;
 
 import java.util.List;
 
+import com.example.releasethekraken.controller.EventHistoryService;
+import com.example.releasethekraken.controller.SampleDataRepository;
+import com.example.releasethekraken.model.EventHistoryEntry;
+import com.example.releasethekraken.model.HistoryOutcome;
+
 public class EventHistoryServiceTest {
 
     @Test

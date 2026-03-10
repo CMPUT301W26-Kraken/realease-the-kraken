@@ -1,4 +1,4 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.model;
 
 public enum Feature {
     JOIN_WAITING_LIST("Join waiting list"),

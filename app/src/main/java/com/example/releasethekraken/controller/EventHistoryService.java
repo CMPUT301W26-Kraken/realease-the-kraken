@@ -1,7 +1,9 @@
-package com.example.releasethekraken;
+package com.example.releasethekraken.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.releasethekraken.model.EventHistoryEntry;
 
 public final class EventHistoryService {
     private EventHistoryService() {

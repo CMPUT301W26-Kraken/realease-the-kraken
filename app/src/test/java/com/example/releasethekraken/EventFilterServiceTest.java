@@ -9,15 +9,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.example.releasethekraken.controller.EventFilterService;
+import com.example.releasethekraken.controller.SampleDataRepository;
+import com.example.releasethekraken.model.FilterEvent;
+
 public class EventFilterServiceTest {
 
     @Test
     public void filtersByInterestsAndAvailability() {
-        List<Event> events = SampleDataRepository.loadEvents();
+        List<FilterEvent> events = SampleDataRepository.loadEvents();
         Set<String> interests = new HashSet<>(Arrays.asList("music", "dance"));
         Set<String> availability = new HashSet<>(Arrays.asList("friday", "wednesday"));
 
-        List<Event> filtered = EventFilterService.filterByInterestsAndAvailability(events, interests, availability);
+        List<FilterEvent> filtered = EventFilterService.filterByInterestsAndAvailability(events, interests, availability);
 
         assertEquals(2, filtered.size());
         assertEquals("Piano Basics", filtered.get(0).getTitle());
@@ -26,9 +30,9 @@ public class EventFilterServiceTest {
 
     @Test
     public void emptyFiltersReturnAllEvents() {
-        List<Event> events = SampleDataRepository.loadEvents();
+        List<FilterEvent> events = SampleDataRepository.loadEvents();
 
-        List<Event> filtered = EventFilterService.filterByInterestsAndAvailability(
+        List<FilterEvent> filtered = EventFilterService.filterByInterestsAndAvailability(
                 events,
                 new HashSet<>(),
                 new HashSet<>()
