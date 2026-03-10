@@ -21,6 +21,13 @@ import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
 
+/**
+ * Fragment responsible for creating a user profile.
+ *
+ * This screen collects the entrant's name, email, and optional phone number.
+ * The entered information is validated locally and then saved using
+ * ProfileRepository. At the moment, local storage is used instead of Firebase.
+ */
 public class AccountCreateFragment extends Fragment {
 
     private FragmentAccountCreateBinding binding;
@@ -30,7 +37,6 @@ public class AccountCreateFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         binding = FragmentAccountCreateBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -48,10 +54,12 @@ public class AccountCreateFragment extends Fragment {
         TextWatcher validationWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No action needed before text changes
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // No action needed while text is changing
             }
 
             @Override
@@ -79,14 +87,25 @@ public class AccountCreateFragment extends Fragment {
             ProfileRepository profileRepository = new ProfileRepository(requireContext());
             profileRepository.saveProfile(profile);
 
-            Toast.makeText(requireContext(), R.string.profile_created_message, Toast.LENGTH_SHORT).show();
-            Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+            Toast.makeText(requireContext(),
+                    R.string.profile_created_message,
+                    Toast.LENGTH_SHORT).show();
+
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
         });
 
         cancelAccountButton.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment));
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_accountCreateFragment_to_loginFragment));
     }
 
+    /**
+     * Validates the profile form fields.
+     *
+     * @param showErrors true if field errors should be displayed to the user
+     * @return true if all required fields are valid, false otherwise
+     */
     private boolean isFormValid(boolean showErrors) {
         String name = binding.nameCreate.getText().toString().trim();
         String email = binding.emailCreate.getText().toString().trim();
@@ -97,16 +116,6 @@ public class AccountCreateFragment extends Fragment {
         if (name.isEmpty()) {
             if (showErrors) {
                 binding.nameCreate.setError(getString(R.string.error_name_required));
-        createAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Navigation.findNavController(view).navigate(R.id.action_accountCreateFragment_to_loginFragment);
-                // Implement Database update with new user information
-
-                // Commented Out default behavior, wanted to just get navigability to work
-                //loadingProgressBar.setVisibility(View.VISIBLE);
-                //loginViewModel.login(usernameEditText.getText().toString(),
-                    //passwordEditText.getText().toString());
             }
             isValid = false;
         }
@@ -133,6 +142,9 @@ public class AccountCreateFragment extends Fragment {
         return isValid;
     }
 
+    /**
+     * Clears all current validation errors from the form fields.
+     */
     private void clearFieldErrors() {
         binding.nameCreate.setError(null);
         binding.emailCreate.setError(null);

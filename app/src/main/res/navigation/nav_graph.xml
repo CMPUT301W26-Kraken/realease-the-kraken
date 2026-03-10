@@ -9,7 +9,7 @@
         android:id="@+id/loginFragment"
         android:name="com.example.releasethekraken.view.ui.login.LoginFragment"
         android:label="fragment_login"
-        tools:layout="@layout/fragment_login" >
+        tools:layout="@layout/fragment_login">
         <action
             android:id="@+id/action_loginFragment_to_accountCreateFragment"
             app:destination="@id/accountCreateFragment" />
@@ -17,11 +17,12 @@
             android:id="@+id/action_loginFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/viewProfileFragment"
         android:name="com.example.releasethekraken.view.ViewProfileFragment"
         android:label="fragment_view_profile"
-        tools:layout="@layout/fragment_view_profile" >
+        tools:layout="@layout/fragment_view_profile">
         <action
             android:id="@+id/action_viewProfileFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
@@ -32,11 +33,12 @@
             android:id="@+id/action_viewProfileFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/mainMenuFragment"
         android:name="com.example.releasethekraken.view.MainMenuFragment"
         android:label="fragment_main_menu"
-        tools:layout="@layout/fragment_main_menu" >
+        tools:layout="@layout/fragment_main_menu">
         <action
             android:id="@+id/action_mainMenuFragment_to_viewProfileFragment"
             app:destination="@id/viewProfileFragment" />
@@ -47,20 +49,25 @@
             android:id="@+id/action_mainMenuFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/accountCreateFragment"
         android:name="com.example.releasethekraken.view.ui.login.AccountCreateFragment"
         android:label="fragment_account_create"
-        tools:layout="@layout/fragment_account_create" >
+        tools:layout="@layout/fragment_account_create">
         <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_accountCreateFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/browseEventsFragment"
         android:name="com.example.releasethekraken.view.BrowseEventsFragment"
         android:label="fragment_browse_events_list"
-        tools:layout="@layout/item_event" >
+        tools:layout="@layout/item_event">
         <action
             android:id="@+id/action_browseEventsFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
@@ -71,11 +78,12 @@
             android:id="@+id/action_browseEventsFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/notificationFragment"
         android:name="com.example.releasethekraken.view.NotificationFragment"
         android:label="fragment_notification"
-        tools:layout="@layout/fragment_notification" >
+        tools:layout="@layout/fragment_notification">
         <action
             android:id="@+id/action_notificationFragment_to_viewProfileFragment"
             app:destination="@id/viewProfileFragment" />
@@ -83,4 +91,5 @@
             android:id="@+id/action_notificationFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
     </fragment>
+
 </navigation>
