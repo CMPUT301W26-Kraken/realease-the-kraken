@@ -1,31 +1,67 @@
 <resources>
     <string name="app_name">Release The Kraken</string>
-    <string name="access_control_title">Role Access Control Demo</string>
-    <string name="select_role_label">Select active role</string>
-    <string name="active_role_placeholder">Active role:</string>
-    <string name="active_role">Active role: %1$s</string>
+    <string name="title_activity_main2">MainActivity2</string>
 
-    <string name="entrant_features_title">Entrant features</string>
-    <string name="organizer_features_title">Organizer features</string>
-    <string name="admin_features_title">Admin features</string>
+    <!-- Strings related to login and account creation -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">Welcome!</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be &gt;5 characters</string>
+    <string name="login_failed">Login failed</string>
+    <string name="create_account_button">Register and Create Account</string>
+    <string name="login_welcome">Release the Kraken!</string>
+    <string name="login_splash">An App to Easily Manage and Enroll&#10;in Various Events and Activities</string>
 
-    <string name="feature_join_waiting_list">Join waiting list</string>
-    <string name="feature_filter_events">Filter events</string>
-    <string name="feature_view_event_history">View event history</string>
-    <string name="feature_create_event">Create event</string>
-    <string name="feature_view_entrants">View entrants</string>
-    <string name="feature_draw_lottery">Draw lottery</string>
-    <string name="feature_browse_events">Browse events</string>
-    <string name="feature_remove_event">Remove event</string>
-    <string name="feature_remove_profile">Remove profile</string>
-    <string name="feature_review_logs">Review notification logs</string>
+    <!-- Strings related to account/profile creation -->
+    <string name="action_create_welcome">Create Your Profile</string>
+    <string name="action_create_account">Confirm Account</string>
+    <string name="action_create_profile">Create Profile</string>
+    <string name="action_update_profile">Update Profile</string>
+    <string name="action_cancel_account_creation">Cancel Account Creation</string>
+    <string name="prompt_name">Name</string>
+    <string name="prompt_phone_optional">Phone Number (Optional)</string>
+    <string name="upload_profile_image_text">Upload&#10;Profile Picture</string>
+    <string name="profile_created_message">Profile created successfully</string>
+    <string name="profile_updated_message">Profile updated successfully</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_email_required">Email is required</string>
+    <string name="error_email_invalid">Enter a valid email address</string>
+    <string name="error_phone_invalid">Enter a valid phone number or leave it blank</string>
 
-    <string name="access_granted">%1$s allowed for %2$s</string>
-    <string name="access_denied">%1$s cannot access %2$s</string>
-    <string name="interests_hint">Interests (comma-separated, e.g. swimming,music)</string>
-    <string name="availability_hint">Available days (comma-separated, e.g. monday,friday)</string>
-    <string name="filter_results_placeholder">Filtered events will appear here.</string>
-    <string name="history_results_placeholder">Event history will appear here.</string>
-    <string name="no_filter_results">No events match the selected interests and availability.</string>
-    <string name="no_history_results">No event history found for this entrant.</string>
+    <!-- Strings related to the main menu -->
+    <string name="view_profile_button">View Profile</string>
+    <string name="browse_events_button">Browse Events</string>
+    <string name="your_events_button">Your Events</string>
+    <string name="admin_browse_users_button">Browse Users</string>
+    <string name="admin_browse_images_button">Browse Images</string>
+
+    <!-- Strings related to the view profile screen -->
+    <string name="profile_to_main_button">Back to Main Menu</string>
+    <string name="profile_not_set">Not set</string>
+    <string name="profile_phone_not_provided">Not provided</string>
+    <string name="profile_welcome">Your Profile</string>
+    <string name="profile_name_text">Your Name</string>
+    <string name="profile_email_text">Your Email</string>
+    <string name="profile_phone_text">Your Phone Number</string>
+    <string name="profile_edit_button">Edit Profile Information</string>
+    <string name="profile_account_delete_button">Delete Account</string>
+    <string name="sign_out_button">Sign Out</string>
+
+    <!-- Strings related to the bottom toolbar -->
+    <string name="profile_toolbar">Profile</string>
+    <string name="home_toolbar">Home</string>
+    <string name="notifications_toolbar">Notifications</string>
+
+    <!-- Strings related to Your/Browse Events fragments -->
+    <string name="browse_events_welcome">Available Events</string>
+
+    <!-- Strings related to the notifications fragment -->
+    <string name="notification_welcome">Notifications</string>
+
+    <!-- Misc strings -->
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY CONTENT</string>
 </resources>
