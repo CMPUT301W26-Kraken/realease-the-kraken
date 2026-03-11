@@ -181,6 +181,8 @@ public class ProfileRepository {
                 && !sharedPreferences.getString(KEY_EMAIL, "").isEmpty();
     }
 
+
+
     /**
      * Normalizes email for safe and consistent Firestore document IDs.
      *
@@ -189,5 +191,38 @@ public class ProfileRepository {
      */
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    /**
+     * Deletes the locally stored profile from SharedPreferences.
+     */
+    public void deleteLocalProfile() {
+        sharedPreferences.edit()
+                .remove(KEY_NAME)
+                .remove(KEY_EMAIL)
+                .remove(KEY_PHONE)
+                .apply();
+    }
+
+    /**
+     * Deletes the profile from Firestore using email as the document ID.
+     *
+     * @param email     email used to identify the Firestore document
+     * @param callback  callback for success/failure
+     */
+    public void deleteProfileFromFirestore(String email, ProfileRepositoryCallback<Void> callback) {
+        String documentId = normalizeEmail(email);
+
+        firestore.collection(COLLECTION_PROFILES)
+                .document(documentId)
+                .delete()
+                .addOnSuccessListener(unused -> {
+                    Log.d("ProfileRepository", "Profile deleted from Firestore");
+                    callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileRepository", "Profile delete failed", e);
+                    callback.onFailure(e);
+                });
     }
 }
