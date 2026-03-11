@@ -1,9 +1,11 @@
 package com.example.releasethekraken.view;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,8 +22,7 @@ import com.example.releasethekraken.repository.ProfileRepository;
  * Fragment that displays the currently saved user profile.
  *
  * The profile information is loaded from local storage and shown on screen.
- * Edit Profile navigates to the profile form, which will act in update mode
- * if a profile already exists.
+ * Users can view, edit, sign out, or delete their profile from here.
  */
 public class ViewProfileFragment extends Fragment {
 
@@ -89,6 +90,60 @@ public class ViewProfileFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_loginFragment)
         );
+
+        binding.profileAccountDeleteButton.setOnClickListener(v ->
+                showDeleteConfirmationDialog(profile, profileRepository, v)
+        );
+    }
+
+    /**
+     * Shows a confirmation dialog before permanently deleting the profile.
+     *
+     * @param profile current profile being deleted
+     * @param profileRepository repository used for local and Firestore deletion
+     * @param view current fragment view used for navigation
+     */
+    private void showDeleteConfirmationDialog(Profile profile,
+                                              ProfileRepository profileRepository,
+                                              View view) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Profile")
+                .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    String email = profile.getEmail();
+
+                    // Delete local profile first so UI updates immediately
+                    profileRepository.deleteLocalProfile();
+
+                    Toast.makeText(requireContext(),
+                            R.string.profile_deleted_message,
+                            Toast.LENGTH_SHORT).show();
+
+                    // Delete from Firestore in the background
+                    profileRepository.deleteProfileFromFirestore(email,
+                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    // No extra UI action needed
+                                }
+
+                                @Override
+                                public void onFailure(Exception exception) {
+                                    if (!isAdded()) {
+                                        return;
+                                    }
+
+                                    Toast.makeText(requireContext(),
+                                            "Profile deleted locally, but Firestore delete failed: " + exception.getMessage(),
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            });
+
+                    Navigation.findNavController(view)
+                            .navigate(R.id.action_viewProfileFragment_to_loginFragment);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     /**
