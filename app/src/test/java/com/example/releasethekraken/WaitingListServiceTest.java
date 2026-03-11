@@ -8,6 +8,7 @@ import com.example.releasethekraken.model.WaitingListRepository;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+
 public class WaitingListServiceTest {
 
     //fake repo so we can control behavior and inspect what gets saved
@@ -16,19 +17,25 @@ public class WaitingListServiceTest {
         boolean removed = false;
         WaitingListEntry savedEntry = null;
 
-        @Override
-        public boolean isEntrantAlreadyWaiting(String eventId, String entrantId) {
-            return alreadyWaiting;
+        public FakeWaitingListRepository() {
+            super(null);
         }
 
         @Override
-        public void addToWaitingList(WaitingListEntry entry) {
+        public void isEntrantAlreadyWaiting(String eventId, String entrantId, BooleanCallback callback) {
+            callback.onResult(alreadyWaiting);
+        }
+
+        @Override
+        public void addToWaitingList(WaitingListEntry entry, CompletionCallback callback) {
             savedEntry = entry;
+            callback.onSuccess();
         }
 
         @Override
-        public void removeFromWaitingList(String eventId, String entrantId) {
+        public void removeFromWaitingList(String eventId, String entrantId, CompletionCallback callback) {
             removed = true;
+            callback.onSuccess();
         }
     }
 
@@ -37,11 +44,37 @@ public class WaitingListServiceTest {
         FakeWaitingListRepository repo = new FakeWaitingListRepository();
         WaitingListService service = new WaitingListService(repo);
 
-        WaitingListService.JoinResult result = service.joinWaitingList(null, "device123");
-        assertEquals(WaitingListService.JoinResult.INVALID_INPUT, result);
+        final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
 
-        WaitingListService.JoinResult result2 = service.joinWaitingList(makeOpenEvent(), "   ");
-        assertEquals(WaitingListService.JoinResult.INVALID_INPUT, result2);
+        service.joinWaitingList(null, "device123", new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.INVALID_INPUT, result[0]);
+
+        final WaitingListService.JoinResult[] result2 = new WaitingListService.JoinResult[1];
+
+        service.joinWaitingList(makeOpenEvent(), "   ", new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result2[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.INVALID_INPUT, result2[0]);
     }
 
     @Test
@@ -52,8 +85,21 @@ public class WaitingListServiceTest {
         long now = System.currentTimeMillis();
         Event closedEvent = new Event("event123", now - 200000, now - 100000); // ended in the past
 
-        WaitingListService.JoinResult result = service.joinWaitingList(closedEvent, "device123");
-        assertEquals(WaitingListService.JoinResult.REGISTRATION_CLOSED, result);
+        final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
+
+        service.joinWaitingList(closedEvent, "device123", new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.REGISTRATION_CLOSED, result[0]);
         assertNull(repo.savedEntry); // nothing saved
     }
 
@@ -64,8 +110,21 @@ public class WaitingListServiceTest {
 
         WaitingListService service = new WaitingListService(repo);
 
-        WaitingListService.JoinResult result = service.joinWaitingList(makeOpenEvent(), "device123");
-        assertEquals(WaitingListService.JoinResult.DUPLICATE_ENTRY, result);
+        final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
+
+        service.joinWaitingList(makeOpenEvent(), "device123", new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.DUPLICATE_ENTRY, result[0]);
         assertNull(repo.savedEntry); // nothing saved
     }
 
@@ -79,19 +138,27 @@ public class WaitingListServiceTest {
         Event event = makeOpenEvent();
         String entrantId = "device123";
 
-        WaitingListService.JoinResult result = service.joinWaitingList(event, entrantId);
-        assertEquals(WaitingListService.JoinResult.SUCCESS, result);
+        final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
+
+        service.joinWaitingList(event, entrantId, new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.SUCCESS, result[0]);
 
         // verify it saved something
         assertNotNull(repo.savedEntry);
         assertEquals(event.getEventId(), repo.savedEntry.getEventId());
         assertEquals(entrantId, repo.savedEntry.getEntrantId());
-        assertTrue(repo.savedEntry.getJoinedAtMillis() > 0);    }
-
-    // helper: registration window definitely open now
-    private Event makeOpenEvent() {
-        long now = System.currentTimeMillis();
-        return new Event("event123", now - 1000000, now + 1000000);
+        assertTrue(repo.savedEntry.getJoinedAtMillis() > 0);
     }
 
     @Test
@@ -99,11 +166,37 @@ public class WaitingListServiceTest {
         FakeWaitingListRepository repo = new FakeWaitingListRepository();
         WaitingListService service = new WaitingListService(repo);
 
-        WaitingListService.LeaveResult result = service.leaveWaitingList(null, "device123");
-        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result);
+        final WaitingListService.LeaveResult[] result = new WaitingListService.LeaveResult[1];
 
-        WaitingListService.LeaveResult result2 = service.leaveWaitingList(makeOpenEvent(), "   ");
-        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result2);
+        service.leaveWaitingList(null, "device123", new WaitingListService.LeaveCallback() {
+            @Override
+            public void onResult(WaitingListService.LeaveResult leaveResult) {
+                result[0] = leaveResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result[0]);
+
+        final WaitingListService.LeaveResult[] result2 = new WaitingListService.LeaveResult[1];
+
+        service.leaveWaitingList(makeOpenEvent(), "   ", new WaitingListService.LeaveCallback() {
+            @Override
+            public void onResult(WaitingListService.LeaveResult leaveResult) {
+                result2[0] = leaveResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.LeaveResult.INVALID_INPUT, result2[0]);
     }
 
     @Test
@@ -113,8 +206,21 @@ public class WaitingListServiceTest {
 
         WaitingListService service = new WaitingListService(repo);
 
-        WaitingListService.LeaveResult result = service.leaveWaitingList(makeOpenEvent(), "device123");
-        assertEquals(WaitingListService.LeaveResult.NOT_ON_WAITING_LIST, result);
+        final WaitingListService.LeaveResult[] result = new WaitingListService.LeaveResult[1];
+
+        service.leaveWaitingList(makeOpenEvent(), "device123", new WaitingListService.LeaveCallback() {
+            @Override
+            public void onResult(WaitingListService.LeaveResult leaveResult) {
+                result[0] = leaveResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.LeaveResult.NOT_ON_WAITING_LIST, result[0]);
         assertFalse(repo.removed);
     }
 
@@ -125,10 +231,27 @@ public class WaitingListServiceTest {
 
         WaitingListService service = new WaitingListService(repo);
 
-        WaitingListService.LeaveResult result = service.leaveWaitingList(makeOpenEvent(), "device123");
-        assertEquals(WaitingListService.LeaveResult.SUCCESS, result);
+        final WaitingListService.LeaveResult[] result = new WaitingListService.LeaveResult[1];
+
+        service.leaveWaitingList(makeOpenEvent(), "device123", new WaitingListService.LeaveCallback() {
+            @Override
+            public void onResult(WaitingListService.LeaveResult leaveResult) {
+                result[0] = leaveResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.LeaveResult.SUCCESS, result[0]);
         assertTrue(repo.removed);
     }
 
-
+    // helper: registration window definitely open now
+    private Event makeOpenEvent() {
+        long now = System.currentTimeMillis();
+        return new Event("event123", now - 1000000, now + 1000000);
+    }
 }

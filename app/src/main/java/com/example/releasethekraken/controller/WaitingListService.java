@@ -40,6 +40,16 @@ public class WaitingListService {
         INVALID_INPUT,
     }
 
+    public interface JoinCallback {
+        void onResult(JoinResult result);
+        void onError(Exception e);
+    }
+
+    public interface LeaveCallback {
+        void onResult(LeaveResult result);
+        void onError(Exception e);
+    }
+
     /**
      * leave the waiting list for an event US 01.01.02
      *  - Entrant can leave the waiting list
@@ -50,30 +60,50 @@ public class WaitingListService {
      * @return LeaveResult indicating what happened
      */
 
-    public LeaveResult leaveWaitingList(Event event, String entrantId) {
+    public void leaveWaitingList(Event event, String entrantId, LeaveCallback callback) {
 
         //to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            return LeaveResult.INVALID_INPUT;
+            callback.onResult(LeaveResult.INVALID_INPUT);
+            return;
         }
 
         // check if entrant is actually on the waiting list
-        boolean alreadyWaiting = waitingListRepository.isEntrantAlreadyWaiting(
+        waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
-                entrantId
+                entrantId,
+                new WaitingListRepository.BooleanCallback() {
+                    @Override
+                    public void onResult(boolean alreadyWaiting) {
+                        if (!alreadyWaiting) {
+                            callback.onResult(LeaveResult.NOT_ON_WAITING_LIST);
+                            return;
+                        }
+
+                        // remove entrant from waiting list
+                        waitingListRepository.removeFromWaitingList(
+                                event.getEventId(),
+                                entrantId,
+                                new WaitingListRepository.CompletionCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        callback.onResult(LeaveResult.SUCCESS);
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        callback.onError(e);
+                                    }
+                                }
+                        );
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        callback.onError(e);
+                    }
+                }
         );
-
-        if (!alreadyWaiting) {
-            return LeaveResult.NOT_ON_WAITING_LIST;
-        }
-
-        // remove entrant from waiting list
-        waitingListRepository.removeFromWaitingList(
-                event.getEventId(),
-                entrantId
-        );
-
-        return LeaveResult.SUCCESS;
     }
 
     /**
@@ -105,42 +135,64 @@ public class WaitingListService {
      * @param entrantId  entrant/device identifier
      * @return JoinResult indicating what happened
      */
-    public JoinResult joinWaitingList(Event event, String entrantId) {
+    public void joinWaitingList(Event event, String entrantId, JoinCallback callback) {
 
         //validation to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            return JoinResult.INVALID_INPUT;
+            callback.onResult(JoinResult.INVALID_INPUT);
+            return;
         }
 
         long nowMillis = System.currentTimeMillis();
 
         // 1. validate registration window
         if (!isRegistrationOpen(event, nowMillis)) {
-            return JoinResult.REGISTRATION_CLOSED;
+            callback.onResult(JoinResult.REGISTRATION_CLOSED);
+            return;
         }
 
         // 2. prevent duplicates
-        // NOTE: This is synchronous right now because no Firestore
-        // later with Firestore, this will likely become asynchronous tbd
-        boolean alreadyWaiting = waitingListRepository.isEntrantAlreadyWaiting(
-                event.getEventId(),
-                entrantId
-        );
-
-        if (alreadyWaiting) {
-            return JoinResult.DUPLICATE_ENTRY;
-        }
-
-        // 3. create the waiting list entry with exact join time
-        WaitingListEntry entry = new WaitingListEntry(
+        // NOTE: This is asynchronous now because Firestore calls do not return immediately
+        waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
                 entrantId,
-                nowMillis
+                new WaitingListRepository.BooleanCallback() {
+                    @Override
+                    public void onResult(boolean alreadyWaiting) {
+                        if (alreadyWaiting) {
+                            callback.onResult(JoinResult.DUPLICATE_ENTRY);
+                            return;
+                        }
+
+                        // 3. create the waiting list entry with exact join time
+                        WaitingListEntry entry = new WaitingListEntry(
+                                event.getEventId(),
+                                entrantId,
+                                nowMillis
+                        );
+
+                        // 4. store it repository will later store in Firestore
+                        waitingListRepository.addToWaitingList(
+                                entry,
+                                new WaitingListRepository.CompletionCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        callback.onResult(JoinResult.SUCCESS);
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        callback.onError(e);
+                                    }
+                                }
+                        );
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        callback.onError(e);
+                    }
+                }
         );
-
-        // 4. store it repository will later store in Firestore
-        waitingListRepository.addToWaitingList(entry);
-
-        return JoinResult.SUCCESS;
     }
 }

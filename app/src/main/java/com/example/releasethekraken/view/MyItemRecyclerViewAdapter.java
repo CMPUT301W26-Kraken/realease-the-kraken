@@ -15,9 +15,15 @@ public class MyItemRecyclerViewAdapter
         extends RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder> {
 
     private final List<PlaceholderItem> mValues;
+    private final OnEventClickListener listener;
 
-    public MyItemRecyclerViewAdapter(List<PlaceholderItem> items) {
+    public interface OnEventClickListener {
+        void onEventClick(PlaceholderItem item);
+    }
+
+    public MyItemRecyclerViewAdapter(List<PlaceholderItem> items, OnEventClickListener listener) {
         mValues = items;
+        this.listener = listener;
     }
 
     @NonNull
@@ -40,6 +46,12 @@ public class MyItemRecyclerViewAdapter
 
         holder.binding.itemNumber.setText(item.id);
         holder.binding.content.setText(item.content);
+
+        holder.binding.getRoot().setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onEventClick(item);
+            }
+        });
     }
 
     @Override
