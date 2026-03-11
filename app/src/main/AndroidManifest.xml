@@ -37,10 +37,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".view.TicketTestActivity"
-            android:exported="false"
-            android:label="@string/ticket_test_title" />
     </application>
 
 </manifest>

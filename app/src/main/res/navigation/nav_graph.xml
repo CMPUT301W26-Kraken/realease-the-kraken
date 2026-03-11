@@ -51,6 +51,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_ticketTestFragment"
+            app:destination="@id/ticketTestFragment" />
     </fragment>
 
     <fragment
@@ -95,6 +98,16 @@
             app:destination="@id/viewProfileFragment" />
         <action
             android:id="@+id/action_notificationFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ticketTestFragment"
+        android:name="com.example.releasethekraken.view.TicketTestFragment"
+        android:label="fragment_ticket_test"
+        tools:layout="@layout/fragment_ticket_test">
+        <action
+            android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
     </fragment>
 

@@ -18,6 +18,7 @@
     <string name="ticket_test_feature_remove_event">Remove event</string>
     <string name="ticket_test_feature_remove_profile">Remove profile</string>
     <string name="ticket_test_feature_review_logs">Review notification logs</string>
+    <string name="ticket_test_button">Ticket Features</string>
 
     <string name="ticket_test_access_granted">%1$s allowed for %2$s</string>
     <string name="ticket_test_access_denied">%1$s cannot access %2$s</string>

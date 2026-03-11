@@ -5,7 +5,7 @@
     android:id="@+id/ticket_test_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.TicketTestActivity">
+    tools:context=".view.TicketTestFragment">
 
     <ScrollView
         android:layout_width="0dp"
@@ -22,9 +22,16 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <Button
+                android:id="@+id/backToMenuButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_to_main_button" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:text="@string/ticket_test_title"
                 android:textSize="22sp"
                 android:textStyle="bold" />

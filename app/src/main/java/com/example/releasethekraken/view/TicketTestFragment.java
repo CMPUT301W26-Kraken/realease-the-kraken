@@ -1,19 +1,17 @@
 package com.example.releasethekraken.view;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import java.util.HashSet;
 import java.util.List;
@@ -26,54 +24,52 @@ import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.controller.EventHistoryService;
 import com.example.releasethekraken.controller.SampleDataRepository;
 import com.example.releasethekraken.controller.SessionManager;
+import com.example.releasethekraken.databinding.FragmentTicketTestBinding;
 import com.example.releasethekraken.model.EventHistoryEntry;
 import com.example.releasethekraken.model.Feature;
 import com.example.releasethekraken.model.FilterEvent;
 import com.example.releasethekraken.model.UserRole;
 
-public class TicketTestActivity extends AppCompatActivity {
+public class TicketTestFragment extends Fragment {
     private static final String CURRENT_ENTRANT_ID = "entrant_device_1";
 
+    private FragmentTicketTestBinding binding;
     private SessionManager sessionManager;
     private UserRole activeRole;
-    private TextView roleSummaryText;
-    private EditText interestsInput;
-    private EditText availabilityInput;
-    private TextView filterResultsText;
-    private TextView historyResultsText;
 
     private List<FilterEvent> eventCatalog;
     private List<EventHistoryEntry> allHistoryEntries;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_ticket_test);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
-        sessionManager = new SessionManager(this);
+        binding = FragmentTicketTestBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        sessionManager = new SessionManager(requireContext());
         activeRole = sessionManager.getRole();
         eventCatalog = SampleDataRepository.loadEvents();
         allHistoryEntries = SampleDataRepository.loadEventHistory();
 
-        roleSummaryText = findViewById(R.id.roleSummaryText);
-        interestsInput = findViewById(R.id.inputInterests);
-        availabilityInput = findViewById(R.id.inputAvailability);
-        filterResultsText = findViewById(R.id.filterResultsText);
-        historyResultsText = findViewById(R.id.historyResultsText);
+        binding.backToMenuButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_ticketTestFragment_to_mainMenuFragment)
+        );
+
         setupRolePicker();
         setupFeatureButtons();
         updateRoleSummary();
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.ticket_test_root), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
     }
 
     private void setupRolePicker() {
-        Spinner roleSpinner = findViewById(R.id.roleSpinner);
         UserRole[] roles = UserRole.values();
         String[] labels = new String[roles.length];
         for (int i = 0; i < roles.length; i++) {
@@ -81,14 +77,14 @@ public class TicketTestActivity extends AppCompatActivity {
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
+                requireContext(),
                 android.R.layout.simple_spinner_item,
                 labels
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        roleSpinner.setAdapter(adapter);
-        roleSpinner.setSelection(activeRole.ordinal());
-        roleSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.roleSpinner.setAdapter(adapter);
+        binding.roleSpinner.setSelection(activeRole.ordinal());
+        binding.roleSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
                 activeRole = roles[position];
@@ -103,32 +99,31 @@ public class TicketTestActivity extends AppCompatActivity {
     }
 
     private void setupFeatureButtons() {
-        wireFeatureButton(R.id.btnJoinWaitingList, Feature.JOIN_WAITING_LIST);
+        wireFeatureButton(binding.btnJoinWaitingList, Feature.JOIN_WAITING_LIST);
         wireFilterEventsButton();
         wireViewHistoryButton();
 
-        wireFeatureButton(R.id.btnCreateEvent, Feature.CREATE_EVENT);
-        wireFeatureButton(R.id.btnViewEntrants, Feature.VIEW_ENTRANTS);
-        wireFeatureButton(R.id.btnDrawLottery, Feature.DRAW_LOTTERY);
+        wireFeatureButton(binding.btnCreateEvent, Feature.CREATE_EVENT);
+        wireFeatureButton(binding.btnViewEntrants, Feature.VIEW_ENTRANTS);
+        wireFeatureButton(binding.btnDrawLottery, Feature.DRAW_LOTTERY);
 
-        wireFeatureButton(R.id.btnBrowseEvents, Feature.BROWSE_EVENTS);
-        wireFeatureButton(R.id.btnRemoveEvent, Feature.REMOVE_EVENT);
-        wireFeatureButton(R.id.btnRemoveProfile, Feature.REMOVE_PROFILE);
-        wireFeatureButton(R.id.btnReviewLogs, Feature.REVIEW_NOTIFICATION_LOGS);
+        wireFeatureButton(binding.btnBrowseEvents, Feature.BROWSE_EVENTS);
+        wireFeatureButton(binding.btnRemoveEvent, Feature.REMOVE_EVENT);
+        wireFeatureButton(binding.btnRemoveProfile, Feature.REMOVE_PROFILE);
+        wireFeatureButton(binding.btnReviewLogs, Feature.REVIEW_NOTIFICATION_LOGS);
     }
 
-    private void wireFeatureButton(int buttonId, Feature feature) {
-        Button button = findViewById(buttonId);
+    private void wireFeatureButton(View button, Feature feature) {
         button.setOnClickListener(v -> {
             if (AccessControl.canAccess(activeRole, feature)) {
                 Toast.makeText(
-                        this,
+                        requireContext(),
                         getString(R.string.ticket_test_access_granted, feature.getLabel(), activeRole.getLabel()),
                         Toast.LENGTH_SHORT
                 ).show();
             } else {
                 Toast.makeText(
-                        this,
+                        requireContext(),
                         getString(R.string.ticket_test_access_denied, activeRole.getLabel(), feature.getLabel()),
                         Toast.LENGTH_SHORT
                 ).show();
@@ -137,34 +132,32 @@ public class TicketTestActivity extends AppCompatActivity {
     }
 
     private void wireFilterEventsButton() {
-        Button button = findViewById(R.id.btnFilterEvents);
-        button.setOnClickListener(v -> {
+        binding.btnFilterEvents.setOnClickListener(v -> {
             if (!AccessControl.canAccess(activeRole, Feature.FILTER_EVENTS)) {
                 Toast.makeText(
-                        this,
+                        requireContext(),
                         getString(R.string.ticket_test_access_denied, activeRole.getLabel(), Feature.FILTER_EVENTS.getLabel()),
                         Toast.LENGTH_SHORT
                 ).show();
                 return;
             }
 
-            Set<String> interests = parseCsv(interestsInput.getText().toString());
-            Set<String> availability = parseCsv(availabilityInput.getText().toString());
+            Set<String> interests = parseCsv(binding.inputInterests.getText().toString());
+            Set<String> availability = parseCsv(binding.inputAvailability.getText().toString());
             List<FilterEvent> filtered = EventFilterService.filterByInterestsAndAvailability(
                     eventCatalog,
                     interests,
                     availability
             );
-            filterResultsText.setText(formatFilterResults(filtered));
+            binding.filterResultsText.setText(formatFilterResults(filtered));
         });
     }
 
     private void wireViewHistoryButton() {
-        Button button = findViewById(R.id.btnViewEventHistory);
-        button.setOnClickListener(v -> {
+        binding.btnViewEventHistory.setOnClickListener(v -> {
             if (!AccessControl.canAccess(activeRole, Feature.VIEW_EVENT_HISTORY)) {
                 Toast.makeText(
-                        this,
+                        requireContext(),
                         getString(R.string.ticket_test_access_denied, activeRole.getLabel(), Feature.VIEW_EVENT_HISTORY.getLabel()),
                         Toast.LENGTH_SHORT
                 ).show();
@@ -175,7 +168,7 @@ public class TicketTestActivity extends AppCompatActivity {
                     allHistoryEntries,
                     CURRENT_ENTRANT_ID
             );
-            historyResultsText.setText(formatHistoryResults(history));
+            binding.historyResultsText.setText(formatHistoryResults(history));
         });
     }
 
@@ -200,7 +193,7 @@ public class TicketTestActivity extends AppCompatActivity {
         }
         StringBuilder builder = new StringBuilder();
         for (FilterEvent event : events) {
-            builder.append("• ")
+            builder.append("- ")
                     .append(event.getTitle())
                     .append(" (")
                     .append(capitalize(event.getDay()))
@@ -215,7 +208,7 @@ public class TicketTestActivity extends AppCompatActivity {
         }
         StringBuilder builder = new StringBuilder();
         for (EventHistoryEntry entry : historyEntries) {
-            builder.append("• ")
+            builder.append("- ")
                     .append(entry.getEventTitle())
                     .append(" - ")
                     .append(entry.getOutcome().getLabel())
@@ -232,6 +225,12 @@ public class TicketTestActivity extends AppCompatActivity {
     }
 
     private void updateRoleSummary() {
-        roleSummaryText.setText(getString(R.string.ticket_test_active_role, activeRole.getLabel()));
+        binding.roleSummaryText.setText(getString(R.string.ticket_test_active_role, activeRole.getLabel()));
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
