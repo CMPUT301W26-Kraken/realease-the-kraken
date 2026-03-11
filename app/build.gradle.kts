@@ -44,11 +44,12 @@ android {
 
 dependencies {
     // Firebase Firestone dependencies
+    implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage:20.3.0")
     implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
-    implementation("com.google.firebase:firebase-storage:20.3.0")
+
 
     implementation(libs.appcompat)
     implementation(libs.material)
