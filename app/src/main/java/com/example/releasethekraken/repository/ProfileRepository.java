@@ -146,6 +146,30 @@ public class ProfileRepository {
                 })
                 .addOnFailureListener(callback::onFailure);
     }
+    public void updateProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
+
+        // Save locally first
+        saveProfileLocally(profile);
+
+        String documentId = normalizeEmail(profile.getEmail());
+
+        Map<String, Object> profileData = new HashMap<>();
+        profileData.put("name", profile.getName());
+        profileData.put("email", profile.getEmail());
+        profileData.put("phone", profile.getPhone());
+
+        firestore.collection(COLLECTION_PROFILES)
+                .document(documentId)
+                .set(profileData)
+                .addOnSuccessListener(unused -> {
+                    Log.d("ProfileRepository", "Profile updated in Firestore");
+                    callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileRepository", "Profile update failed", e);
+                    callback.onFailure(e);
+                });
+    }
 
     /**
      * Checks whether a profile exists locally.

@@ -58,6 +58,12 @@
         android:name="com.example.releasethekraken.view.ui.login.AccountCreateFragment"
         android:label="fragment_account_create"
         tools:layout="@layout/fragment_account_create">
+
+        <argument
+            android:name="isEditMode"
+            app:argType="boolean"
+            android:defaultValue="false" />
+
         <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />

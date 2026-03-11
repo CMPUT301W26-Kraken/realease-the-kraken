@@ -19,8 +19,9 @@ import com.example.releasethekraken.repository.ProfileRepository;
 /**
  * Fragment that displays the currently saved user profile.
  *
- * The profile information is loaded from ProfileRepository and shown on screen.
- * If a value has not been set yet, a fallback message is displayed instead.
+ * The profile information is loaded from local storage and shown on screen.
+ * Edit Profile navigates to the profile form, which will act in update mode
+ * if a profile already exists.
  */
 public class ViewProfileFragment extends Fragment {
 
@@ -61,31 +62,29 @@ public class ViewProfileFragment extends Fragment {
                 getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided))
         );
 
-        // Navigate back to main menu
         binding.profileToMainButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
         );
 
-        // Navigate to the home/main menu from toolbar
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
         );
 
-        // Navigate to the notifications screen
         binding.notificationsToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_notificationFragment)
         );
 
-        // Navigate to edit profile screen
-        binding.profileEditButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_viewProfileFragment_to_accountCreateFragment)
-        );
+        binding.profileEditButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("isEditMode", true);
 
-        // Sign out and return to login screen
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_viewProfileFragment_to_accountCreateFragment, bundle);
+        });
+
         binding.profileSignoutButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_loginFragment)
