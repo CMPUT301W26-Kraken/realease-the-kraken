@@ -3,48 +3,63 @@ package com.example.releasethekraken.model;
 /**
  * Profile model class representing a user's personal information in the app.
  *
- * This class acts as a simple data container (POJO) for profile information
- * entered by an entrant when creating their account. It currently stores
- * the user's name, email, and optional phone number.
- *
- * The fields are immutable (final) because once a Profile object is created,
- * its values should not change. If an update is needed, a new Profile object
- * can be created with the updated information.
+ * This class is used for both local storage and Firebase Firestore.
+ * Firestore requires a public no-argument constructor and non-final fields
+ * so that it can automatically deserialize documents into Profile objects.
  */
 public class Profile {
 
     // User's full name (required field)
-    private final String name;
+    private String name;
 
     // User's email address (required field)
-    private final String email;
+    private String email;
 
     // User's phone number (optional field)
-    private final String phone;
+    private String phone;
 
+    /**
+     * Required empty constructor for Firestore deserialization.
+     */
+    public Profile() {
+    }
 
-     //Constructs a new Profile object.
-
+    /**
+     * Constructs a new Profile object.
+     *
+     * @param name  the user's full name
+     * @param email the user's email address
+     * @param phone the user's phone number (can be empty)
+     */
     public Profile(String name, String email, String phone) {
         this.name = name;
         this.email = email;
-        this.phone = phone; // (can be empty if not provided)
+        this.phone = phone;
     }
 
-
-    //Returns the user's name.
+    /**
+     * Returns the user's full name.
+     *
+     * @return profile name
+     */
     public String getName() {
         return name;
     }
 
-
-    //Returns the user's email address.
+    /**
+     * Returns the user's email address.
+     *
+     * @return profile email
+     */
     public String getEmail() {
         return email;
     }
 
-
-    //Returns the user's phone number.(may be empty)
+    /**
+     * Returns the user's phone number.
+     *
+     * @return profile phone number
+     */
     public String getPhone() {
         return phone;
     }

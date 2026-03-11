@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "675002345999",
-    "project_id": "kraken2-ba91c",
-    "storage_bucket": "kraken2-ba91c.firebasestorage.app"
+    "project_number": "590559864567",
+    "project_id": "kraken-4444",
+    "storage_bucket": "kraken-4444.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:675002345999:android:ebbaa344aec4b2e9a4517a",
+        "mobilesdk_app_id": "1:590559864567:android:9a50aafc4515e5b79155f2",
         "android_client_info": {
           "package_name": "com.example.releasethekraken"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBxdM0-OLCRzs9rzF-Krct4WF-VG0L_p9M"
+          "current_key": "AIzaSyDqX92RTotJRfR7DyCUjrrpxT9pIZl34nI"
         }
       ],
       "services": {
