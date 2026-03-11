@@ -24,6 +24,11 @@
             android:label="@string/title_activity_main2"
             android:theme="@style/Theme.ReleaseTheKraken" />
         <activity
+            android:name=".MainActivity2"
+            android:exported="false"
+            android:label="@string/title_activity_main2"
+            android:theme="@style/Theme.ReleaseTheKraken" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

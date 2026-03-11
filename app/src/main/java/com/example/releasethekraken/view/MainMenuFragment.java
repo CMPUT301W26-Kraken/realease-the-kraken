@@ -53,6 +53,12 @@ public class MainMenuFragment extends Fragment {
                         .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment)
         );
 
+        // Navigate to Ticket Test (role access, filtering, history)
+        binding.ticketTestButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_mainMenuFragment_to_ticketTestFragment)
+        );
+
         // Navigate to Notifications
         binding.notificationsToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)

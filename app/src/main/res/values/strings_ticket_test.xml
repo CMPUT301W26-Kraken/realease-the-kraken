@@ -1,0 +1,31 @@
+<resources>
+    <string name="ticket_test_title">Role Access Control Demo</string>
+    <string name="ticket_test_role_label">Select active role</string>
+    <string name="ticket_test_active_role_placeholder">Active role:</string>
+    <string name="ticket_test_active_role">Active role: %1$s</string>
+
+    <string name="ticket_test_entrant_features_title">Entrant features</string>
+    <string name="ticket_test_organizer_features_title">Organizer features</string>
+    <string name="ticket_test_admin_features_title">Admin features</string>
+
+    <string name="ticket_test_feature_join_waiting_list">Join waiting list</string>
+    <string name="ticket_test_feature_filter_events">Filter events</string>
+    <string name="ticket_test_feature_view_event_history">View event history</string>
+    <string name="ticket_test_feature_create_event">Create event</string>
+    <string name="ticket_test_feature_view_entrants">View entrants</string>
+    <string name="ticket_test_feature_draw_lottery">Draw lottery</string>
+    <string name="ticket_test_feature_browse_events">Browse events</string>
+    <string name="ticket_test_feature_remove_event">Remove event</string>
+    <string name="ticket_test_feature_remove_profile">Remove profile</string>
+    <string name="ticket_test_feature_review_logs">Review notification logs</string>
+    <string name="ticket_test_button">Ticket Features</string>
+
+    <string name="ticket_test_access_granted">%1$s allowed for %2$s</string>
+    <string name="ticket_test_access_denied">%1$s cannot access %2$s</string>
+    <string name="ticket_test_interests_hint">Interests (comma-separated, e.g. swimming,music)</string>
+    <string name="ticket_test_availability_hint">Available days (comma-separated, e.g. monday,friday)</string>
+    <string name="ticket_test_filter_results_placeholder">Filtered events will appear here.</string>
+    <string name="ticket_test_history_results_placeholder">Event history will appear here.</string>
+    <string name="ticket_test_no_filter_results">No events match the selected interests and availability.</string>
+    <string name="ticket_test_no_history_results">No event history found for this entrant.</string>
+</resources>
