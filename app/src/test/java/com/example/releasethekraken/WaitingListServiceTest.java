@@ -83,7 +83,7 @@ public class WaitingListServiceTest {
         WaitingListService service = new WaitingListService(repo);
 
         long now = System.currentTimeMillis();
-        Event closedEvent = new Event("event123", now - 200000, now - 100000); // ended in the past
+        Event closedEvent = new Event("event123", "Closed Event", "Description", now - 200000, now - 100000); // ended in the past
 
         final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
 
@@ -252,6 +252,6 @@ public class WaitingListServiceTest {
     // helper: registration window definitely open now
     private Event makeOpenEvent() {
         long now = System.currentTimeMillis();
-        return new Event("event123", now - 1000000, now + 1000000);
+        return new Event("event123", "Open Event", "Description", now - 1000000, now + 1000000);
     }
 }

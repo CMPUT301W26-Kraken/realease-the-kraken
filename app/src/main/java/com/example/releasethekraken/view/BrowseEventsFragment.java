@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -16,13 +17,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
-import com.example.releasethekraken.placeholder.PlaceholderContent;
+import com.example.releasethekraken.model.Event;
+import com.example.releasethekraken.model.EventRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BrowseEventsFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 2;
     private boolean yourEvents;
+
+    private final List<Event> eventList = new ArrayList<>();
+    private MyItemRecyclerViewAdapter adapter;
 
     public BrowseEventsFragment() { }
 
@@ -67,28 +75,29 @@ public class BrowseEventsFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        // TODO: Change the adapter to the events viewing adapter
-        recyclerView.setAdapter(
-                new MyItemRecyclerViewAdapter(PlaceholderContent.ITEMS, item -> {
-                    Bundle args = new Bundle();
-                    args.putString("eventId", item.id);
+        adapter = new MyItemRecyclerViewAdapter(eventList, event -> {
+            Bundle args = new Bundle();
+            args.putString("eventId", event.getEventId());
 
-                    Navigation.findNavController(view)
-                            .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
-                })
-        );
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
+        });
 
+        recyclerView.setAdapter(adapter);
+
+        loadEvents();
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
         // Hide the create events button if we aren't in your Events
-        if (!yourEvents) {createEventButton.setVisibility(View.GONE);}
+        if (!yourEvents) {
+            createEventButton.setVisibility(View.GONE);
+        }
 
         // Navigate to Create Events
-        createEventButton
-                .setOnClickListener(v ->
-                        Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_createEventFragment)
-                );
+        createEventButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_browseEventsFragment_to_createEventFragment)
+        );
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
@@ -115,7 +124,7 @@ public class BrowseEventsFragment extends Fragment {
         // Navigate to Event Details as an Organizer
         view.findViewById(R.id.dummy_organizer_button).setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ORGANIZER.name()); // Using this argument to determine what should be displayed
+            bundle.putString("UserType", MainActivity.UserType.ORGANIZER.name());
 
             Navigation.findNavController(v)
                     .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
@@ -125,12 +134,34 @@ public class BrowseEventsFragment extends Fragment {
         // Navigate to Event Details as an Entrant
         view.findViewById(R.id.dummy_entrant_button).setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ENTRANT.name()); // Using this argument to determine what should be displayed
+            bundle.putString("UserType", MainActivity.UserType.ENTRANT.name());
 
             Navigation.findNavController(v)
                     .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
         });
 
         return view;
+    }
+
+    private void loadEvents() {
+        EventRepository repository = new EventRepository();
+
+        repository.getAllEvents(new EventRepository.EventsCallback() {
+            @Override
+            public void onSuccess(List<Event> events) {
+                eventList.clear();
+                eventList.addAll(events);
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(),
+                            "Failed to load events: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

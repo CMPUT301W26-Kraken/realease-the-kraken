@@ -160,12 +160,6 @@ public class NotificationServiceTest {
         assertEquals(repo.sentNotification.getSentAtMillis(), repo.loggedNotification.getSentAtMillis());
     }
 
-    // helper method to create a sample event
-    private Event makeSampleEvent() {
-        long now = System.currentTimeMillis();
-        return new Event("event123", now - 1000000, now + 1000000);
-    }
-
     @Test
     public void sendLossNotification_invalidInput_returnsInvalidInput() {
         FakeNotificationRepository repo = new FakeNotificationRepository();
@@ -291,5 +285,17 @@ public class NotificationServiceTest {
         assertEquals(repo.sentNotification.getMessage(), repo.loggedNotification.getMessage());
         assertEquals(repo.sentNotification.getType(), repo.loggedNotification.getType());
         assertEquals(repo.sentNotification.getSentAtMillis(), repo.loggedNotification.getSentAtMillis());
+    }
+
+    // helper method to create a sample event
+    private Event makeSampleEvent() {
+        long now = System.currentTimeMillis();
+        return new Event(
+                "event123",
+                "Sample Event",
+                "Sample Description",
+                now - 1000000,
+                now + 1000000
+        );
     }
 }
