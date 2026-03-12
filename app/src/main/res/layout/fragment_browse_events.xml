@@ -145,7 +145,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="57dp"
                 android:background="@color/white"
-                android:src="@android:drawable/ic_dialog_alert"
+                android:scaleType="fitCenter"
+                android:src="@drawable/hometoolbar"
                 app:tint="@color/dark_blue_text" />
 
             <TextView
@@ -169,7 +170,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="57dp"
                 android:background="@color/white"
-                android:src="@android:drawable/ic_dialog_alert"
+                android:scaleType="fitCenter"
+                android:src="@drawable/profiletoolbar"
                 app:tint="@color/dark_blue_text" />
 
             <TextView

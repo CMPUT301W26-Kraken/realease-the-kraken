@@ -38,6 +38,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="57dp"
                     android:background="@color/white"
+                    android:scaleType="center"
                     android:src="@android:drawable/ic_popup_reminder"
                     app:tint="@color/dark_blue_text" />
 
@@ -62,8 +63,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="57dp"
                     android:background="@color/white"
-                    android:src="@android:drawable/ic_dialog_alert"
-                    app:tint="@color/dark_blue_text" />
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/hometoolbar"
+                    app:tint="@color/light_blue_600" />
 
                 <TextView
                     android:id="@+id/home_toolbar_text"
@@ -86,7 +88,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="57dp"
                     android:background="@color/white"
-                    android:src="@android:drawable/ic_dialog_alert"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/profiletoolbar"
                     app:tint="@color/dark_blue_text" />
 
                 <TextView
@@ -155,7 +158,8 @@
             android:layout_height="125dp"
             android:layout_marginTop="20dp"
             android:backgroundTint="@color/dark_blue_text"
-            android:src="@android:drawable/stat_sys_warning"
+            android:scaleType="fitCenter"
+            android:src="@drawable/qrscan"
             app:layout_constraintBottom_toTopOf="@+id/AdminButtonLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
