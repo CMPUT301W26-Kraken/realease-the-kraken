@@ -83,15 +83,14 @@ public class BrowseEventsFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
 
-                    // TODO: Implement logic that can determine user type before navigation
-                    args.putSerializable("UserType", userRole);
+            // TODO: Implement logic that can determine user type before navigation
+            args.putSerializable("UserType", userRole);
 
-                    args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
+            args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
 
-                    Navigation.findNavController(view)
-                            .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
-                })
-        );
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
+        });
 
         recyclerView.setAdapter(adapter);
 
