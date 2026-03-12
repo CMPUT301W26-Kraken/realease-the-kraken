@@ -57,11 +57,39 @@
 
     <!-- Strings related to Your/Browse Events fragments -->
     <string name="browse_events_welcome">Available Events</string>
+    <string name="your_events_welcome">Your Events</string>
+    <string name="create_event_button">Create Event</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
 
+    <!-- Strings related to the event creation fragment -->
+    <string name="create_event_welcome">Create An Event</string>
+    <string name="prompt_event_name">Event Title</string>
+    <string name="prompt_event_description">Event Description…</string>
+    <string name="prompt_date">DD/MM/YYYY</string>
+    <string name="prompt_maximum_entrants">Max Entrants</string>
+    <string name="registration_start_text">Registration Start</string>
+    <string name="registration_end_text">Registration End</string>
+    <string name="upload_event_poster_text">Upload&#10;Event Poster</string>
+    <string name="maximum_entrants_text">Maximum Entrants&#10;(Optional)</string>
+    <string name="enable_geolocation_text">Enable&#10;Geo-location</string>
+    <string name="cancel_button">Cancel</string>
+
+    <!-- Strings related to Event Details -->
+    <string name="view_entrant_map_button">View Entrant&#10;Map (Optional)</string>
+    <string name="create_notification_button">Create&#10;Notification</string>
+    <string name="view_qr_button">View QR Code</string>
+    <string name="edit_event_button">Edit Event</string>
+    <string name="delete_event_button">Delete Event</string>
+    <string name="return_button">Return</string>
+    <string name="signup_button">Sign Up</string>
+    <string name="opt_out_button">Opt Out</string>
+
+
     <!-- Misc strings -->
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY CONTENT</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -83,6 +83,15 @@
         <action
             android:id="@+id/action_browseEventsFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
+        <argument
+            android:name="yourEvents"
+            app:argType="boolean" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_createEventFragment"
+            app:destination="@id/createEventFragment" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
     </fragment>
 
     <fragment
@@ -96,6 +105,27 @@
         <action
             android:id="@+id/action_notificationFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/createEventFragment"
+        android:name="com.example.releasethekraken.view.CreateEventFragment"
+        android:label="fragment_create_event"
+        tools:layout="@layout/fragment_create_event" >
+        <action
+            android:id="@+id/action_createEventFragment_to_browseEventsFragment"
+            app:destination="@id/browseEventsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/eventDetailsFragment"
+        android:name="com.example.releasethekraken.view.EventDetailsFragment"
+        android:label="fragment_event_details"
+        tools:layout="@layout/fragment_event_details" >
+        <argument
+            android:name="UserType"
+            app:argType="com.example.releasethekraken.MainActivity$UserType" />
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_browseEventsFragment"
+            app:destination="@id/browseEventsFragment" />
     </fragment>
 
 </navigation>

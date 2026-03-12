@@ -31,53 +31,72 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="30dp"
         android:layout_marginEnd="24dp"
+        android:ems="10"
         android:hint="@string/prompt_name"
-        android:inputType="textPersonName"
-        android:maxLines="1"
+        android:inputType="text"
+        app:layout_constraintBottom_toTopOf="@+id/email_create"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/account_creation_welcome" />
+        app:layout_constraintTop_toBottomOf="@+id/account_creation_welcome" />
 
     <EditText
         android:id="@+id/email_create"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
         android:hint="@string/prompt_email"
         android:inputType="textEmailAddress"
-        android:maxLines="1"
         android:selectAllOnFocus="true"
+        app:layout_constraintBottom_toTopOf="@+id/phone_create"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/name_create" />
+        app:layout_constraintTop_toBottomOf="@+id/name_create" />
 
     <EditText
         android:id="@+id/phone_create"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
+        android:ems="10"
         android:hint="@string/prompt_phone_optional"
         android:inputType="phone"
-        android:maxLines="1"
+        app:layout_constraintBottom_toTopOf="@+id/password_create"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/email_create" />
+        app:layout_constraintTop_toBottomOf="@+id/email_create" />
+
+    <EditText
+        android:id="@+id/password_create"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:hint="@string/prompt_password"
+        android:imeActionLabel="@string/action_sign_in_short"
+        android:imeOptions="actionDone"
+        android:inputType="textPassword"
+        android:selectAllOnFocus="true"
+        app:layout_constraintBottom_toTopOf="@+id/imageButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/phone_create" />
 
     <ImageButton
         android:id="@+id/imageButton"
         android:layout_width="110dp"
         android:layout_height="110dp"
-        android:layout_marginTop="20dp"
         android:padding="25dp"
         android:scaleType="fitCenter"
         android:src="@android:drawable/stat_sys_upload_done"
+        app:layout_constraintBottom_toTopOf="@+id/create_account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/phone_create"
+        app:layout_constraintTop_toBottomOf="@+id/password_create"
         app:tint="@color/dark_blue_text" />
 
     <TextView
@@ -89,31 +108,49 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageButton" />
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
     <Button
         android:id="@+id/create_account"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_gravity="start"
+        android:layout_marginTop="50dp"
         android:backgroundTint="@color/light_grey_button"
-        android:text="@string/action_create_profile"
+        android:enabled="false"
+        android:text="@string/action_create_account"
         android:textColor="@color/dark_blue_text"
         android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/cancel_account_creation"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/upload_photo_text" />
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
     <Button
         android:id="@+id/cancel_account_creation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="50dp"
         android:backgroundTint="@color/delete_cancel_button"
         android:text="@string/action_cancel_account_creation"
         android:textStyle="bold"
-        app:layout_constraintBaseline_toBaselineOf="@id/create_account"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/create_account" />
+        app:layout_constraintStart_toEndOf="@+id/create_account"
+        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="64dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/password"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3" />
 </androidx.constraintlayout.widget.ConstraintLayout>
