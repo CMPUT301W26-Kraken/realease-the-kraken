@@ -51,6 +51,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_ticketTestFragment"
+            app:destination="@id/ticketTestFragment" />
     </fragment>
 
     <fragment
@@ -58,6 +61,12 @@
         android:name="com.example.releasethekraken.view.ui.login.AccountCreateFragment"
         android:label="fragment_account_create"
         tools:layout="@layout/fragment_account_create">
+
+        <argument
+            android:name="isEditMode"
+            app:argType="boolean"
+            android:defaultValue="false" />
+
         <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -126,6 +135,16 @@
         <action
             android:id="@+id/action_eventDetailsFragment_to_browseEventsFragment"
             app:destination="@id/browseEventsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ticketTestFragment"
+        android:name="com.example.releasethekraken.view.TicketTestFragment"
+        android:label="fragment_ticket_test"
+        tools:layout="@layout/fragment_ticket_test">
+        <action
+            android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
     </fragment>
 
 </navigation>

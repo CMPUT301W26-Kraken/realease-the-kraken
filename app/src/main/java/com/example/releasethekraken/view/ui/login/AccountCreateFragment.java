@@ -24,8 +24,9 @@ import com.example.releasethekraken.repository.ProfileRepository;
 /**
  * Fragment responsible for creating or updating a user profile.
  *
- * If a profile already exists, the form is pre-filled and the screen behaves
- * as an update-profile screen. Otherwise, it behaves as a create-profile screen.
+ * Mode is determined by navigation argument:
+ * - false -> create mode
+ * - true  -> update mode
  */
 public class AccountCreateFragment extends Fragment {
 
@@ -53,10 +54,12 @@ public class AccountCreateFragment extends Fragment {
 
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
 
-        // If a profile already exists, switch this screen into edit mode
-        if (profileRepository.hasProfile()) {
-            isEditMode = true;
+        if (getArguments() != null) {
+            isEditMode = getArguments().getBoolean("isEditMode", false);
+        }
 
+        // Only prefill fields when explicitly opened in edit mode
+        if (isEditMode) {
             Profile existingProfile = profileRepository.getProfile();
             nameEditText.setText(existingProfile.getName());
             emailEditText.setText(existingProfile.getEmail());
@@ -64,17 +67,23 @@ public class AccountCreateFragment extends Fragment {
 
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
             saveProfileButton.setText(R.string.action_update_profile);
+        } else {
+            binding.accountCreationWelcome.setText(R.string.action_create_welcome);
+            saveProfileButton.setText(R.string.action_create_profile);
+
+            // Clear fields in create mode
+            nameEditText.setText("");
+            emailEditText.setText("");
+            phoneEditText.setText("");
         }
 
         TextWatcher validationWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No action needed before text changes
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // No action needed while text is changing
             }
 
             @Override
@@ -88,7 +97,6 @@ public class AccountCreateFragment extends Fragment {
         emailEditText.addTextChangedListener(validationWatcher);
         phoneEditText.addTextChangedListener(validationWatcher);
 
-        // Enable button immediately if prefilled data is already valid
         saveProfileButton.setEnabled(isFormValid(false));
 
         saveProfileButton.setOnClickListener(v -> {
@@ -102,40 +110,73 @@ public class AccountCreateFragment extends Fragment {
                     phoneEditText.getText().toString().trim()
             );
 
-            profileRepository.saveProfile(profile);
-
-            int messageResId = isEditMode
-                    ? R.string.profile_updated_message
-                    : R.string.profile_created_message;
-
-            Toast.makeText(requireContext(), messageResId, Toast.LENGTH_SHORT).show();
-
             if (isEditMode) {
-                Navigation.findNavController(view)
+                profileRepository.saveProfileLocally(profile);
+
+                Toast.makeText(requireContext(),
+                        R.string.profile_updated_message,
+                        Toast.LENGTH_SHORT).show();
+
+                profileRepository.updateProfile(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                    }
+
+                    @Override
+                    public void onFailure(Exception exception) {
+                        if (!isAdded()) {
+                            return;
+                        }
+
+                        Toast.makeText(requireContext(),
+                                "Profile updated locally, but Firestore sync failed: " + exception.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+
+                Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
+
             } else {
-                Navigation.findNavController(view)
+                profileRepository.saveProfileLocally(profile);
+
+                Toast.makeText(requireContext(),
+                        R.string.profile_created_message,
+                        Toast.LENGTH_SHORT).show();
+
+                profileRepository.saveProfileToFirestore(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                    }
+
+                    @Override
+                    public void onFailure(Exception exception) {
+                        if (!isAdded()) {
+                            return;
+                        }
+
+                        Toast.makeText(requireContext(),
+                                "Profile was saved locally, but Firestore sync failed: " + exception.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+
+                Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
             }
         });
 
         cancelAccountButton.setOnClickListener(v -> {
             if (isEditMode) {
-                Navigation.findNavController(view)
+                Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
             } else {
-                Navigation.findNavController(view)
+                Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_loginFragment);
             }
         });
     }
 
-    /**
-     * Validates the profile form fields.
-     *
-     * @param showErrors true if field errors should be displayed to the user
-     * @return true if all required fields are valid, false otherwise
-     */
     private boolean isFormValid(boolean showErrors) {
         String name = binding.nameCreate.getText().toString().trim();
         String email = binding.emailCreate.getText().toString().trim();
@@ -172,9 +213,6 @@ public class AccountCreateFragment extends Fragment {
         return isValid;
     }
 
-    /**
-     * Clears all current validation errors from the form fields.
-     */
     private void clearFieldErrors() {
         binding.nameCreate.setError(null);
         binding.emailCreate.setError(null);

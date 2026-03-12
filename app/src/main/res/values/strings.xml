@@ -48,6 +48,12 @@
     <string name="profile_phone_text">Your Phone Number</string>
     <string name="profile_edit_button">Edit Profile Information</string>
     <string name="profile_account_delete_button">Delete Account</string>
+    <string name="profile_deleted_message">Profile deleted successfully</string>
+    <string name="delete_profile_title">Delete Profile</string>
+    <string name="delete_profile_confirmation">Are you sure you want to delete your profile? This action cannot be undone.</string>
+    <string name="delete_button_text">Delete</string>
+    <string name="cancel_button_text">Cancel</string>
+
     <string name="sign_out_button">Sign Out</string>
 
     <!-- Strings related to the bottom toolbar -->
@@ -59,6 +65,8 @@
     <string name="browse_events_welcome">Available Events</string>
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
+
+
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
