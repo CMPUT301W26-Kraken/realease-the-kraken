@@ -1,10 +1,8 @@
 package com.example.releasethekraken.controller;
 
-
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.Notification;
 import com.example.releasethekraken.model.NotificationRepository;
-
 
 //handles notification logic
 //this class belongs to the controller layer and contains the rules
@@ -13,8 +11,8 @@ import com.example.releasethekraken.model.NotificationRepository;
 //This class does not contain UI code and does not directly interact with Firestore
 //instead it delegates storage and delivery to NotificationRepository which is what interacts with Firestore
 
-
 public class NotificationService {
+
     //repository responsible for sending and logging notifications
     //this will later connect to Firestore
     private final NotificationRepository notificationRepository;
@@ -32,6 +30,11 @@ public class NotificationService {
         INVALID_INPUT
     }
 
+    public interface NotificationCallback {
+        void onResult(NotificationResult result);
+        void onError(Exception e);
+    }
+
     /**
      * sends a win notification to an entrant
      * responsibilities:
@@ -45,11 +48,12 @@ public class NotificationService {
      * @param entrantId the entrant receiving the notification
      * @return NotificationResult indicating success or invalid input
      */
-    public NotificationResult sendWinNotification(Event event, String entrantId) {
+    public void sendWinNotification(Event event, String entrantId, NotificationCallback callback) {
 
         //validate inputs to prevent null values or empty entrant identifiers
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            return NotificationResult.INVALID_INPUT;
+            callback.onResult(NotificationResult.INVALID_INPUT);
+            return;
         }
 
         //capture the exact time the notification is being created
@@ -72,15 +76,70 @@ public class NotificationService {
                 nowMillis
         );
 
-        //trigger the notification through the repository
-        //this will eventually send the notification through the app or backend
-        notificationRepository.sendNotification(notification);
+        sendAndLogNotification(notification, callback);
+    }
 
-        //log the notification event so it can be stored in Firestore
-        notificationRepository.logNotification(notification);
+    /**
+     * sends a loss notification to an entrant
+     * responsibilities:
+     *  - validate input
+     *  - generate the notification message
+     *  - create a Notification object
+     *  - trigger the notification through the repository
+     *  - log the notification event
+     *
+     * @param event the event the entrant was not selected for
+     * @param entrantId the entrant receiving the notification
+     */
+    public void sendLossNotification(Event event, String entrantId, NotificationCallback callback) {
 
-        //indicate the notification was successfully processed
-        return NotificationResult.SUCCESS;
+        //validate inputs to prevent null values or empty entrant identifiers
+        if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
+            callback.onResult(NotificationResult.INVALID_INPUT);
+            return;
+        }
+
+        //capture the exact time the notification is being created
+        long nowMillis = System.currentTimeMillis();
+
+        //create a message informing the entrant that they were not selected
+        String message = "Thank you for your interest in event "
+                + event.getEventId()
+                + ". You were not selected in this draw.";
+
+        //create a notification object containing all required information
+        Notification notification = new Notification(
+                entrantId,
+                event.getEventId(),
+                message,
+                "LOSS",
+                nowMillis
+        );
+
+        sendAndLogNotification(notification, callback);
+    }
+
+    private void sendAndLogNotification(Notification notification, NotificationCallback callback) {
+        notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {
+                notificationRepository.logNotification(notification, new NotificationRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        callback.onResult(NotificationResult.SUCCESS);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        callback.onError(e);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                callback.onError(e);
+            }
+        });
     }
 }
-
