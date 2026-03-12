@@ -167,7 +167,7 @@
         android:layout_gravity="start"
         android:layout_marginTop="50dp"
         android:backgroundTint="@color/light_grey_button"
-        android:enabled="false"
+        android:enabled="true"
         android:text="@string/create_event_button"
         android:textColor="@color/dark_blue_text"
         android:textStyle="bold"

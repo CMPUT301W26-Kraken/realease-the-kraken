@@ -42,6 +42,7 @@ public class EventDetailsFragment extends Fragment {
 
 
     private WaitingListService waitingListService;
+    private EventRepository eventRepository;
     private Event currentEvent;
     private UserRole userType;
     private boolean cameFromYourEvents;
@@ -70,6 +71,7 @@ public class EventDetailsFragment extends Fragment {
 
         WaitingListRepository waitingListRepository = new WaitingListRepository();
         waitingListService = new WaitingListService(waitingListRepository);
+        eventRepository = new EventRepository();
     }
 
     @Override
@@ -163,31 +165,35 @@ public class EventDetailsFragment extends Fragment {
         });
     }
 
-    //Temporary event loader
-    //Later, replace this with EventRepository.getEventById(eventId, ...)
+    //load real event details from Firestore
     private void loadEventDetails() {
         if (eventId == null || eventId.trim().isEmpty()) {
             Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        long now = System.currentTimeMillis();
+        eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                currentEvent = event;
+                bindEventToViews();
+            }
 
-        // Temporary hardcoded event so the screen works end-to-end
-        currentEvent = new Event(
-                eventId,
-                now - 60_000,
-                now + 3_600_000
-        );
-
-        bindEventToViews();
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(),
+                            "Failed to load event: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     //displays the event details on screen
-
     private void bindEventToViews() {
-        titleTextView.setText("Event " + currentEvent.getEventId());
-        descriptionTextView.setText("This is a placeholder event description.");
+        titleTextView.setText(currentEvent.getTitle());
+        descriptionTextView.setText(currentEvent.getDescription());
         registrationStartTextView.setText(formatMillis(currentEvent.getRegistrationStartMillis()));
         registrationEndTextView.setText(formatMillis(currentEvent.getRegistrationEndMillis()));
     }
@@ -227,7 +233,6 @@ public class EventDetailsFragment extends Fragment {
 
     //Temporary entrant ID for testing.
     //replace later with the real profile/device/user ID
-
     private String getEntrantId() {
         return "testEntrant001";
     }

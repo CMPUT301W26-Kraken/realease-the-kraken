@@ -4,7 +4,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Responsible for loading events from Firestore.
@@ -31,6 +33,27 @@ public class EventRepository {
         void onError(Exception e);
     }
 
+    public interface CompletionCallback {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    //creates a new event in Firestore
+    public void createEvent(Event event, CompletionCallback callback) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("eventId", event.getEventId());
+        data.put("title", event.getTitle());
+        data.put("description", event.getDescription());
+        data.put("registrationStartMillis", event.getRegistrationStartMillis());
+        data.put("registrationEndMillis", event.getRegistrationEndMillis());
+
+        db.collection("events")
+                .document(event.getEventId())
+                .set(data)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
     //gets one event by its Firestore document ID
     public void getEventById(String eventId, EventCallback callback) {
         db.collection("events")
@@ -42,9 +65,17 @@ public class EventRepository {
                         return;
                     }
 
+                    String title = documentSnapshot.getString("title");
+                    String description = documentSnapshot.getString("description");
                     Long registrationStartMillis = documentSnapshot.getLong("registrationStartMillis");
                     Long registrationEndMillis = documentSnapshot.getLong("registrationEndMillis");
 
+                    if (title == null) {
+                        title = "";
+                    }
+                    if (description == null) {
+                        description = "";
+                    }
                     if (registrationStartMillis == null) {
                         registrationStartMillis = 0L;
                     }
@@ -54,6 +85,8 @@ public class EventRepository {
 
                     Event event = new Event(
                             documentSnapshot.getId(),
+                            title,
+                            description,
                             registrationStartMillis,
                             registrationEndMillis
                     );
@@ -64,7 +97,6 @@ public class EventRepository {
     }
 
     //gets all events from Firestore
-
     public void getAllEvents(EventsCallback callback) {
         db.collection("events")
                 .get()
@@ -72,9 +104,17 @@ public class EventRepository {
                     List<Event> events = new ArrayList<>();
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String title = document.getString("title");
+                        String description = document.getString("description");
                         Long registrationStartMillis = document.getLong("registrationStartMillis");
                         Long registrationEndMillis = document.getLong("registrationEndMillis");
 
+                        if (title == null) {
+                            title = "";
+                        }
+                        if (description == null) {
+                            description = "";
+                        }
                         if (registrationStartMillis == null) {
                             registrationStartMillis = 0L;
                         }
@@ -84,6 +124,8 @@ public class EventRepository {
 
                         Event event = new Event(
                                 document.getId(),
+                                title,
+                                description,
                                 registrationStartMillis,
                                 registrationEndMillis
                         );

@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -19,6 +20,11 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.placeholder.PlaceholderContent;
 import com.google.firebase.firestore.auth.User;
+import com.example.releasethekraken.model.Event;
+import com.example.releasethekraken.model.EventRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BrowseEventsFragment extends Fragment {
 
@@ -26,6 +32,9 @@ public class BrowseEventsFragment extends Fragment {
     private int mColumnCount = 2;
     private boolean yourEvents;
     private UserRole userRole = UserRole.ENTRANT;
+
+    private final List<Event> eventList = new ArrayList<>();
+    private MyItemRecyclerViewAdapter adapter;
 
     public BrowseEventsFragment() { }
 
@@ -70,11 +79,9 @@ public class BrowseEventsFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        // TODO: Change the adapter to the events viewing adapter
-        recyclerView.setAdapter(
-                new MyItemRecyclerViewAdapter(PlaceholderContent.ITEMS, item -> {
-                    Bundle args = new Bundle();
-                    args.putString("eventId", item.id);
+        adapter = new MyItemRecyclerViewAdapter(eventList, event -> {
+            Bundle args = new Bundle();
+            args.putString("eventId", event.getEventId());
 
                     // TODO: Implement logic that can determine user type before navigation
                     args.putSerializable("UserType", userRole);
@@ -86,10 +93,15 @@ public class BrowseEventsFragment extends Fragment {
                 })
         );
 
+        recyclerView.setAdapter(adapter);
+
+        loadEvents();
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
         // Hide the create events button if we aren't in your Events
-        if (!yourEvents) {createEventButton.setVisibility(View.GONE);}
+        if (!yourEvents) {
+            createEventButton.setVisibility(View.GONE);
+        }
 
         // Navigate to Create Events
         createEventButton
@@ -136,5 +148,27 @@ public class BrowseEventsFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void loadEvents() {
+        EventRepository repository = new EventRepository();
+
+        repository.getAllEvents(new EventRepository.EventsCallback() {
+            @Override
+            public void onSuccess(List<Event> events) {
+                eventList.clear();
+                eventList.addAll(events);
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(),
+                            "Failed to load events: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }
