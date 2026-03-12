@@ -73,6 +73,11 @@ public class BrowseEventsFragment extends Fragment {
                     Bundle args = new Bundle();
                     args.putString("eventId", item.id);
 
+                    // TODO: Implement logic that can determine user type before navigation
+                    args.putSerializable("UserType", MainActivity.UserType.ORGANIZER);
+
+                    args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
+
                     Navigation.findNavController(view)
                             .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
                 })
@@ -110,26 +115,6 @@ public class BrowseEventsFragment extends Fragment {
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
                 );
-
-        // TODO: REMOVE DUMMY VARIABLES AND IMPLEMENT EVENTS ADAPTER
-        // Navigate to Event Details as an Organizer
-        view.findViewById(R.id.dummy_organizer_button).setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ORGANIZER.name()); // Using this argument to determine what should be displayed
-
-            Navigation.findNavController(v)
-                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
-        });
-
-        // TODO: REMOVE DUMMY VARIABLES AND IMPLEMENT EVENTS ADAPTER
-        // Navigate to Event Details as an Entrant
-        view.findViewById(R.id.dummy_entrant_button).setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ENTRANT.name()); // Using this argument to determine what should be displayed
-
-            Navigation.findNavController(v)
-                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
-        });
 
         return view;
     }
