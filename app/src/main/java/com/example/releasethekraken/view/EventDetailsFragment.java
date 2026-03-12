@@ -1,14 +1,6 @@
 package com.example.releasethekraken.view;
 
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.Group;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
-
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,15 +13,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
-import com.example.releasethekraken.databinding.FragmentEventDetailsBinding;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.WaitingListRepository;
 
 //fragment that shows the details for one event and allows the entrant
- //to join the waiting list
+//to join the waiting list
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
@@ -77,8 +67,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         titleTextView = view.findViewById(R.id.text_event_title);
@@ -93,12 +82,6 @@ public class EventDetailsFragment extends Fragment {
             if (currentEvent == null) {
                 Toast.makeText(requireContext(), "Event could not be loaded", Toast.LENGTH_SHORT).show();
                 return;
-        if (getArguments() != null) {
-            String userTypeStr = getArguments().getString("UserType");
-            if (userTypeStr != null) {
-                userType = MainActivity.UserType.valueOf(userTypeStr);
-            } else {
-                userType = MainActivity.UserType.ENTRANT; // default
             }
 
             // replace this later with the real entrant/device/profile ID
@@ -121,7 +104,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     //Temporary event loader
-     //Later, replace this with EventRepository.getEventById(eventId, ...)
+    //Later, replace this with EventRepository.getEventById(eventId, ...)
     private void loadEventDetails() {
         if (eventId == null || eventId.trim().isEmpty()) {
             Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -185,7 +168,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     //Temporary entrant ID for testing.
-     //replace later with the real profile/device/user ID
+    //replace later with the real profile/device/user ID
 
     private String getEntrantId() {
         return "testEntrant001";
