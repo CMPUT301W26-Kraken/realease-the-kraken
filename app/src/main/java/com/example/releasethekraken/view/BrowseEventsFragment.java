@@ -17,6 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.placeholder.PlaceholderContent;
+import com.google.firebase.firestore.auth.User;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 
@@ -28,6 +31,7 @@ public class BrowseEventsFragment extends Fragment {
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 2;
     private boolean yourEvents;
+    private UserRole userRole = UserRole.ENTRANT;
 
     private final List<Event> eventList = new ArrayList<>();
     private MyItemRecyclerViewAdapter adapter;
@@ -79,9 +83,15 @@ public class BrowseEventsFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
 
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
-        });
+                    // TODO: Implement logic that can determine user type before navigation
+                    args.putSerializable("UserType", userRole);
+
+                    args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
+
+                    Navigation.findNavController(view)
+                            .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
+                })
+        );
 
         recyclerView.setAdapter(adapter);
 
@@ -94,10 +104,15 @@ public class BrowseEventsFragment extends Fragment {
         }
 
         // Navigate to Create Events
-        createEventButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_browseEventsFragment_to_createEventFragment)
-        );
+        createEventButton
+                .setOnClickListener(v -> {
+                    Bundle args = new Bundle();
+                    args.putBoolean("editEvent", false);
+                    args.putBoolean("cameFromYourEvents", true);
+
+                    Navigation.findNavController(v)
+                            .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
+                });
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
@@ -120,24 +135,16 @@ public class BrowseEventsFragment extends Fragment {
                                 .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
                 );
 
-        // TODO: REMOVE DUMMY VARIABLES AND IMPLEMENT EVENTS ADAPTER
-        // Navigate to Event Details as an Organizer
+        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
+        // Become an organizer for viewing event details
         view.findViewById(R.id.dummy_organizer_button).setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ORGANIZER.name());
-
-            Navigation.findNavController(v)
-                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
+            userRole = UserRole.ORGANIZER;
         });
 
-        // TODO: REMOVE DUMMY VARIABLES AND IMPLEMENT EVENTS ADAPTER
-        // Navigate to Event Details as an Entrant
+        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
+        // Become an entrant for viewing event details
         view.findViewById(R.id.dummy_entrant_button).setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("UserType", MainActivity.UserType.ENTRANT.name());
-
-            Navigation.findNavController(v)
-                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
+            userRole = UserRole.ENTRANT;
         });
 
         return view;
