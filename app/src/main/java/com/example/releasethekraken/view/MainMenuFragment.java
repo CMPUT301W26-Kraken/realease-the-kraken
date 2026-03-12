@@ -48,10 +48,22 @@ public class MainMenuFragment extends Fragment {
         );
 
         // Navigate to Browse Events
-        binding.browseEventsButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment)
-        );
+        binding.browseEventsButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("yourEvents", false); // Using this argument to determine what should be displayed
+
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
+        });
+
+        // Navigate to Your Events
+        binding.yourEventsButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("yourEvents", true); // Using this argument to determine what should be displayed
+
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
+        });
 
         // Navigate to Ticket Test (role access, filtering, history)
         binding.ticketTestButton.setOnClickListener(v ->

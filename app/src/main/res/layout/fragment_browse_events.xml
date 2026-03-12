@@ -8,15 +8,60 @@
 
     <!-- Top Banner -->
 
-    <TextView
-        android:id="@+id/textView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10sp"
-        android:text="@string/browse_events_welcome"
-        android:textColor="@color/dark_blue_text"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/search_events_text"
+            android:layout_width="325dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="20dp"
+            android:ems="10"
+            android:hint="Search"
+            android:inputType="text" />
+
+        <ImageButton
+            android:id="@+id/search_events_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:backgroundTint="@color/light_grey_button"
+            android:tint="@color/black"
+            app:srcCompat="@android:drawable/ic_menu_search" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/welcome_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="@string/browse_events_welcome"
+            android:textColor="@color/dark_blue_text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/create_event_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/create_event_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
     <!-- List Area (RecyclerView Recommended) -->
     <androidx.recyclerview.widget.RecyclerView
@@ -24,9 +69,33 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="8dp" >
+
+    </androidx.recyclerview.widget.RecyclerView>
 
     <!-- Toolbar -->
+
+    <LinearLayout
+        android:id="@+id/DummyButtonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/dummy_organizer_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Organizer" />
+
+        <Button
+            android:id="@+id/dummy_entrant_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Entrant" />
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/fullscreen_content_controls"
         style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"
@@ -76,7 +145,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="57dp"
                 android:background="@color/white"
-                android:src="@android:drawable/ic_dialog_alert"
+                android:scaleType="fitCenter"
+                android:src="@drawable/hometoolbar"
                 app:tint="@color/dark_blue_text" />
 
             <TextView
@@ -100,7 +170,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="57dp"
                 android:background="@color/white"
-                android:src="@android:drawable/ic_dialog_alert"
+                android:scaleType="fitCenter"
+                android:src="@drawable/profiletoolbar"
                 app:tint="@color/dark_blue_text" />
 
             <TextView

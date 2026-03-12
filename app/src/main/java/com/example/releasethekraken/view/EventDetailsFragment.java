@@ -19,7 +19,7 @@ import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.WaitingListRepository;
 
 //fragment that shows the details for one event and allows the entrant
- //to join the waiting list
+//to join the waiting list
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
@@ -104,7 +104,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     //Temporary event loader
-     //Later, replace this with EventRepository.getEventById(eventId, ...)
+    //Later, replace this with EventRepository.getEventById(eventId, ...)
     private void loadEventDetails() {
         if (eventId == null || eventId.trim().isEmpty()) {
             Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -168,7 +168,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     //Temporary entrant ID for testing.
-     //replace later with the real profile/device/user ID
+    //replace later with the real profile/device/user ID
 
     private String getEntrantId() {
         return "testEntrant001";
