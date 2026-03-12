@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.releasethekraken" />
+                  <option name="mobileSdkAppId" value="1:590559864567:android:9a50aafc4515e5b79155f2" />
+                  <option name="projectId" value="kraken-4444" />
+                  <option name="projectNumber" value="590559864567" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

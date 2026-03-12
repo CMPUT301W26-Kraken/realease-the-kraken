@@ -69,7 +69,13 @@ public class BrowseEventsFragment extends Fragment {
 
         // TODO: Change the adapter to the events viewing adapter
         recyclerView.setAdapter(
-                new MyItemRecyclerViewAdapter(PlaceholderContent.ITEMS)
+                new MyItemRecyclerViewAdapter(PlaceholderContent.ITEMS, item -> {
+                    Bundle args = new Bundle();
+                    args.putString("eventId", item.id);
+
+                    Navigation.findNavController(view)
+                            .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
+                })
         );
 
 

@@ -9,34 +9,90 @@ import androidx.constraintlayout.widget.Group;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentEventDetailsBinding;
+import com.example.releasethekraken.controller.WaitingListService;
+import com.example.releasethekraken.model.Event;
+import com.example.releasethekraken.model.WaitingListRepository;
 
+//fragment that shows the details for one event and allows the entrant
+ //to join the waiting list
 public class EventDetailsFragment extends Fragment {
 
-    private FragmentEventDetailsBinding binding;
-    private MainActivity.UserType userType;
+    public static final String ARG_EVENT_ID = "eventId";
 
-    @Nullable
+    private String eventId;
+
+    private TextView titleTextView;
+    private TextView descriptionTextView;
+    private TextView registrationStartTextView;
+    private TextView registrationEndTextView;
+    private Button joinWaitingListButton;
+
+    private WaitingListService waitingListService;
+    private Event currentEvent;
+
+    public EventDetailsFragment() {
+        // required empty public constructor
+    }
+
+    public static EventDetailsFragment newInstance(String eventId) {
+        EventDetailsFragment fragment = new EventDetailsFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_EVENT_ID, eventId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getArguments() != null) {
+            eventId = getArguments().getString(ARG_EVENT_ID);
+        }
+
+        WaitingListRepository waitingListRepository = new WaitingListRepository();
+        waitingListService = new WaitingListService(waitingListRepository);
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
-        binding = FragmentEventDetailsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+                             ViewGroup container,
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_event_details, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        titleTextView = view.findViewById(R.id.text_event_title);
+        descriptionTextView = view.findViewById(R.id.text_event_description);
+        registrationStartTextView = view.findViewById(R.id.text_registration_start);
+        registrationEndTextView = view.findViewById(R.id.text_registration_end);
+        joinWaitingListButton = view.findViewById(R.id.button_join_waiting_list);
+
+        loadEventDetails();
+
+        joinWaitingListButton.setOnClickListener(v -> {
+            if (currentEvent == null) {
+                Toast.makeText(requireContext(), "Event could not be loaded", Toast.LENGTH_SHORT).show();
+                return;
         if (getArguments() != null) {
             String userTypeStr = getArguments().getString("UserType");
             if (userTypeStr != null) {
@@ -44,28 +100,99 @@ public class EventDetailsFragment extends Fragment {
             } else {
                 userType = MainActivity.UserType.ENTRANT; // default
             }
+
+            // replace this later with the real entrant/device/profile ID
+            String entrantId = getEntrantId();
+
+            waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
+                @Override
+                public void onResult(WaitingListService.JoinResult result) {
+                    handleJoinResult(result);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(requireContext(),
+                            "Error joining waiting list: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    //Temporary event loader
+     //Later, replace this with EventRepository.getEventById(eventId, ...)
+    private void loadEventDetails() {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        if (getActivity() instanceof AppCompatActivity) {
-            AppCompatActivity activity = (AppCompatActivity) getActivity();
-            if (activity.getSupportActionBar() != null) {
-                activity.getSupportActionBar().show();
-            }
-        }
+        long now = System.currentTimeMillis();
 
-        Group organizerButtonGroup = view.findViewById(R.id.organizer_button_group);
-        Button signupOptOutButton = view.findViewById((R.id.signup_optout_button));
-        // Handle Visibilities of the button groups
-        if (userType == MainActivity.UserType.ENTRANT) {
-            organizerButtonGroup.setVisibility(View.GONE);
-        } else if (userType == MainActivity.UserType.ORGANIZER) {
-            signupOptOutButton.setVisibility(View.GONE);
-        }
-
-        // Sign out and return to login screen
-        binding.returnButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_eventDetailsFragment_to_browseEventsFragment)
+        // Temporary hardcoded event so the screen works end-to-end
+        currentEvent = new Event(
+                eventId,
+                now - 60_000,
+                now + 3_600_000
         );
+
+        bindEventToViews();
+    }
+
+    //displays the event details on screen
+
+    private void bindEventToViews() {
+        titleTextView.setText("Event " + currentEvent.getEventId());
+        descriptionTextView.setText("This is a placeholder event description.");
+        registrationStartTextView.setText("Registration opens: "
+                + formatMillis(currentEvent.getRegistrationStartMillis()));
+        registrationEndTextView.setText("Registration closes: "
+                + formatMillis(currentEvent.getRegistrationEndMillis()));
+    }
+
+    //Handles the result of a join waiting list request
+    private void handleJoinResult(WaitingListService.JoinResult result) {
+        if (!isAdded()) {
+            return;
+        }
+
+        switch (result) {
+            case SUCCESS:
+                Toast.makeText(requireContext(),
+                        "Successfully joined the waiting list",
+                        Toast.LENGTH_SHORT).show();
+                break;
+
+            case DUPLICATE_ENTRY:
+                Toast.makeText(requireContext(),
+                        "You are already on the waiting list",
+                        Toast.LENGTH_SHORT).show();
+                break;
+
+            case REGISTRATION_CLOSED:
+                Toast.makeText(requireContext(),
+                        "Registration is closed",
+                        Toast.LENGTH_SHORT).show();
+                break;
+
+            case INVALID_INPUT:
+                Toast.makeText(requireContext(),
+                        "Invalid event or entrant information",
+                        Toast.LENGTH_SHORT).show();
+                break;
+        }
+    }
+
+    //Temporary entrant ID for testing.
+     //replace later with the real profile/device/user ID
+
+    private String getEntrantId() {
+        return "testEntrant001";
+    }
+
+    //formats milliseconds into a readable time
+    private String formatMillis(long millis) {
+        return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
     }
 }
