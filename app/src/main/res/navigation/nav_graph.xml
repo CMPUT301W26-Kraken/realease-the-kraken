@@ -92,6 +92,9 @@
         <action
             android:id="@+id/action_browseEventsFragment_to_notificationFragment"
             app:destination="@id/notificationFragment" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
     </fragment>
 
     <fragment
@@ -115,6 +118,16 @@
         <action
             android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/eventDetailsFragment"
+        android:name="com.example.releasethekraken.view.EventDetailsFragment"
+        android:label="Event Details"
+        tools:layout="@layout/fragment_event_details">
+
+        <argument
+            android:name="eventId"
+            app:argType="string" />
     </fragment>
 
 </navigation>
