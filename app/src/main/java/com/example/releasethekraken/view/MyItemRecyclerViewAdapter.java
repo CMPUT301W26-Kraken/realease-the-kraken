@@ -7,21 +7,21 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.example.releasethekraken.databinding.ItemEventBinding;
-import com.example.releasethekraken.placeholder.PlaceholderContent.PlaceholderItem;
+import com.example.releasethekraken.model.Event;
 
 import java.util.List;
 
 public class MyItemRecyclerViewAdapter
         extends RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder> {
 
-    private final List<PlaceholderItem> mValues;
+    private final List<Event> mValues;
     private final OnEventClickListener listener;
 
     public interface OnEventClickListener {
-        void onEventClick(PlaceholderItem item);
+        void onEventClick(Event event);
     }
 
-    public MyItemRecyclerViewAdapter(List<PlaceholderItem> items, OnEventClickListener listener) {
+    public MyItemRecyclerViewAdapter(List<Event> items, OnEventClickListener listener) {
         mValues = items;
         this.listener = listener;
     }
@@ -42,14 +42,14 @@ public class MyItemRecyclerViewAdapter
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
 
-        PlaceholderItem item = mValues.get(position);
+        Event event = mValues.get(position);
 
-        holder.binding.itemNumber.setText(item.id);
-        holder.binding.content.setText(item.content);
+        holder.binding.itemNumber.setText(event.getTitle());
+        holder.binding.content.setText(event.getDescription());
 
         holder.binding.getRoot().setOnClickListener(v -> {
             if (listener != null) {
-                listener.onEventClick(item);
+                listener.onEventClick(event);
             }
         });
     }
