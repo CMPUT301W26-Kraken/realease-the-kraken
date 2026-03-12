@@ -67,6 +67,7 @@ public class AccountCreateFragment extends Fragment {
 
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
             saveProfileButton.setText(R.string.action_update_profile);
+            cancelAccountButton.setText(R.string.action_cancel_account_edits);
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             saveProfileButton.setText(R.string.action_create_profile);
