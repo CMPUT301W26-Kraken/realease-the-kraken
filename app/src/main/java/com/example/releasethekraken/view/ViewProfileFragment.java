@@ -63,11 +63,6 @@ public class ViewProfileFragment extends Fragment {
                 getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided))
         );
 
-        binding.profileToMainButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
-        );
-
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
@@ -109,7 +104,7 @@ public class ViewProfileFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Profile")
                 .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> {
+                .setPositiveButton("Yes, Delete", (dialog, which) -> {
                     String email = profile.getEmail();
 
                     // Delete local profile first so UI updates immediately

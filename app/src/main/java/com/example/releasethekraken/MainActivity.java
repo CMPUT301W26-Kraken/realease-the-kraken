@@ -14,12 +14,6 @@ import com.google.firebase.storage.StorageReference;
 
 public class MainActivity extends AppCompatActivity {
 
-    public enum UserType {
-        ENTRANT,
-        ORGANIZER,
-        ADMIN,
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

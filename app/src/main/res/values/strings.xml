@@ -72,6 +72,8 @@
 
     <!-- Strings related to the event creation fragment -->
     <string name="create_event_welcome">Create An Event</string>
+    <string name="edit_event_welcome">Edit Your Event</string>
+    <string name="edit_event_confirm_button">Confirm Changes</string>
     <string name="prompt_event_name">Event Title</string>
     <string name="prompt_event_description">Event Description…</string>
     <string name="prompt_date">DD/MM/YYYY</string>
@@ -92,6 +94,7 @@
     <string name="return_button">Return</string>
     <string name="signup_button">Sign Up</string>
     <string name="opt_out_button">Opt Out</string>
+    <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
