@@ -19,7 +19,7 @@ import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
 
 /**
- * Fragment that displays the currently saved user profile.
+ * Fragment that displays the currently saved user profile information.
  *
  * The profile information is loaded from local storage and shown on screen.
  * Users can view, edit, sign out, or delete their profile from here.

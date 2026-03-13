@@ -16,6 +16,10 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentNotificationBinding;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 
+/**
+ * The class that will contain a list of all notifications for events that the logged in user is enrolled in.
+ * Currently unsupported.
+ */
 public class NotificationFragment extends Fragment {
 
     private FragmentNotificationBinding binding;
