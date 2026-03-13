@@ -28,8 +28,19 @@ import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
 
-//fragment that shows the details for one event and allows the entrant
-//to join the waiting list
+/**
+ * A fragment that shows the details of an event that can be accessed when an event is clicked from
+ * the your events or browse events pages. It displays all of the relevant information for an event
+ * as well as displays control buttons at the bottom that are dependent upon the user's role.
+ *
+ * When this event is navigated to it takes three arguments
+ * String eventId that is the id of the event that is being viewed and is used to fill in fields with
+ *  the relevant event information.
+ * UserRole userType that informs the fragment of what type of user is accessing the fragment so it can
+ *  display the proper control buttons.
+ * Boolean cameFromYourEvents that determines if the details page was accessed through the your events
+ *  page or the browse all events page and is used for backwards navigability.
+ */
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
@@ -115,7 +126,7 @@ public class EventDetailsFragment extends Fragment {
                 return;
             }
 
-            // replace this later with the real entrant/device/profile ID
+            // TODO: replace this later with the real entrant/device/profile ID
             String entrantId = getEntrantId();
 
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
@@ -190,7 +201,10 @@ public class EventDetailsFragment extends Fragment {
         });
     }
 
-    //displays the event details on screen
+    /**
+     * This is a method that is used to set all of the display fields to contain the information stored
+     * by the event object being accessed
+     */
     private void bindEventToViews() {
         titleTextView.setText(currentEvent.getTitle());
         descriptionTextView.setText(currentEvent.getDescription());
@@ -198,7 +212,11 @@ public class EventDetailsFragment extends Fragment {
         registrationEndTextView.setText(formatMillis(currentEvent.getRegistrationEndMillis()));
     }
 
-    //Handles the result of a join waiting list request
+    /**
+     * This method is used to create a toast dependent on the success of the join event and display it to the user.
+     *
+     * @param result the JoinResult object that is created by the WaitingListService that says if the request succeeded.
+     */
     private void handleJoinResult(WaitingListService.JoinResult result) {
         if (!isAdded()) {
             return;
@@ -231,13 +249,22 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    //Temporary entrant ID for testing.
-    //replace later with the real profile/device/user ID
+    /**
+     * A method that is used to fetch the current user ID of the entrant trying to enlist so that they can
+     * be properly added to the event's waiting list
+     *
+     * /@return
+     */
     private String getEntrantId() {
         return "testEntrant001";
     }
 
-    //formats milliseconds into a readable time
+    /**
+     * Converts a time given in milliseconds into a time displayed in YYYY-MM-DD so that it can be displayed.
+     *
+     * @param millis the time that is stored in milliseconds
+     * @return a String version of the date converted into YYYY-MM-DD format
+     */
     private String formatMillis(long millis) {
         return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
     }

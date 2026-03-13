@@ -1,9 +1,10 @@
 package com.example.releasethekraken.model;
 
-//model class to represent one entrants entry on a event waiting list
-//this is used for joining wait list and leave waiting list tickets ( US 01.01.01 and  US 01.01.02)
-//this class holds data only, no UI or Firebase code added atm.
-//
+/**
+ * represents a single entrants entry on an event waiting list
+ * It stores only the data related to a waiting list entry and
+ * contains no UI
+ */
 
 
 public class WaitingListEntry {
@@ -18,7 +19,7 @@ public class WaitingListEntry {
     private final long joinedAtMillis;
 
     /**
-     * Create a waiting list entry
+     * create a waiting list entry
      *
      * @param eventId        event identifier
      * @param entrantId      entrant identifier could be device id or user id

@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_name_text"
-                android:textAlignment="textStart"
+                android:textAlignment="viewStart"
                 android:textColor="@color/dark_blue_text"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -58,9 +58,10 @@
                 android:textSize="20sp" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_email_text"
+                android:textAlignment="viewStart"
                 android:textColor="@color/dark_blue_text"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -75,7 +76,7 @@
                 android:textSize="20sp" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_phone_text"
                 android:textColor="@color/dark_blue_text"

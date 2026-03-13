@@ -1,30 +1,33 @@
 package com.example.releasethekraken.controller;
 
-//other classes this uses
+
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.model.WaitingListEntry;
 import com.example.releasethekraken.model.Event;
 
-//implements rules for the joining of the waiting list
-//validate registration window
-//prevent duplicates
-//store in Firestore
-//no UI
+/**
+ * service class responsible for handling waiting list logic
+ * this class validates registration windows, prevents duplicate entries,
+ * and delegates waiting list data storage to the WaitingListRepository
+ * it belongs to the controller layer and contains no UI logic
+ */
 
 public class WaitingListService {
 
-    //repo that stores and retrieves waiting list data entries from firestore
+    /** repository used to store and retrieve waiting list entries. */
     private final WaitingListRepository waitingListRepository;
 
-    //creates a WaitingListService with the repo dependency
-    //this makes it easy to swap repos in the future (firestore)
+    /**
+     * creates a WaitingListService with the given repository dependency
+     * @param waitingListRepository the repository used for waiting list operations
+     */
     public WaitingListService(WaitingListRepository waitingListRepository) {
         this.waitingListRepository = waitingListRepository;
     }
 
-    //possible outcomes of attempting to join the waiting list
-    //used enum to make it simple for the View to show correct message,
-    // can also add more outcomes if needed
+    /**
+     * possible outcomes when attempting to join the waiting list
+     */
     public enum JoinResult {
         SUCCESS,
         REGISTRATION_CLOSED,
@@ -32,26 +35,31 @@ public class WaitingListService {
         INVALID_INPUT,
     }
 
-    //possible outcomes of attempting to leave the waiting list
-    //used enum to make it simple for the View to show correct message,
+    /**
+     * possible outcomes when attempting to leave the waiting list
+     */
     public enum LeaveResult {
         SUCCESS,
         NOT_ON_WAITING_LIST,
         INVALID_INPUT,
     }
-
+    /**
+     * callback interface for join waiting list results
+     */
     public interface JoinCallback {
         void onResult(JoinResult result);
         void onError(Exception e);
     }
-
+    /**
+     * callback interface for leave waiting list results
+     */
     public interface LeaveCallback {
         void onResult(LeaveResult result);
         void onError(Exception e);
     }
 
     /**
-     * leave the waiting list for an event US 01.01.02
+     * leave the waiting list for an event
      *  - Entrant can leave the waiting list
      *  - Entrant is removed from the waiting list
      *
@@ -125,7 +133,7 @@ public class WaitingListService {
     }
 
     /**
-     * join the waiting list for an event US 01.01.01
+     * join the waiting list for an event
      * this method enforces acceptance criteria
      *  - Entrant can join during registration period
      *  - Duplicate entries prevented

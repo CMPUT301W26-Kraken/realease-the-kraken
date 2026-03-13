@@ -12,9 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +19,6 @@ import android.view.ViewGroup;
 
 import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
-import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
@@ -33,8 +29,18 @@ import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 
-import java.util.concurrent.TimeUnit;
-
+/**
+ * This is the fragment that is used to create events and add them to the repository. It is also
+ * used in editing information about events and updating that information in the repository.
+ *
+ * It takes three arguments from the navigator when this event is navigated to;
+ * Boolean editEvent that is true when editing the events and false when not editing the events and
+ *  is used to adjust UI elements and update the event instead of creating a new one.
+ * Boolean cameFromYourEvents that determines if the user entered the event creator via your events
+ *  or browse events. It is true when you have come from your events and is used in backwards navigability.
+ * String eventID contains the string version of the event ID and is used when the event is chosen to be
+ *  edited so that it can properly prefill the relevant fields to be edited.
+ */
 public class CreateEventFragment extends Fragment {
 
     private FragmentCreateEventBinding binding;
@@ -83,6 +89,7 @@ public class CreateEventFragment extends Fragment {
         // Navigate back to main menu
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
+                // An existing event had its edits cancelled so we return to its details page
                 Bundle args = new Bundle();
                 args.putSerializable("UserType", UserRole.ORGANIZER);
                 args.putString("eventId", eventID);
@@ -91,6 +98,7 @@ public class CreateEventFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             } else {
+                // A new event being created was canceled, so the user had to have come from your events
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
 
@@ -103,6 +111,10 @@ public class CreateEventFragment extends Fragment {
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
 
+    /**
+     * The method that is called to handle event creations based on the information in the fields
+     * and writes the event into the repository and the database.
+     */
     private void createEventAndSave() {
         String title = binding.nameEventCreate.getText().toString().trim();
         String description = binding.eventDescriptionText.getText().toString().trim();
@@ -171,24 +183,6 @@ public class CreateEventFragment extends Fragment {
                 binding.createEvent.setEnabled(true);
 
                 Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
-
-                //Ethan here adding some epic code that starts a timer to check registration ending!
-                long delay = registrationEndMillis - System.currentTimeMillis(); //Gets the delay from now until the reg closes
-
-                //getting our event id for the worker so that we know which event we are waiting to draw from
-                Data inputData = new Data.Builder()
-                        .putString("eventId", eventId)
-                        .build();
-
-                //making our request with DrawEntrantsWorker to draw entrants when delay expires
-                OneTimeWorkRequest drawRequest =
-                        new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
-                                .setInitialDelay(delay, TimeUnit.MILLISECONDS) //tells it to wait "delay" long until running the worker
-                                .setInputData(inputData) //store that juicy data to give to DrawEntrantsWorker
-                                .build();
-
-                WorkManager.getInstance(requireContext()).enqueue(drawRequest); //submit that job! LETS GOOO
-                //End of Ethan's very cool code
 
                 Navigation.findNavController(requireView())
                         .navigate(R.id.action_createEventFragment_to_browseEventsFragment);

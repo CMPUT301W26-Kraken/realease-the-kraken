@@ -26,6 +26,14 @@ import com.example.releasethekraken.model.EventRepository;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * BrowseEventsFragment acts as the fragment that displays lists of events and is used
+ * to display all events in browse events, and only enrolled/created events in the main menu.
+ *
+ * Takes two arguments when the fragment is navigated to, the first is a column count that chooses
+ * the amount of columns to display, and the second is a boolean called "yourEvents" which determines
+ * if you are viewing it through your events and uses it to set UI elements accordingly.
+ */
 public class BrowseEventsFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -149,6 +157,10 @@ public class BrowseEventsFragment extends Fragment {
         return view;
     }
 
+    /**
+     * A method that is used to fetch all of the events from the EventRepository so that they can
+     * be displayed on screen.
+     */
     private void loadEvents() {
         EventRepository repository = new EventRepository();
 

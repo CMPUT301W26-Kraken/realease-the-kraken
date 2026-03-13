@@ -4,32 +4,38 @@ import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.Notification;
 import com.example.releasethekraken.model.NotificationRepository;
 
-//handles notification logic
-//this class belongs to the controller layer and contains the rules
-//for creating and sending notifications to entrants
-//the result is a notification message, sends the notification, and logs the notification event
-//This class does not contain UI code and does not directly interact with Firestore
-//instead it delegates storage and delivery to NotificationRepository which is what interacts with Firestore
+/**
+ * service responsible for handling notification business logic
+ * This class creates notification messages for entrants, sends the
+ * notifications, and logs notification events. It belongs to the
+ * controller layer and contains no UI code
+ * storage and delivery of notifications are delegated to
+ * notificationRepository, which interacts with Firestore
+ */
 
 public class NotificationService {
 
-    //repository responsible for sending and logging notifications
-    //this will later connect to Firestore
+    /** repository responsible for sending and logging notifications. */
     private final NotificationRepository notificationRepository;
 
-    //constructor that injects the repository dependency
-    //this allows the service to interact with the data layer
+    /**
+     * creates a NotificationService with the given repository dependency
+     * @param notificationRepository repository used for notification storage and delivery
+     */
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
     }
 
-    //possible outcomes when attempting to send a notification
-    //this makes it easier for the view layer to determine what happened
+    /**
+     * possible outcomes when attempting to send a notification
+     */
     public enum NotificationResult {
         SUCCESS,
         INVALID_INPUT
     }
-
+    /**
+     * callback interface used to return notification results.
+     */
     public interface NotificationCallback {
         void onResult(NotificationResult result);
         void onError(Exception e);

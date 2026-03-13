@@ -14,6 +14,11 @@ import androidx.navigation.Navigation;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentMainMenuBinding;
 
+/**
+ * This is the fragment that is responsible for displaying the main menu of the program and offering the
+ * option to browse events, browse your events, scan QR codes and will be the platform from which admins
+ * can go to view all images and browse all users, but this has not been implemented yet.
+ */
 public class MainMenuFragment extends Fragment {
 
     private FragmentMainMenuBinding binding;
