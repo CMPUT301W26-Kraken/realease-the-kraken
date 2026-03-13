@@ -1,9 +1,12 @@
 package com.example.releasethekraken.controller;
 
 
+import com.example.releasethekraken.model.LotteryManager;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.model.WaitingListEntry;
 import com.example.releasethekraken.model.Event;
+
+import java.util.ArrayList;
 
 /**
  * service class responsible for handling waiting list logic
@@ -202,5 +205,43 @@ public class WaitingListService {
                     }
                 }
         );
+    }
+
+    /**
+     * Draws winners for the given event.
+     * Retrieves all entrants from Firebase and randomly selects winners
+     * based on the event's capacity, and saves the accepted winners
+     * back to Firebase.
+     * @param event    The event to be drawn from
+     * @param capacity The maximum number of winners to select
+     */
+    public void drawEntrants(Event event, int capacity) {
+        //get all the entrants from the firebase through waitingListRepository
+        waitingListRepository.getAllEntrants(event.getEventId(), new WaitingListRepository.EntrantsCallback() {
+            @Override
+            public void onResult(ArrayList<String> entrants) {
+                //Lottery!
+                ArrayList<String> winners = new LotteryManager().drawEntrants(event, entrants, capacity);
+
+                //save the winners in firebase! (got to do callback for firebase)
+                waitingListRepository.saveAcceptedEntrants(event.getEventId(), winners, new WaitingListRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        System.out.println("Winners saved successfully!");
+                        // optionally notify users via NotificationService here
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

@@ -17,6 +17,7 @@ public class Event {
 
     private final long registrationStartMillis; //time in milliseconds when registration starts for the event
     private final long registrationEndMillis; //time in milliseconds when registration ends for the event
+    private final int capacity = 20; //CHANGE THIS POST HALF WAY!!!! (All events have capacity of 20 right now)
 
     /**
      *  creating a new Event object
@@ -61,4 +62,7 @@ public class Event {
     public long getRegistrationEndMillis() {
         return registrationEndMillis;
     }
+
+    //returns capacity
+    public int getCapacity() {return capacity; }
 }
