@@ -207,6 +207,14 @@ public class WaitingListService {
         );
     }
 
+    /**
+     * Draws winners for the given event.
+     * Retrieves all entrants from Firebase and randomly selects winners
+     * based on the event's capacity, and saves the accepted winners
+     * back to Firebase.
+     * @param event    The event to be drawn from
+     * @param capacity The maximum number of winners to select
+     */
     public void drawEntrants(Event event, int capacity) {
         //get all the entrants from the firebase through waitingListRepository
         waitingListRepository.getAllEntrants(event.getEventId(), new WaitingListRepository.EntrantsCallback() {

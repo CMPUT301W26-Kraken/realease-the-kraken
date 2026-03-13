@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.provider.Settings;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
@@ -105,7 +106,14 @@ public class AccountCreateFragment extends Fragment {
                 return;
             }
 
+            //Added to fix crash. Gets device id and constructs profile with it
+            String deviceId = Settings.Secure.getString(
+                    requireContext().getContentResolver(),
+                    Settings.Secure.ANDROID_ID
+            );
+
             Profile profile = new Profile(
+                    deviceId,
                     nameEditText.getText().toString().trim(),
                     emailEditText.getText().toString().trim(),
                     phoneEditText.getText().toString().trim()

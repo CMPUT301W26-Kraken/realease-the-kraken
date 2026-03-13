@@ -119,7 +119,8 @@ public class CreateEventFragment extends Fragment {
 
     /**
      * The method that is called to handle event creations based on the information in the fields
-     * and writes the event into the repository and the database.
+     * and writes the event into the repository and the database. Sets up a worker to trigger on
+     * registration closing
      */
     private void createEventAndSave() {
         String title = binding.nameEventCreate.getText().toString().trim();
