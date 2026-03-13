@@ -12,6 +12,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +22,7 @@ import android.view.ViewGroup;
 
 import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
@@ -28,6 +32,8 @@ import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the fragment that is used to create events and add them to the repository. It is also
@@ -181,6 +187,24 @@ public class CreateEventFragment extends Fragment {
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
+
+                //Ethan here adding some epic code that starts a timer to check registration ending!
+                long delay = registrationEndMillis - System.currentTimeMillis(); //Gets the delay from now until the reg closes
+
+                //getting our event id for the worker so that we know which event we are waiting to draw from
+                Data inputData = new Data.Builder()
+                        .putString("eventId", eventId)
+                        .build();
+
+                //making our request with DrawEntrantsWorker to draw entrants when delay expires
+                OneTimeWorkRequest drawRequest =
+                        new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
+                                .setInitialDelay(delay, TimeUnit.MILLISECONDS) //tells it to wait "delay" long until running the worker
+                                .setInputData(inputData) //store that juicy data to give to DrawEntrantsWorker
+                                .build();
+
+                WorkManager.getInstance(requireContext()).enqueue(drawRequest); //submit that job! LETS GOOO
+                //End of Ethan's very cool code
 
                 Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
 
