@@ -9,36 +9,54 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Responsible for loading events from Firestore.
+ * repository class responsible for creating and retrieving Event objects
+ * from Firestore
  */
 public class EventRepository {
 
     private final FirebaseFirestore db;
-
+    /**
+     * creates an EventRepository using the default Firestore instance
+     */
     public EventRepository() {
         this(FirebaseFirestore.getInstance());
     }
-
+    /**
+     * creates an EventRepository with a specific Firestore instance
+     *
+     * @param db the Firestore database instance to use
+     */
     public EventRepository(FirebaseFirestore db) {
         this.db = db;
     }
-
+    /**
+     * callback interface for returning a single Event result
+     */
     public interface EventCallback {
         void onSuccess(Event event);
         void onError(Exception e);
     }
-
+    /**
+     * callback interface for returning a list of Event objects
+     */
     public interface EventsCallback {
         void onSuccess(List<Event> events);
         void onError(Exception e);
     }
-
+    /**
+     * callback interface for operations that  report completion status
+     */
     public interface CompletionCallback {
         void onSuccess();
         void onError(Exception e);
     }
 
-    //creates a new event in Firestore
+    /**
+     * creates a new event in Firestore
+     *
+     * @param event the event to save
+     * @param callback callback used to report success or failure
+     */
     public void createEvent(Event event, CompletionCallback callback) {
         Map<String, Object> data = new HashMap<>();
         data.put("eventId", event.getEventId());
@@ -54,7 +72,12 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    //gets one event by its Firestore document ID
+    /**
+     * gets a single event from Firestore by its document ID
+     *
+     * @param eventId the ID of the event document to retrieve
+     * @param callback callback used to return the event or an error
+     */
     public void getEventById(String eventId, EventCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -96,7 +119,11 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    //gets all events from Firestore
+    /**
+     * gets all events from Firestore
+     *
+     * @param callback callback used to return the list of events or an error
+     */
     public void getAllEvents(EventsCallback callback) {
         db.collection("events")
                 .get()

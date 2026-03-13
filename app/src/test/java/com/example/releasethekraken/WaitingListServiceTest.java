@@ -8,7 +8,9 @@ import com.example.releasethekraken.model.WaitingListRepository;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-
+/**
+ * Unit tests for WaitingListService.
+ */
 public class WaitingListServiceTest {
 
     //fake repo so we can control behavior and inspect what gets saved

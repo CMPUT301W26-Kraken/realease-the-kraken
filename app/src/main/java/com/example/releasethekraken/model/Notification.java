@@ -1,12 +1,12 @@
 package com.example.releasethekraken.model;
 
-//this is for logging and sending notifications through firebase
-//this is in the model package
-//no UI logic
-//this class is used for US 01.04.01 – Receive win notification
-//stores all information related to a notification event,
-//such as which entrant received it, which event it relates to,
-//the notification message, and the time it was sent
+/**
+ * represents a notification sent to an entrant
+ * stores information about which entrant received the notification,
+ * which event it relates to, the message content, the notification
+ * type, and the time the notification was sent.
+ *this class belongs to the model layer and contains no UI logic
+ */
 
 
 public class Notification {
