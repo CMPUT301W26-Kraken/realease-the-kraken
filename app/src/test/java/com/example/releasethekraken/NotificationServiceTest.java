@@ -8,7 +8,9 @@ import com.example.releasethekraken.model.NotificationRepository;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-
+/**
+ * Unit tests for NotificationService.
+ */
 public class NotificationServiceTest {
 
     // fake repository so we can test without Firestore

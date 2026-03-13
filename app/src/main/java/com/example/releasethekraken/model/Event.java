@@ -1,13 +1,11 @@
 package com.example.releasethekraken.model;
 
-//event class
-// represents an event in the system
-// it stores basic information about the event, including its ID, registration start and end times
-//needed to determine if an entrant is allowed to join the waiting list for the event
-
-//this is in the model package
-//
-//no UI logic
+/**
+ * represents an event
+ * stores the basic event information such as the event ID, title,
+ * description, and registration start and end times
+ * this class belongs to the model layer and contains no UI logic
+ */
 public class Event {
 
     //unique identifier for the event
@@ -21,7 +19,7 @@ public class Event {
     private final long registrationEndMillis; //time in milliseconds when registration ends for the event
 
     /**
-     * Constructor for creating a new Event object.
+     *  creating a new Event object
      *
      * @param eventId unique ID for the event
      * @param title title of the event
