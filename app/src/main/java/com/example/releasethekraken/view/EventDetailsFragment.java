@@ -266,7 +266,7 @@ public class EventDetailsFragment extends Fragment {
      * @return a String version of the date converted into YYYY-MM-DD format
      */
     private String formatMillis(long millis) {
-        return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
+        return DateFormat.format("yyyy-MM-dd HH:mm a", millis).toString();
     }
 
     /**

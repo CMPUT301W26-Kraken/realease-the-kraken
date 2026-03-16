@@ -16,22 +16,12 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.DrawEntrantsWorker;
-import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
-import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
-import com.example.releasethekraken.model.Profile;
-import com.example.releasethekraken.model.UserRole;
-import com.example.releasethekraken.model.WaitingListRepository;
-import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.UserRole;
 
 import java.util.concurrent.TimeUnit;
 
@@ -112,7 +102,7 @@ public class CreateEventFragment extends Fragment {
                         .navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
-      
+
         // Create event and save to Firestore
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
@@ -138,7 +128,8 @@ public class CreateEventFragment extends Fragment {
         long registrationEndMillis;
 
         try {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault());
+            java.text.SimpleDateFormat sdf =
+                    new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
             sdf.setLenient(false);
 
             java.util.Date startDate = sdf.parse(startText);
@@ -153,7 +144,7 @@ public class CreateEventFragment extends Fragment {
             registrationEndMillis = endDate.getTime();
         } catch (Exception e) {
             Toast.makeText(getContext(),
-                    "Enter dates as dd/MM/yyyy",
+                    "Enter dates as dd/MM/yyyy h:mm AM/PM",
                     Toast.LENGTH_SHORT).show();
             return;
         }
