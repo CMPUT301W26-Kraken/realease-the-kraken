@@ -70,12 +70,12 @@ public class WaitingListService {
      * @param entrantId entrant/device identifier
      */
     public void leaveWaitingList(Event event, String entrantId, LeaveCallback callback) {
-
+        //to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
             if (callback != null) callback.onResult(LeaveResult.INVALID_INPUT);
             return;
         }
-
+        // check if entrant is actually on the waiting list
         waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
                 entrantId,
@@ -131,24 +131,30 @@ public class WaitingListService {
 
     /**
      * join the waiting list for an event
+     * this method enforces acceptance criteria
+     *  - Entrant can join during registration period
+     *  - Duplicate entries prevented
+     *  - Entry is stored via WaitingListRepository using Firestore
      *
      * @param event event the entrant is trying to join
+     * @param entrantId  entrant/device identifier
+     * @return JoinResult indicating what happened
      * @param entrantId entrant/device identifier
      */
     public void joinWaitingList(Event event, String entrantId, JoinCallback callback) {
-
+        //validation to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
             if (callback != null) callback.onResult(JoinResult.INVALID_INPUT);
             return;
         }
 
         long nowMillis = System.currentTimeMillis();
-
+        // 1. validate registration window
         if (!isRegistrationOpen(event, nowMillis)) {
             if (callback != null) callback.onResult(JoinResult.REGISTRATION_CLOSED);
             return;
         }
-
+        // 2. prevent duplicates
         waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
                 entrantId,
@@ -159,13 +165,13 @@ public class WaitingListService {
                             if (callback != null) callback.onResult(JoinResult.DUPLICATE_ENTRY);
                             return;
                         }
-
+                        // 3. create the waiting list entry with exact join time
                         WaitingListEntry entry = new WaitingListEntry(
                                 event.getEventId(),
                                 entrantId,
                                 nowMillis
                         );
-
+                        // 4. store it repository will later store in Firestore
                         waitingListRepository.addToWaitingList(
                                 entry,
                                 new WaitingListRepository.CompletionCallback() {
@@ -192,14 +198,20 @@ public class WaitingListService {
 
     /**
      * Draws winners for the given event.
+     * Retrieves all entrants from Firebase and randomly selects winners
+     * based on the event's capacity, and saves the accepted winners
+     * back to Firebase.
+     * @param event    The event to be drawn from
+     * @param capacity The maximum number of winners to select
      */
     public void drawEntrants(Event event, int capacity) {
 
         waitingListRepository.getAllEntrants(event.getEventId(), new WaitingListRepository.EntrantsCallback() {
             @Override
             public void onResult(ArrayList<String> entrants) {
+                //Lottery!
                 ArrayList<String> winners = new LotteryManager().drawEntrants(event, entrants, capacity);
-
+                //save the winners in firebase! (got to do callback for firebase)
                 waitingListRepository.saveAcceptedEntrants(event.getEventId(), winners, new WaitingListRepository.CompletionCallback() {
                     @Override
                     public void onSuccess() {

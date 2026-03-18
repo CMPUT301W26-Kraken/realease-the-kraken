@@ -24,6 +24,18 @@ import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
 
 import java.util.concurrent.TimeUnit;
+/**
+ * This is the fragment that is used to create events and add them to the repository. It is also
+ * used in editing information about events and updating that information in the repository.
+ *
+ * It takes three arguments from the navigator when this event is navigated to;
+ * Boolean editEvent that is true when editing the events and false when not editing the events and
+ *  is used to adjust UI elements and update the event instead of creating a new one.
+ * Boolean cameFromYourEvents that determines if the user entered the event creator via your events
+ *  or browse events. It is true when you have come from your events and is used in backwards navigability.
+ * String eventID contains the string version of the event ID and is used when the event is chosen to be
+ *  edited so that it can properly prefill the relevant fields to be edited.
+ */
 
 public class CreateEventFragment extends Fragment {
 
@@ -61,24 +73,30 @@ public class CreateEventFragment extends Fragment {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
         }
-
+        // Navigate back to main menu
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
+                // An existing event had its edits cancelled so we return to its details page
                 Bundle args = new Bundle();
                 args.putSerializable("UserType", UserRole.ORGANIZER);
                 args.putString("eventId", eventID);
                 args.putBoolean("cameFromYourEvents", cameFromYourEvents);
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             } else {
+                // A new event being created was canceled, so the user had to have come from your events
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
-
+        // Create event and save to Firestore
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
-
+    /**
+     * The method that is called to handle event creations based on the information in the fields
+     * and writes the event into the repository and the database. Sets up a worker to trigger on
+     * registration closing
+     */
     private void createEventAndSave() {
         String title = binding.nameEventCreate.getText().toString().trim();
         String description = binding.eventDescriptionText.getText().toString().trim();
@@ -112,7 +130,7 @@ public class CreateEventFragment extends Fragment {
             public void onSuccess() {
                 if (!isAdded()) return;
                 
-                // Ethan's Worker Logic
+                // Ethan's Worker Logic sorry I had to edit this making qr work was bad
                 long delay = registrationEndMillis - System.currentTimeMillis();
                 Data inputData = new Data.Builder().putString("eventId", eventId).build();
                 OneTimeWorkRequest drawRequest = new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)

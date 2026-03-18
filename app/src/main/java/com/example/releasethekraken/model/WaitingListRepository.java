@@ -9,37 +9,98 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * repository responsible for saving and retrieving waiting list entries from Firestore
- * this class belongs to the model layer and contains no UI logic
- * it communicates with Firebase to manage waiting list data for events
+ * Repository responsible for saving and retrieving waiting list entries from Firestore.
+ * This class belongs to the model layer and contains no UI logic.
+ * It communicates directly with Firebase to manage waiting list data
+ * associated with events.
  */
 public class WaitingListRepository {
+
+    /** Firestore database instance used for all operations */
     private final FirebaseFirestore db;
 
+    /**
+     * Creates a WaitingListRepository using the default Firestore instance.
+     */
     public WaitingListRepository() {
         this(FirebaseFirestore.getInstance());
     }
 
+    /**
+     * Creates a WaitingListRepository with a specific Firestore instance.
+     *
+     * @param db the Firestore database instance to use
+     */
     public WaitingListRepository(FirebaseFirestore db) {
         this.db = db;
     }
 
+    /**
+     * Callback interface for operations that return a boolean result.
+     */
     public interface BooleanCallback {
+
+        /**
+         * Called when the operation completes successfully.
+         *
+         * @param value true if condition is met, false otherwise
+         */
         void onResult(boolean value);
+
+        /**
+         * Called when an error occurs during the operation.
+         *
+         * @param e exception describing the failure
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Callback interface for operations that report completion status.
+     */
     public interface CompletionCallback {
+
+        /**
+         * Called when the operation completes successfully.
+         */
         void onSuccess();
+
+        /**
+         * Called when an error occurs during the operation.
+         *
+         * @param e exception describing the failure
+         */
         void onError(Exception e);
     }
 
-    // new used by EventDetailsFragment
+    /**
+     * Callback interface used to check if a user exists in the waiting list.
+     * Used specifically by EventDetailsFragment.
+     */
     public interface CheckCallback {
+
+        /**
+         * Called when the check completes.
+         *
+         * @param exists true if the user is in the waiting list
+         */
         void onResult(boolean exists);
+
+        /**
+         * Called when an error occurs.
+         *
+         * @param e exception describing the failure
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Checks if an entrant is already on the waiting list for a given event.
+     *
+     * @param eventId   the ID of the event
+     * @param entrantId the ID of the entrant (user/device)
+     * @param callback  callback returning true if entrant exists in waiting list
+     */
     public void isEntrantAlreadyWaiting(String eventId, String entrantId, BooleanCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -50,7 +111,14 @@ public class WaitingListRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    // New method
+    /**
+     * Checks if a user is currently in the waiting list for a given event.
+     * This is functionally similar to isEntrantAlreadyWaiting but uses a dedicated callback.
+     *
+     * @param eventId   the ID of the event
+     * @param entrantId the ID of the entrant
+     * @param callback  callback returning whether the user exists in the waiting list
+     */
     public void isUserInWaitingList(String eventId, String entrantId, CheckCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -63,6 +131,12 @@ public class WaitingListRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Adds a waiting list entry to Firestore.
+     *
+     * @param entry    the waiting list entry to add
+     * @param callback callback to indicate success or failure
+     */
     public void addToWaitingList(WaitingListEntry entry, CompletionCallback callback) {
         DocumentReference docRef = db.collection("events")
                 .document(entry.getEventId())
@@ -79,6 +153,13 @@ public class WaitingListRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Removes an entrant from the waiting list for a given event.
+     *
+     * @param eventId   the ID of the event
+     * @param entrantId the ID of the entrant
+     * @param callback  callback to indicate success or failure
+     */
     public void removeFromWaitingList(String eventId, String entrantId, CompletionCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -89,7 +170,12 @@ public class WaitingListRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    // Ethan's code
+    /**
+     * Retrieves all entrant IDs currently on the waiting list for a given event.
+     *
+     * @param eventId the ID of the event
+     * @param callback callback returning a list of entrant IDs
+     */
     public void getAllEntrants(String eventId, EntrantsCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -105,11 +191,34 @@ public class WaitingListRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Callback interface used to return a list of entrant IDs.
+     */
     public interface EntrantsCallback {
+
+        /**
+         * Called when entrants are successfully retrieved.
+         *
+         * @param entrants list of entrant IDs
+         */
         void onResult(ArrayList<String> entrants);
+
+        /**
+         * Called when an error occurs.
+         *
+         * @param e exception describing the failure
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Saves accepted entrants (winners) for an event into Firestore.
+     * Each winner is stored under a separate document in the "accepted" collection.
+     *
+     * @param eventId the ID of the event
+     * @param winners list of entrant IDs selected as winners
+     * @param callback callback to indicate when all writes succeed or if an error occurs
+     */
     public void saveAcceptedEntrants(String eventId, ArrayList<String> winners, CompletionCallback callback) {
         int total = winners.size();
         final int[] savedCount = {0};
