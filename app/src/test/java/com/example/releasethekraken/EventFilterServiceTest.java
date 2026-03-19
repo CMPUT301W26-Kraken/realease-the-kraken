@@ -18,6 +18,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void filtersByInterestsAndAvailability() {
+        // Legacy/sample-data coverage for the earlier filter service path.
         List<FilterEvent> events = SampleDataRepository.loadEvents();
         Set<String> interests = new HashSet<>(Arrays.asList("music", "dance"));
         Set<String> availability = new HashSet<>(Arrays.asList("friday", "wednesday"));
@@ -31,6 +32,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void emptyFiltersReturnAllEvents() {
+        // Empty sets should behave as "no filters applied".
         List<FilterEvent> events = SampleDataRepository.loadEvents();
 
         List<FilterEvent> filtered = EventFilterService.filterByInterestsAndAvailability(
@@ -44,6 +46,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void keywordSearchIsPartialAndCaseInsensitive() {
+        // Ticket #97 requires partial text matching across event text fields.
         List<Event> events = Arrays.asList(
                 new Event("1", "Beginner Swimming", "Swim lessons", 100L, 200L, 10),
                 new Event("2", "Piano Basics", "Learn piano", 100L, 200L, 25)
@@ -57,6 +60,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void capacityFilterUsesMinimumCapacity() {
+        // Ticket #83 uses minimum-capacity semantics, not exact matching.
         List<Event> events = Arrays.asList(
                 new Event("1", "Small Event", "A", 100L, 200L, 10),
                 new Event("2", "Large Event", "B", 100L, 200L, 50)
@@ -70,6 +74,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void availabilityFilterMatchesEventsContainingRequestedTime() {
+        // Availability currently maps to the stored registration window on Event.
         List<Event> events = Arrays.asList(
                 new Event("1", "Morning Event", "A", 100L, 200L, 10),
                 new Event("2", "Evening Event", "B", 300L, 400L, 10)
@@ -83,6 +88,7 @@ public class EventFilterServiceTest {
 
     @Test
     public void combinedFiltersReturnOnlyMatchingEvents() {
+        // Ticket #98 is satisfied by combining all active predicates in one pass.
         List<Event> events = Arrays.asList(
                 new Event("1", "Swimming Lessons", "Kids welcome", 100L, 300L, 30),
                 new Event("2", "Swimming Intensive", "Advanced", 100L, 300L, 10),

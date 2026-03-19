@@ -7,6 +7,9 @@ package com.example.releasethekraken.model;
  * this class belongs to the model layer and contains no UI logic
  */
 public class Event {
+    // Older Firestore documents were created before capacity became part of the model.
+    // Keeping a single default in the model avoids scattering the fallback value across
+    // the repository, tests, and UI code.
     public static final int DEFAULT_CAPACITY = 20;
 
     //unique identifier for the event
@@ -31,6 +34,8 @@ public class Event {
      */
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis) {
+        // This overload keeps older call sites valid while routing everything through the
+        // full constructor so capacity normalization only exists in one place.
         this(eventId, title, description, registrationStartMillis, registrationEndMillis, DEFAULT_CAPACITY);
     }
 
@@ -46,12 +51,14 @@ public class Event {
      */
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity) {
-        //assign constructor parameters to class fields
+        // Store the raw event metadata exactly as provided by the caller.
         this.eventId = eventId;
         this.title = title;
         this.description = description;
         this.registrationStartMillis = registrationStartMillis;
         this.registrationEndMillis = registrationEndMillis;
+        // Capacity is normalized here instead of in every caller so that older documents,
+        // blank create-event input, and invalid values all converge to the same behavior.
         this.capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
     }
 

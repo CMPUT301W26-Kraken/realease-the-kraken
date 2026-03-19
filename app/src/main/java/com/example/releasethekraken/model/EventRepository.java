@@ -58,6 +58,8 @@ public class EventRepository {
      * @param callback callback used to report success or failure
      */
     public void createEvent(Event event, CompletionCallback callback) {
+        // Write the full event shape to Firestore. Capacity is now persisted so browse-time
+        // filtering can use real event data instead of a hardcoded value.
         Map<String, Object> data = new HashMap<>();
         data.put("eventId", event.getEventId());
         data.put("title", event.getTitle());
@@ -84,33 +86,45 @@ public class EventRepository {
                 .document(eventId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    // Treat a missing document as a repository error instead of returning a
+                    // partially constructed Event to the UI layer.
                     if (!documentSnapshot.exists()) {
                         callback.onError(new Exception("Event not found"));
                         return;
                     }
 
+                    // Read each field defensively because older documents may predate newer
+                    // fields like capacity, and Firestore values may be null.
                     String title = documentSnapshot.getString("title");
                     String description = documentSnapshot.getString("description");
                     Long registrationStartMillis = documentSnapshot.getLong("registrationStartMillis");
                     Long registrationEndMillis = documentSnapshot.getLong("registrationEndMillis");
                     Long capacity = documentSnapshot.getLong("capacity");
 
+                    // Normalize missing strings so adapter and search code can treat event data
+                    // as non-null without adding repeated null checks.
                     if (title == null) {
                         title = "";
                     }
                     if (description == null) {
                         description = "";
                     }
+                    // Normalize timestamps to zero when absent. This preserves backward
+                    // compatibility and avoids crashing on incomplete seed data.
                     if (registrationStartMillis == null) {
                         registrationStartMillis = 0L;
                     }
                     if (registrationEndMillis == null) {
                         registrationEndMillis = 0L;
                     }
+                    // Events created before capacity support should still load and remain
+                    // filterable, so repository fallback matches Event.DEFAULT_CAPACITY.
                     if (capacity == null || capacity <= 0) {
                         capacity = (long) Event.DEFAULT_CAPACITY;
                     }
 
+                    // Use the Firestore document id as the canonical id, since that is what the
+                    // rest of the app navigates with when opening event details.
                     Event event = new Event(
                             documentSnapshot.getId(),
                             title,
@@ -137,6 +151,8 @@ public class EventRepository {
                     List<Event> events = new ArrayList<>();
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        // Apply the same defensive normalization for collection reads so browse
+                        // and detail screens see consistent Event objects.
                         String title = document.getString("title");
                         String description = document.getString("description");
                         Long registrationStartMillis = document.getLong("registrationStartMillis");
@@ -159,6 +175,8 @@ public class EventRepository {
                             capacity = (long) Event.DEFAULT_CAPACITY;
                         }
 
+                        // Convert each Firestore document into a model object immediately so the
+                        // view/controller code only works with Event instances from this point on.
                         Event event = new Event(
                                 document.getId(),
                                 title,

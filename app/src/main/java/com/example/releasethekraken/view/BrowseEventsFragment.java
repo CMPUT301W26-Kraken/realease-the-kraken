@@ -39,6 +39,7 @@ import java.util.Locale;
  */
 public class BrowseEventsFragment extends Fragment {
     private static final String ARG_YOUR_EVENTS = "yourEvents";
+    // Keep browse-screen parsing aligned with create-event input so users enter one shared format.
     private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -46,6 +47,9 @@ public class BrowseEventsFragment extends Fragment {
     private boolean yourEvents;
     private UserRole userRole = UserRole.ENTRANT;
 
+    // allEvents is the source-of-truth list from Firestore.
+    // visibleEvents is the currently rendered subset after search/filter predicates are applied.
+    // Keeping both lists avoids re-fetching from Firestore every time the user changes a filter.
     private final List<Event> allEvents = new ArrayList<>();
     private final List<Event> visibleEvents = new ArrayList<>();
     private MyItemRecyclerViewAdapter adapter;
@@ -80,7 +84,8 @@ public class BrowseEventsFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_browse_events, container, false);
 
-        // Set the welcome text to the proper display based on if we are browsing your events or just normal events
+        // The same fragment backs both "Browse Events" and "Your Events", so the title and create
+        // button visibility are adjusted from the navigation argument instead of duplicating screens.
         TextView welcomeText = view.findViewById(R.id.welcome_text);
         if (yourEvents) {
             welcomeText.setText(getString(R.string.your_events_welcome));
@@ -88,7 +93,8 @@ public class BrowseEventsFragment extends Fragment {
             welcomeText.setText(getString(R.string.browse_events_welcome));
         }
 
-        // Find RecyclerView inside layout
+        // RecyclerView is populated from visibleEvents so the adapter only ever renders the
+        // already-filtered data set.
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
 
         if (mColumnCount <= 1) {
@@ -102,6 +108,8 @@ public class BrowseEventsFragment extends Fragment {
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
         emptyResultsText = view.findViewById(R.id.empty_results_text);
 
+        // Event taps still navigate using the existing event-details flow. Search/filtering only
+        // changes which events are visible, not how selection/navigation works.
         adapter = new MyItemRecyclerViewAdapter(visibleEvents, event -> {
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
@@ -117,11 +125,12 @@ public class BrowseEventsFragment extends Fragment {
 
         recyclerView.setAdapter(adapter);
 
+        // Load the source data first, then allow UI controls to refine the in-memory list.
         loadEvents();
         wireSearchAndFilters(view);
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
-        // Hide the create events button if we aren't in your Events
+        // Only organizers on the "Your Events" path should see event creation controls here.
         if (!yourEvents) {
             createEventButton.setVisibility(View.GONE);
         }
@@ -174,6 +183,8 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private void wireSearchAndFilters(View view) {
+        // Search and structured filters both feed the same applyFilters method so ticket #98
+        // ("combine search with filters") is just the shared code path, not a separate screen.
         view.findViewById(R.id.search_events_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.apply_filters_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.clear_filters_button).setOnClickListener(v -> clearFilters());
@@ -189,6 +200,8 @@ public class BrowseEventsFragment extends Fragment {
         repository.getAllEvents(new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(List<Event> events) {
+                // Replace the source list atomically, then re-run the current filter state against
+                // the fresh data so browse results stay in sync with Firestore.
                 allEvents.clear();
                 allEvents.addAll(events);
                 applyFilters(false);
@@ -206,6 +219,7 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private void applyFilters(boolean showValidationErrors) {
+        // Parse each optional filter independently. A blank field means that constraint is inactive.
         Long availableAtMillis = parseAvailableAtMillis(showValidationErrors);
         if (showValidationErrors && filterHasValue(filterAvailableAtText) && availableAtMillis == null) {
             return;
@@ -216,6 +230,7 @@ public class BrowseEventsFragment extends Fragment {
             return;
         }
 
+        // One service call applies keyword search, availability, and capacity together.
         List<Event> filteredEvents = EventFilterService.filterEvents(
                 allEvents,
                 searchEventsText.getText().toString(),
@@ -226,6 +241,7 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private void clearFilters() {
+        // Reset both the UI state and the rendered list so "clear" truly restores the full browse view.
         searchEventsText.setText("");
         filterAvailableAtText.setText("");
         filterCapacityText.setText("");
@@ -233,9 +249,11 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private void updateVisibleEvents(List<Event> filteredEvents) {
+        // Update the adapter backing list in place so the existing adapter instance can be reused.
         visibleEvents.clear();
         visibleEvents.addAll(filteredEvents);
         adapter.notifyDataSetChanged();
+        // Show a dedicated empty state instead of leaving the user with a blank RecyclerView.
         emptyResultsText.setVisibility(visibleEvents.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
@@ -245,6 +263,8 @@ public class BrowseEventsFragment extends Fragment {
             return null;
         }
 
+        // The field represents a single point in time. An event matches if its registration window
+        // contains that timestamp.
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
         dateFormat.setLenient(false);
         try {
@@ -268,6 +288,7 @@ public class BrowseEventsFragment extends Fragment {
         }
 
         try {
+            // The browse UI uses "minimum capacity" semantics, not exact-capacity matching.
             int minimumCapacity = Integer.parseInt(capacityText);
             if (minimumCapacity <= 0) {
                 throw new NumberFormatException("Capacity must be positive");
@@ -286,6 +307,7 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private boolean filterHasValue(EditText input) {
+        // Shared helper used to distinguish "blank optional field" from "user entered invalid text".
         return !TextUtils.isEmpty(input.getText().toString().trim());
     }
 }
