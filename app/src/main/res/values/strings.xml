@@ -66,6 +66,12 @@
     <string name="browse_events_welcome">Available Events</string>
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
+    <string name="search_events_hint">Search by title or description</string>
+    <string name="filter_available_at_hint">Available at (dd/MM/yyyy h:mm AM/PM)</string>
+    <string name="filter_capacity_hint">Min capacity</string>
+    <string name="apply_filters_button">Apply Filters</string>
+    <string name="clear_filters_button">Clear Filters</string>
+    <string name="no_matching_events">No events match the current search and filters.</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>

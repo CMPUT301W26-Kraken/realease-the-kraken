@@ -64,6 +64,7 @@ public class EventRepository {
         data.put("description", event.getDescription());
         data.put("registrationStartMillis", event.getRegistrationStartMillis());
         data.put("registrationEndMillis", event.getRegistrationEndMillis());
+        data.put("capacity", event.getCapacity());
 
         db.collection("events")
                 .document(event.getEventId())
@@ -92,6 +93,7 @@ public class EventRepository {
                     String description = documentSnapshot.getString("description");
                     Long registrationStartMillis = documentSnapshot.getLong("registrationStartMillis");
                     Long registrationEndMillis = documentSnapshot.getLong("registrationEndMillis");
+                    Long capacity = documentSnapshot.getLong("capacity");
 
                     if (title == null) {
                         title = "";
@@ -105,13 +107,17 @@ public class EventRepository {
                     if (registrationEndMillis == null) {
                         registrationEndMillis = 0L;
                     }
+                    if (capacity == null || capacity <= 0) {
+                        capacity = (long) Event.DEFAULT_CAPACITY;
+                    }
 
                     Event event = new Event(
                             documentSnapshot.getId(),
                             title,
                             description,
                             registrationStartMillis,
-                            registrationEndMillis
+                            registrationEndMillis,
+                            capacity.intValue()
                     );
 
                     callback.onSuccess(event);
@@ -135,6 +141,7 @@ public class EventRepository {
                         String description = document.getString("description");
                         Long registrationStartMillis = document.getLong("registrationStartMillis");
                         Long registrationEndMillis = document.getLong("registrationEndMillis");
+                        Long capacity = document.getLong("capacity");
 
                         if (title == null) {
                             title = "";
@@ -148,13 +155,17 @@ public class EventRepository {
                         if (registrationEndMillis == null) {
                             registrationEndMillis = 0L;
                         }
+                        if (capacity == null || capacity <= 0) {
+                            capacity = (long) Event.DEFAULT_CAPACITY;
+                        }
 
                         Event event = new Event(
                                 document.getId(),
                                 title,
                                 description,
                                 registrationStartMillis,
-                                registrationEndMillis
+                                registrationEndMillis,
+                                capacity.intValue()
                         );
 
                         events.add(event);

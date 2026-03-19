@@ -1,10 +1,12 @@
 package com.example.releasethekraken.view;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,16 +17,17 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
-import com.example.releasethekraken.model.UserRole;
-import com.example.releasethekraken.placeholder.PlaceholderContent;
-import com.google.firebase.firestore.auth.User;
+import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.UserRole;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * BrowseEventsFragment acts as the fragment that displays lists of events and is used
@@ -35,14 +38,21 @@ import java.util.List;
  * if you are viewing it through your events and uses it to set UI elements accordingly.
  */
 public class BrowseEventsFragment extends Fragment {
+    private static final String ARG_YOUR_EVENTS = "yourEvents";
+    private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 2;
     private boolean yourEvents;
     private UserRole userRole = UserRole.ENTRANT;
 
-    private final List<Event> eventList = new ArrayList<>();
+    private final List<Event> allEvents = new ArrayList<>();
+    private final List<Event> visibleEvents = new ArrayList<>();
     private MyItemRecyclerViewAdapter adapter;
+    private EditText searchEventsText;
+    private EditText filterAvailableAtText;
+    private EditText filterCapacityText;
+    private TextView emptyResultsText;
 
     public BrowseEventsFragment() { }
 
@@ -59,7 +69,7 @@ public class BrowseEventsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
-            yourEvents = getArguments().getBoolean("yourEvents", false);
+            yourEvents = getArguments().getBoolean(ARG_YOUR_EVENTS, false);
         }
     }
 
@@ -87,7 +97,12 @@ public class BrowseEventsFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        adapter = new MyItemRecyclerViewAdapter(eventList, event -> {
+        searchEventsText = view.findViewById(R.id.search_events_text);
+        filterAvailableAtText = view.findViewById(R.id.filter_available_at_text);
+        filterCapacityText = view.findViewById(R.id.filter_capacity_text);
+        emptyResultsText = view.findViewById(R.id.empty_results_text);
+
+        adapter = new MyItemRecyclerViewAdapter(visibleEvents, event -> {
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
 
@@ -103,6 +118,7 @@ public class BrowseEventsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         loadEvents();
+        wireSearchAndFilters(view);
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
         // Hide the create events button if we aren't in your Events
@@ -157,6 +173,12 @@ public class BrowseEventsFragment extends Fragment {
         return view;
     }
 
+    private void wireSearchAndFilters(View view) {
+        view.findViewById(R.id.search_events_button).setOnClickListener(v -> applyFilters(true));
+        view.findViewById(R.id.apply_filters_button).setOnClickListener(v -> applyFilters(true));
+        view.findViewById(R.id.clear_filters_button).setOnClickListener(v -> clearFilters());
+    }
+
     /**
      * A method that is used to fetch all of the events from the EventRepository so that they can
      * be displayed on screen.
@@ -167,9 +189,9 @@ public class BrowseEventsFragment extends Fragment {
         repository.getAllEvents(new EventRepository.EventsCallback() {
             @Override
             public void onSuccess(List<Event> events) {
-                eventList.clear();
-                eventList.addAll(events);
-                adapter.notifyDataSetChanged();
+                allEvents.clear();
+                allEvents.addAll(events);
+                applyFilters(false);
             }
 
             @Override
@@ -181,5 +203,89 @@ public class BrowseEventsFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void applyFilters(boolean showValidationErrors) {
+        Long availableAtMillis = parseAvailableAtMillis(showValidationErrors);
+        if (showValidationErrors && filterHasValue(filterAvailableAtText) && availableAtMillis == null) {
+            return;
+        }
+
+        Integer minimumCapacity = parseMinimumCapacity(showValidationErrors);
+        if (showValidationErrors && filterHasValue(filterCapacityText) && minimumCapacity == null) {
+            return;
+        }
+
+        List<Event> filteredEvents = EventFilterService.filterEvents(
+                allEvents,
+                searchEventsText.getText().toString(),
+                availableAtMillis,
+                minimumCapacity
+        );
+        updateVisibleEvents(filteredEvents);
+    }
+
+    private void clearFilters() {
+        searchEventsText.setText("");
+        filterAvailableAtText.setText("");
+        filterCapacityText.setText("");
+        updateVisibleEvents(allEvents);
+    }
+
+    private void updateVisibleEvents(List<Event> filteredEvents) {
+        visibleEvents.clear();
+        visibleEvents.addAll(filteredEvents);
+        adapter.notifyDataSetChanged();
+        emptyResultsText.setVisibility(visibleEvents.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private Long parseAvailableAtMillis(boolean showValidationErrors) {
+        String availableAtText = filterAvailableAtText.getText().toString().trim();
+        if (availableAtText.isEmpty()) {
+            return null;
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
+        dateFormat.setLenient(false);
+        try {
+            return dateFormat.parse(availableAtText).getTime();
+        } catch (ParseException | NullPointerException e) {
+            if (showValidationErrors && getContext() != null) {
+                Toast.makeText(
+                        getContext(),
+                        "Enter availability as dd/MM/yyyy h:mm AM/PM",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+            return null;
+        }
+    }
+
+    private Integer parseMinimumCapacity(boolean showValidationErrors) {
+        String capacityText = filterCapacityText.getText().toString().trim();
+        if (capacityText.isEmpty()) {
+            return null;
+        }
+
+        try {
+            int minimumCapacity = Integer.parseInt(capacityText);
+            if (minimumCapacity <= 0) {
+                throw new NumberFormatException("Capacity must be positive");
+            }
+            return minimumCapacity;
+        } catch (NumberFormatException e) {
+            if (showValidationErrors && getContext() != null) {
+                Toast.makeText(
+                        getContext(),
+                        "Enter a positive whole number for capacity",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+            return null;
+        }
+    }
+
+    private boolean filterHasValue(EditText input) {
+        return !TextUtils.isEmpty(input.getText().toString().trim());
     }
 }

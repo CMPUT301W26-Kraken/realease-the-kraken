@@ -117,6 +117,7 @@ public class CreateEventFragment extends Fragment {
         String description = binding.eventDescriptionText.getText().toString().trim();
         String startText = binding.registrationStartDate.getText().toString().trim();
         String endText = binding.registrationEndDate.getText().toString().trim();
+        String capacityText = binding.maxEntrantsEditText.getText().toString().trim();
 
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description)
                 || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
@@ -156,6 +157,24 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        int capacity = Event.DEFAULT_CAPACITY;
+        if (!capacityText.isEmpty()) {
+            try {
+                capacity = Integer.parseInt(capacityText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(),
+                        "Maximum entrants must be a whole number",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (capacity <= 0) {
+                Toast.makeText(getContext(),
+                        "Maximum entrants must be greater than zero",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
         String eventId = title.replaceAll("\\s+", "_").toLowerCase();
 
         Event event = new Event(
@@ -163,7 +182,8 @@ public class CreateEventFragment extends Fragment {
                 title,
                 description,
                 registrationStartMillis,
-                registrationEndMillis
+                registrationEndMillis,
+                capacity
         );
 
         binding.loading.setVisibility(View.VISIBLE);
