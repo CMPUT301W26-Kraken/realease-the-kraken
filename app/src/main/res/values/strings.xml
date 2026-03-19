@@ -66,6 +66,7 @@
     <string name="browse_events_welcome">Available Events</string>
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
+    <string name="prompt_search">Search</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
@@ -99,6 +100,10 @@
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
     <string name="confirm_delete_popup">Yes, Delete</string>
+
+    <!-- Strings related to the User List -->
+    <string name="admin_user_list_welcome">All Users</string>
+    <string name="waiting_list_welcome">Event Waiting List</string>
 
 
     <!-- Misc strings -->

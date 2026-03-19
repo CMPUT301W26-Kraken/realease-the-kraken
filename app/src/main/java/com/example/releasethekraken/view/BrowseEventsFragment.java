@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.releasethekraken.MainActivity;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.placeholder.PlaceholderContent;
@@ -115,7 +114,7 @@ public class BrowseEventsFragment extends Fragment {
                 .setOnClickListener(v -> {
                     Bundle args = new Bundle();
                     args.putBoolean("editEvent", false);
-                    args.putBoolean("cameFromYourEvents", true);
+                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
 
                     Navigation.findNavController(v)
                             .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
