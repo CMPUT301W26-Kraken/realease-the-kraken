@@ -24,6 +24,7 @@ import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
 
 import java.util.concurrent.TimeUnit;
+
 /**
  * This is the fragment that is used to create events and add them to the repository. It is also
  * used in editing information about events and updating that information in the repository.
@@ -36,7 +37,6 @@ import java.util.concurrent.TimeUnit;
  * String eventID contains the string version of the event ID and is used when the event is chosen to be
  *  edited so that it can properly prefill the relevant fields to be edited.
  */
-
 public class CreateEventFragment extends Fragment {
 
     private FragmentCreateEventBinding binding;
@@ -73,6 +73,7 @@ public class CreateEventFragment extends Fragment {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
         }
+
         // Navigate back to main menu
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
@@ -89,9 +90,11 @@ public class CreateEventFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
+
         // Create event and save to Firestore
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
+
     /**
      * The method that is called to handle event creations based on the information in the fields
      * and writes the event into the repository and the database. Sets up a worker to trigger on
@@ -119,6 +122,11 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        if (registrationEndMillis <= registrationStartMillis) {
+            Toast.makeText(getContext(), "Registration end must be after registration start", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String eventId = title.replaceAll("\\s+", "_").toLowerCase();
         Event event = new Event(eventId, title, description, registrationStartMillis, registrationEndMillis);
 
@@ -129,7 +137,10 @@ public class CreateEventFragment extends Fragment {
             @Override
             public void onSuccess() {
                 if (!isAdded()) return;
-                
+
+                binding.loading.setVisibility(View.GONE);
+                binding.createEvent.setEnabled(true);
+
                 // Ethan's Worker Logic sorry I had to edit this making qr work was bad
                 long delay = registrationEndMillis - System.currentTimeMillis();
                 Data inputData = new Data.Builder().putString("eventId", eventId).build();
