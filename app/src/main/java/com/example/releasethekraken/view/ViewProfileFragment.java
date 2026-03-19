@@ -33,7 +33,6 @@ public class ViewProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         binding = FragmentViewProfileBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -93,33 +92,29 @@ public class ViewProfileFragment extends Fragment {
 
     /**
      * Shows a confirmation dialog before permanently deleting the profile.
-     *
-     * @param profile current profile being deleted
-     * @param profileRepository repository used for local and Firestore deletion
-     * @param view current fragment view used for navigation
      */
     private void showDeleteConfirmationDialog(Profile profile,
                                               ProfileRepository profileRepository,
                                               View view) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Profile")
-                .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
-                .setPositiveButton("Yes, Delete", (dialog, which) -> {
-                    String email = profile.getEmail();
+                .setTitle(R.string.delete_profile_title)
+                .setMessage(R.string.delete_profile_confirmation)
+                .setPositiveButton(R.string.delete_button_text, (dialog, which) -> {
+                    String deviceId = profile.getDeviceId();
 
-                    // Delete local profile first so UI updates immediately
+                    // Delete local profile first
                     profileRepository.deleteLocalProfile();
 
                     Toast.makeText(requireContext(),
                             R.string.profile_deleted_message,
                             Toast.LENGTH_SHORT).show();
 
-                    // Delete from Firestore in the background
-                    profileRepository.deleteProfileFromFirestore(email,
+                    // Delete Firestore doc using deviceId
+                    profileRepository.deleteProfileFromFirestore(deviceId,
                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
-                                    // No extra UI action needed
+                                    // no extra UI action needed
                                 }
 
                                 @Override
@@ -137,16 +132,12 @@ public class ViewProfileFragment extends Fragment {
                     Navigation.findNavController(view)
                             .navigate(R.id.action_viewProfileFragment_to_loginFragment);
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel_button_text, (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     /**
      * Returns a fallback string when the stored value is null or empty.
-     *
-     * @param value the profile value to display
-     * @param fallback text shown when value is missing
-     * @return value if present, otherwise fallback
      */
     private String getDisplayValue(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;

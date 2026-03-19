@@ -214,7 +214,12 @@ public class ProfileRepository {
      * @param deviceId  device ID used to identify the Firestore document
      * @param callback  callback for success/failure
      */
-    public void deleteProfileFromFirestore(String deviceId, ProfileRepositoryCallback<Void> callback) {
+    /**
+     * Deletes the profile from Firestore using deviceId as the document ID.
+     */
+    public void deleteProfileFromFirestore(String deviceId,
+                                           ProfileRepositoryCallback<Void> callback) {
+
         firestore.collection(COLLECTION_PROFILES)
                 .document(deviceId)
                 .delete()

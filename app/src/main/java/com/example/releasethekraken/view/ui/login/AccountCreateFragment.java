@@ -3,11 +3,14 @@ package com.example.releasethekraken.view.ui.login;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,20 +18,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import android.provider.Settings;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
 
-/**
- * Fragment responsible for creating or updating a user profile.
- *
- * Mode is determined by navigation argument:
- * - false -> create mode
- * - true  -> update mode
- */
 public class AccountCreateFragment extends Fragment {
 
     private FragmentAccountCreateBinding binding;
@@ -59,7 +54,6 @@ public class AccountCreateFragment extends Fragment {
             isEditMode = getArguments().getBoolean("isEditMode", false);
         }
 
-        // Only prefill fields when explicitly opened in edit mode
         if (isEditMode) {
             Profile existingProfile = profileRepository.getProfile();
             nameEditText.setText(existingProfile.getName());
@@ -72,8 +66,6 @@ public class AccountCreateFragment extends Fragment {
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             saveProfileButton.setText(R.string.action_create_profile);
-
-            // Clear fields in create mode
             nameEditText.setText("");
             emailEditText.setText("");
             phoneEditText.setText("");
@@ -81,17 +73,15 @@ public class AccountCreateFragment extends Fragment {
 
         TextWatcher validationWatcher = new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
 
             @Override
             public void afterTextChanged(Editable s) {
                 clearFieldErrors();
-                saveProfileButton.setEnabled(isFormValid(false));
+                saveProfileButton.setEnabled(true);
             }
         };
 
@@ -102,11 +92,17 @@ public class AccountCreateFragment extends Fragment {
         saveProfileButton.setEnabled(isFormValid(false));
 
         saveProfileButton.setOnClickListener(v -> {
-            if (!isFormValid(true)) {
+            Log.d("AccountCreateFragment", "Save/Create button clicked");
+            Toast.makeText(requireContext(), "Create clicked", Toast.LENGTH_SHORT).show();
+
+            boolean valid = isFormValid(true);
+            Log.d("AccountCreateFragment", "Form valid = " + valid);
+
+            if (!valid) {
+                Toast.makeText(requireContext(), "Form is invalid", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            //Added to fix crash. Gets device id and constructs profile with it
             String deviceId = Settings.Secure.getString(
                     requireContext().getContentResolver(),
                     Settings.Secure.ANDROID_ID
@@ -119,6 +115,8 @@ public class AccountCreateFragment extends Fragment {
                     phoneEditText.getText().toString().trim()
             );
 
+            Log.d("AccountCreateFragment", "Device ID = " + deviceId);
+
             if (isEditMode) {
                 profileRepository.saveProfileLocally(profile);
 
@@ -129,10 +127,12 @@ public class AccountCreateFragment extends Fragment {
                 profileRepository.updateProfile(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
+                        Log.d("AccountCreateFragment", "Firestore update success");
                     }
 
                     @Override
                     public void onFailure(Exception exception) {
+                        Log.e("AccountCreateFragment", "Firestore update failed", exception);
                         if (!isAdded()) {
                             return;
                         }
@@ -143,8 +143,9 @@ public class AccountCreateFragment extends Fragment {
                     }
                 });
 
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
+                NavController navController = Navigation.findNavController(v);
+                Log.d("AccountCreateFragment", "Navigating to viewProfileFragment");
+                navController.navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
 
             } else {
                 profileRepository.saveProfileLocally(profile);
@@ -156,10 +157,12 @@ public class AccountCreateFragment extends Fragment {
                 profileRepository.saveProfileToFirestore(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
+                        Log.d("AccountCreateFragment", "Firestore create success");
                     }
 
                     @Override
                     public void onFailure(Exception exception) {
+                        Log.e("AccountCreateFragment", "Firestore create failed", exception);
                         if (!isAdded()) {
                             return;
                         }
@@ -170,8 +173,9 @@ public class AccountCreateFragment extends Fragment {
                     }
                 });
 
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+                NavController navController = Navigation.findNavController(v);
+                Log.d("AccountCreateFragment", "Navigating to mainMenuFragment");
+                navController.navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
             }
         });
 
