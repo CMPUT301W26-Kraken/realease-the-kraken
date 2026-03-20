@@ -46,7 +46,6 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
             editEvent = getArguments().getBoolean("editEvent");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -56,30 +55,23 @@ public class CreateEventFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentCreateEventBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
-            if (activity.getSupportActionBar() != null) {
-                activity.getSupportActionBar().show();
-            }
+            if (activity.getSupportActionBar() != null) activity.getSupportActionBar().show();
         }
 
-        if (editEvent == true) {
+        if (editEvent) {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
-            //TODO: FILL IN REMAINING FIELDS WITH EXISTING EVENTS INFORMATION
         }
 
         // Navigate back to main menu
@@ -90,16 +82,12 @@ public class CreateEventFragment extends Fragment {
                 args.putSerializable("UserType", UserRole.ORGANIZER);
                 args.putString("eventId", eventID);
                 args.putBoolean("cameFromYourEvents", cameFromYourEvents);
-
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             } else {
                 // A new event being created was canceled, so the user had to have come from your events
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
-
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
 
@@ -118,104 +106,65 @@ public class CreateEventFragment extends Fragment {
         String startText = binding.registrationStartDate.getText().toString().trim();
         String endText = binding.registrationEndDate.getText().toString().trim();
 
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description)
-                || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
+        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description) || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
             Toast.makeText(getContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        long registrationStartMillis;
-        long registrationEndMillis;
-
+        long registrationStartMillis, registrationEndMillis;
         try {
-            java.text.SimpleDateFormat sdf =
-                    new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
             sdf.setLenient(false);
-
-            java.util.Date startDate = sdf.parse(startText);
-            java.util.Date endDate = sdf.parse(endText);
-
-            if (startDate == null || endDate == null) {
-                Toast.makeText(getContext(), "Invalid date format", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            registrationStartMillis = startDate.getTime();
-            registrationEndMillis = endDate.getTime();
+            registrationStartMillis = sdf.parse(startText).getTime();
+            registrationEndMillis = sdf.parse(endText).getTime();
         } catch (Exception e) {
-            Toast.makeText(getContext(),
-                    "Enter dates as dd/MM/yyyy h:mm AM/PM",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Enter dates as dd/MM/yyyy h:mm AM/PM", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (registrationEndMillis < registrationStartMillis) {
-            Toast.makeText(getContext(),
-                    "Registration end must be after registration start",
-                    Toast.LENGTH_SHORT).show();
+        if (registrationEndMillis <= registrationStartMillis) {
+            Toast.makeText(getContext(), "Registration end must be after registration start", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String eventId = title.replaceAll("\\s+", "_").toLowerCase();
-
-        Event event = new Event(
-                eventId,
-                title,
-                description,
-                registrationStartMillis,
-                registrationEndMillis
-        );
+        Event event = new Event(eventId, title, description, registrationStartMillis, registrationEndMillis);
 
         binding.loading.setVisibility(View.VISIBLE);
         binding.createEvent.setEnabled(false);
 
-        EventRepository repository = new EventRepository();
-        repository.createEvent(event, new EventRepository.CompletionCallback() {
+        new EventRepository().createEvent(event, new EventRepository.CompletionCallback() {
             @Override
             public void onSuccess() {
-                if (!isAdded()) {
-                    return;
-                }
+                if (!isAdded()) return;
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
 
-                //Ethan here adding some epic code that starts a timer to check registration ending!
-                long delay = registrationEndMillis - System.currentTimeMillis(); //Gets the delay from now until the reg closes
-
-                //getting our event id for the worker so that we know which event we are waiting to draw from
-                Data inputData = new Data.Builder()
-                        .putString("eventId", eventId)
+                // Ethan's Worker Logic sorry I had to edit this making qr work was bad
+                long delay = registrationEndMillis - System.currentTimeMillis();
+                Data inputData = new Data.Builder().putString("eventId", eventId).build();
+                OneTimeWorkRequest drawRequest = new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
+                        .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                        .setInputData(inputData)
                         .build();
-
-                //making our request with DrawEntrantsWorker to draw entrants when delay expires
-                OneTimeWorkRequest drawRequest =
-                        new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
-                                .setInitialDelay(delay, TimeUnit.MILLISECONDS) //tells it to wait "delay" long until running the worker
-                                .setInputData(inputData) //store that juicy data to give to DrawEntrantsWorker
-                                .build();
-
-                WorkManager.getInstance(requireContext()).enqueue(drawRequest); //submit that job! LETS GOOO
-                //End of Ethan's very cool code
+                WorkManager.getInstance(requireContext()).enqueue(drawRequest);
 
                 Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
 
-                Navigation.findNavController(requireView())
-                        .navigate(R.id.action_createEventFragment_to_browseEventsFragment);
+                // Navigate to details instead of browse
+                Bundle args = new Bundle();
+                args.putString("eventId", eventId);
+                args.putSerializable("UserType", UserRole.ORGANIZER);
+                Navigation.findNavController(requireView()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             }
 
             @Override
             public void onError(Exception e) {
-                if (!isAdded()) {
-                    return;
-                }
-
+                if (!isAdded()) return;
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
-
-                Toast.makeText(getContext(),
-                        "Failed to create event: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

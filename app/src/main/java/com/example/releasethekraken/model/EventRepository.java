@@ -1,6 +1,7 @@
 package com.example.releasethekraken.model;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
@@ -64,6 +65,7 @@ public class EventRepository {
         data.put("description", event.getDescription());
         data.put("registrationStartMillis", event.getRegistrationStartMillis());
         data.put("registrationEndMillis", event.getRegistrationEndMillis());
+        data.put("createdAt", System.currentTimeMillis()); // Added for sorting
 
         db.collection("events")
                 .document(event.getEventId())
@@ -79,6 +81,11 @@ public class EventRepository {
      * @param callback callback used to return the event or an error
      */
     public void getEventById(String eventId, EventCallback callback) {
+        if (eventId == null || eventId.isEmpty()) {
+            callback.onError(new Exception("Invalid event ID"));
+            return;
+        }
+
         db.collection("events")
                 .document(eventId)
                 .get()
@@ -161,6 +168,40 @@ public class EventRepository {
                     }
 
                     callback.onSuccess(events);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * gets the most recently created event from Firestore
+     *
+     * @param callback callback used to return the event or an error
+     */
+    public void getMostRecentEvent(EventCallback callback) {
+        db.collection("events")
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        callback.onError(new Exception("No events found"));
+                        return;
+                    }
+                    
+                    QueryDocumentSnapshot document = (QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
+                    String title = document.getString("title");
+                    String description = document.getString("description");
+                    Long registrationStartMillis = document.getLong("registrationStartMillis");
+                    Long registrationEndMillis = document.getLong("registrationEndMillis");
+
+                    Event event = new Event(
+                            document.getId(),
+                            title != null ? title : "",
+                            description != null ? description : "",
+                            registrationStartMillis != null ? registrationStartMillis : 0L,
+                            registrationEndMillis != null ? registrationEndMillis : 0L
+                    );
+                    callback.onSuccess(event);
                 })
                 .addOnFailureListener(callback::onError);
     }
