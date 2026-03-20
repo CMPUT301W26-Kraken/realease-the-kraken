@@ -87,9 +87,6 @@ public class EventDetailsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Group organizerButtonGroup = view.findViewById(R.id.organizer_button_group);
-        Group entrantButtonGroup = view.findViewById(R.id.entrant_button_group);
-
         titleTextView = view.findViewById(R.id.event_title_text);
         descriptionTextView = view.findViewById(R.id.event_description_display);
         registrationStartTextView = view.findViewById(R.id.registration_start_display);
@@ -105,11 +102,13 @@ public class EventDetailsFragment extends Fragment {
 
         // Toggle visibilities of button groups based on the user's role
         if (userType == UserRole.ENTRANT) {
-            organizerButtonGroup.setVisibility(View.GONE);
-            entrantButtonGroup.setVisibility(View.VISIBLE);
+            viewEntrantMapButton.setVisibility(View.GONE);
+            createNotificationButton.setVisibility(View.GONE);
+            viewQrButton.setVisibility(View.GONE);
+            editEventButton.setVisibility(View.GONE);
+            deleteEventButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER) {
-            organizerButtonGroup.setVisibility(View.VISIBLE);
-            entrantButtonGroup.setVisibility(View.GONE);
+            signupOptOutButton.setVisibility(View.GONE);
         }
 
         loadEventDetails();

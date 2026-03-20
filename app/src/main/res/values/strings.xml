@@ -92,6 +92,7 @@
     <string name="view_qr_button">View QR Code</string>
     <string name="edit_event_button">Edit Event</string>
     <string name="delete_event_button">Delete Event</string>
+    <string name="view_comments_button">View Comments</string>
     <string name="return_button">Return</string>
     <string name="signup_button">Sign Up</string>
     <string name="opt_out_button">Opt Out</string>

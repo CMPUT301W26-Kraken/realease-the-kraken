@@ -78,7 +78,7 @@ public class UserListFragment extends Fragment {
             returnButton.setVisibility(View.VISIBLE);
         }
 
-        // TODO: IMPLEMENT RECYCLER VIEW AND ASSOCIATED CLICK ACTIONS
+        // TODO: IMPLEMENT RECYCLER VIEW (OF ALL USERS FOR ADMIN AND ONLY REGISTERED ONES FOR EVENT) AND ASSOCIATED CLICK ACTIONS
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
