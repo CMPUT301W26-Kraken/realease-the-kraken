@@ -125,15 +125,7 @@ public class EventDetailsFragment extends Fragment {
 
         deleteEventButton.setOnClickListener(v -> showDeleteConfirmationDialog(v));
         createNotificationButton.setOnClickListener(v -> showCreateNotificationDialog());
-        editEventButton.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putBoolean("editEvent", true);
-            args.putBoolean("cameFromYourEvents", cameFromYourEvents); // Needed for backwards traceability
-            args.putString(ARG_EVENT_ID, eventId);
-
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_eventDetailsFragment_to_createEventFragment, args);
-        });
+        editEventButton.setOnClickListener(v -> navigateToEditEvent(v));
 
         viewWaitingListButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
@@ -204,7 +196,7 @@ public class EventDetailsFragment extends Fragment {
                 public void onResult(WaitingListService.JoinResult result) {
                     if (result == WaitingListService.JoinResult.SUCCESS) {
                         isJoined = true;
-                        button.setText("Leave Waiting List");
+                        button.setText(R.string.opt_out_button);
                     }
                     Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
                 }
@@ -216,7 +208,7 @@ public class EventDetailsFragment extends Fragment {
                 public void onResult(WaitingListService.LeaveResult result) {
                     if (result == WaitingListService.LeaveResult.SUCCESS) {
                         isJoined = false;
-                        button.setText("Join Waiting List");
+                        button.setText(R.string.signup_button);
                     }
                 }
                 @Override public void onError(Exception e) {}

@@ -94,8 +94,8 @@
     <string name="delete_event_button">Delete Event</string>
     <string name="view_comments_button">View Comments</string>
     <string name="return_button">Return</string>
-    <string name="signup_button">Sign Up</string>
-    <string name="opt_out_button">Opt Out</string>
+    <string name="signup_button">Join Waiting List</string>
+    <string name="opt_out_button">Leave Waiting List</string>
     <string name="view_waiting_list_button">View Current Waiting List</string>
     <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
 
