@@ -77,7 +77,7 @@
     <string name="edit_event_confirm_button">Confirm Changes</string>
     <string name="prompt_event_name">Event Title</string>
     <string name="prompt_event_description">Event Description…</string>
-    <string name="prompt_date">DD/MM/YYYY</string>
+    <string name="prompt_date">DD/MM/YYYY HH:MM AM/PM</string>
     <string name="prompt_maximum_entrants">Max Entrants</string>
     <string name="registration_start_text">Registration Start</string>
     <string name="registration_end_text">Registration End</string>
@@ -87,8 +87,8 @@
     <string name="cancel_button">Cancel</string>
 
     <!-- Strings related to Event Details -->
-    <string name="view_entrant_map_button">View Entrant&#10;Map (Optional)</string>
-    <string name="create_notification_button">Create&#10;Notification</string>
+    <string name="view_entrant_map_button">View Entrant Map</string>
+    <string name="create_notification_button">Create Notification</string>
     <string name="view_qr_button">View QR Code</string>
     <string name="edit_event_button">Edit Event</string>
     <string name="delete_event_button">Delete Event</string>
@@ -96,6 +96,7 @@
     <string name="return_button">Return</string>
     <string name="signup_button">Sign Up</string>
     <string name="opt_out_button">Opt Out</string>
+    <string name="view_waiting_list_button">View Current Waiting List</string>
     <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
 
     <!-- Strings related to the delete popup -->

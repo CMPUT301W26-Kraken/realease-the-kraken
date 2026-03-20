@@ -99,6 +99,7 @@ public class EventDetailsFragment extends Fragment {
         Button editEventButton = view.findViewById(R.id.edit_event_button);
         Button viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         Button viewQrButton = view.findViewById(R.id.view_qr_button);
+        Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
 
         // Toggle visibilities of button groups based on the user's role
         if (userType == UserRole.ENTRANT) {
@@ -134,8 +135,7 @@ public class EventDetailsFragment extends Fragment {
                     .navigate(R.id.action_eventDetailsFragment_to_createEventFragment, args);
         });
 
-        // TODO: IMPLEMENT PROPER VIEW WAITING LIST BUTTON
-        viewEntrantMapButton.setOnClickListener(v -> {
+        viewWaitingListButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putBoolean("adminView", false);
             args.putString(ARG_EVENT_ID, eventId);
