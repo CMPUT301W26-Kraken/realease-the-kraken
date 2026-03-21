@@ -46,7 +46,6 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
             editEvent = getArguments().getBoolean("editEvent");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -56,30 +55,23 @@ public class CreateEventFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentCreateEventBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
-            if (activity.getSupportActionBar() != null) {
-                activity.getSupportActionBar().show();
-            }
+            if (activity.getSupportActionBar() != null) activity.getSupportActionBar().show();
         }
 
-        if (editEvent == true) {
+        if (editEvent) {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
-            //TODO: FILL IN REMAINING FIELDS WITH EXISTING EVENTS INFORMATION
         }
 
         // Navigate back to main menu
@@ -90,16 +82,12 @@ public class CreateEventFragment extends Fragment {
                 args.putSerializable("UserType", UserRole.ORGANIZER);
                 args.putString("eventId", eventID);
                 args.putBoolean("cameFromYourEvents", cameFromYourEvents);
-
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             } else {
                 // A new event being created was canceled, so the user had to have come from your events
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
-
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
 
@@ -122,44 +110,27 @@ public class CreateEventFragment extends Fragment {
 
         // Capacity is optional, but the rest of the event data is required to create a usable
         // browseable event in Firestore.
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description)
-                || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
+        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description) || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
             Toast.makeText(getContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        long registrationStartMillis;
-        long registrationEndMillis;
-
+        long registrationStartMillis, registrationEndMillis;
         try {
             // Keep create-event input and browse-event filter input on the same date format so
             // the user only has to learn one timestamp convention in the app.
-            java.text.SimpleDateFormat sdf =
-                    new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
             sdf.setLenient(false);
-
-            java.util.Date startDate = sdf.parse(startText);
-            java.util.Date endDate = sdf.parse(endText);
-
-            if (startDate == null || endDate == null) {
-                Toast.makeText(getContext(), "Invalid date format", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            registrationStartMillis = startDate.getTime();
-            registrationEndMillis = endDate.getTime();
+            registrationStartMillis = sdf.parse(startText).getTime();
+            registrationEndMillis = sdf.parse(endText).getTime();
         } catch (Exception e) {
-            Toast.makeText(getContext(),
-                    "Enter dates as dd/MM/yyyy h:mm AM/PM",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Enter dates as dd/MM/yyyy h:mm AM/PM", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // Registration end drives worker scheduling, so reject inverted windows before saving.
-        if (registrationEndMillis < registrationStartMillis) {
-            Toast.makeText(getContext(),
-                    "Registration end must be after registration start",
-                    Toast.LENGTH_SHORT).show();
+        if (registrationEndMillis <= registrationStartMillis) {
+            Toast.makeText(getContext(), "Registration end must be after registration start", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -201,13 +172,10 @@ public class CreateEventFragment extends Fragment {
         binding.loading.setVisibility(View.VISIBLE);
         binding.createEvent.setEnabled(false);
 
-        EventRepository repository = new EventRepository();
-        repository.createEvent(event, new EventRepository.CompletionCallback() {
+        new EventRepository().createEvent(event, new EventRepository.CompletionCallback() {
             @Override
             public void onSuccess() {
-                if (!isAdded()) {
-                    return;
-                }
+                if (!isAdded()) return;
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
@@ -230,27 +198,23 @@ public class CreateEventFragment extends Fragment {
                                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
                                 .setInputData(inputData)
                                 .build();
-
                 WorkManager.getInstance(requireContext()).enqueue(drawRequest);
 
                 Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
 
-                Navigation.findNavController(requireView())
-                        .navigate(R.id.action_createEventFragment_to_browseEventsFragment);
+                // Navigate to details instead of browse
+                Bundle args = new Bundle();
+                args.putString("eventId", eventId);
+                args.putSerializable("UserType", UserRole.ORGANIZER);
+                Navigation.findNavController(requireView()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             }
 
             @Override
             public void onError(Exception e) {
-                if (!isAdded()) {
-                    return;
-                }
-
+                if (!isAdded()) return;
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
-
-                Toast.makeText(getContext(),
-                        "Failed to create event: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

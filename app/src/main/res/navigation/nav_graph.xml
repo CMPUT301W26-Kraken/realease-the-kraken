@@ -54,6 +54,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_ticketTestFragment"
             app:destination="@id/ticketTestFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_qrScanFragment"
+            app:destination="@id/qrScanFragment" />
     </fragment>
 
     <fragment
@@ -138,9 +141,16 @@
         <action
             android:id="@+id/action_eventDetailsFragment_to_createEventFragment"
             app:destination="@id/createEventFragment" />
+
         <argument
             android:name="UserType"
             app:argType="com.example.releasethekraken.model.UserRole" />
+
+        <!-- FOR QR -->
+        <argument
+            android:name="eventId"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
     <fragment
@@ -151,6 +161,17 @@
         <action
             android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+    </fragment>
+
+    <!-- QR SCAN FRAGMENT -->
+    <fragment
+        android:id="@+id/qrScanFragment"
+        android:name="com.example.releasethekraken.view.QRScanFragment"
+        android:label="fragment_qr_scan"
+        tools:layout="@layout/fragment_qr_scan">
+        <action
+            android:id="@+id/action_qrScanFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
     </fragment>
 
 </navigation>

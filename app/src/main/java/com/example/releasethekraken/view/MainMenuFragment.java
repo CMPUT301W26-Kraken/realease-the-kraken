@@ -81,6 +81,12 @@ public class MainMenuFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_notificationFragment)
         );
+
+        // Navigate to QR Scan
+        binding.qrScanButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_mainMenuFragment_to_qrScanFragment)
+        );
     }
 
     @Override
