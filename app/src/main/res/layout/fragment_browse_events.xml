@@ -6,32 +6,93 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Top Banner -->
-
+    <!-- Search entry point for keyword-based event lookup (#97). -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <EditText
             android:id="@+id/search_events_text"
-            android:layout_width="325dp"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
+            android:layout_weight="1"
             android:ems="10"
-            android:hint="@string/prompt_search"
+            android:hint="@string/search_events_hint"
             android:inputType="text" />
 
         <ImageButton
             android:id="@+id/search_events_button"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="20dp"
             android:backgroundTint="@color/light_grey_button"
             android:tint="@color/black"
             app:srcCompat="@android:drawable/ic_menu_search" />
+    </LinearLayout>
+
+    <!-- Structured filters for timestamp availability and minimum capacity (#83). -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/filter_available_at_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="2"
+            android:hint="@string/filter_available_at_hint"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/filter_capacity_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:layout_weight="1"
+            android:hint="@string/filter_capacity_hint"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <!-- Search and filter submission controls. Clear restores the unfiltered event list. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/apply_filters_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/apply_filters_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/clear_filters_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/light_grey_button"
+            android:text="@string/clear_filters_button"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout
@@ -63,7 +124,7 @@
 
     </LinearLayout>
 
-    <!-- List Area (RecyclerView Recommended) -->
+    <!-- RecyclerView renders the filtered subset maintained by BrowseEventsFragment. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/events_recycler_view"
         android:layout_width="match_parent"
@@ -73,8 +134,20 @@
 
     </androidx.recyclerview.widget.RecyclerView>
 
-    <!-- Toolbar -->
+    <!-- Empty state shown when the current search/filter combination produces no matches. -->
+    <TextView
+        android:id="@+id/empty_results_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:text="@string/no_matching_events"
+        android:textColor="@color/dark_blue_text"
+        android:visibility="gone" />
 
+    <!-- Temporary dummy role controls left in place from the existing browse screen. -->
     <LinearLayout
         android:id="@+id/DummyButtonLayout"
         android:layout_width="match_parent"
@@ -96,6 +169,7 @@
             android:text="Entrant" />
     </LinearLayout>
 
+    <!-- Existing bottom toolbar/navigation controls. -->
     <LinearLayout
         android:id="@+id/fullscreen_content_controls"
         style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"

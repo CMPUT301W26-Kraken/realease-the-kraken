@@ -7,6 +7,10 @@ package com.example.releasethekraken.model;
  * this class belongs to the model layer and contains no UI logic
  */
 public class Event {
+    // Older Firestore documents were created before capacity became part of the model.
+    // Keeping a single default in the model avoids scattering the fallback value across
+    // the repository, tests, and UI code.
+    public static final int DEFAULT_CAPACITY = 20;
 
     //unique identifier for the event
     //could be a firestore document ID or generated ID
@@ -17,7 +21,7 @@ public class Event {
 
     private final long registrationStartMillis; //time in milliseconds when registration starts for the event
     private final long registrationEndMillis; //time in milliseconds when registration ends for the event
-    private final int capacity = 20; //CHANGE THIS POST HALF WAY!!!! (All events have capacity of 20 right now)
+    private final int capacity;
 
     /**
      *  creating a new Event object
@@ -30,12 +34,32 @@ public class Event {
      */
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis) {
-        //assign constructor parameters to class fields
+        // This overload keeps older call sites valid while routing everything through the
+        // full constructor so capacity normalization only exists in one place.
+        this(eventId, title, description, registrationStartMillis, registrationEndMillis, DEFAULT_CAPACITY);
+    }
+
+    /**
+     * creating a new Event object with an explicit capacity.
+     *
+     * @param eventId unique ID for the event
+     * @param title title of the event
+     * @param description description of the event
+     * @param registrationStartMillis Time when registration starts
+     * @param registrationEndMillis Time when registration ends
+     * @param capacity maximum number of entrants the event supports
+     */
+    public Event(String eventId, String title, String description,
+                 long registrationStartMillis, long registrationEndMillis, int capacity) {
+        // Store the raw event metadata exactly as provided by the caller.
         this.eventId = eventId;
         this.title = title;
         this.description = description;
         this.registrationStartMillis = registrationStartMillis;
         this.registrationEndMillis = registrationEndMillis;
+        // Capacity is normalized here instead of in every caller so that older documents,
+        // blank create-event input, and invalid values all converge to the same behavior.
+        this.capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
     }
 
     //returns a unique ID for the event
@@ -64,5 +88,7 @@ public class Event {
     }
 
     //returns capacity
-    public int getCapacity() {return capacity; }
+    public int getCapacity() {
+        return capacity;
+    }
 }
