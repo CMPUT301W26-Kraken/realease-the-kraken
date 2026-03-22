@@ -101,11 +101,15 @@ public class CreateEventFragment extends Fragment {
      * registration closing
      */
     private void createEventAndSave() {
+        // Pull the raw user input first so validation can happen before any repository work.
         String title = binding.nameEventCreate.getText().toString().trim();
         String description = binding.eventDescriptionText.getText().toString().trim();
         String startText = binding.registrationStartDate.getText().toString().trim();
         String endText = binding.registrationEndDate.getText().toString().trim();
+        String capacityText = binding.maxEntrantsEditText.getText().toString().trim();
 
+        // Capacity is optional, but the rest of the event data is required to create a usable
+        // browseable event in Firestore.
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description) || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
             Toast.makeText(getContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
@@ -113,6 +117,8 @@ public class CreateEventFragment extends Fragment {
 
         long registrationStartMillis, registrationEndMillis;
         try {
+            // Keep create-event input and browse-event filter input on the same date format so
+            // the user only has to learn one timestamp convention in the app.
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
             sdf.setLenient(false);
             registrationStartMillis = sdf.parse(startText).getTime();
@@ -122,14 +128,47 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        // Registration end drives worker scheduling, so reject inverted windows before saving.
         if (registrationEndMillis <= registrationStartMillis) {
             Toast.makeText(getContext(), "Registration end must be after registration start", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String eventId = title.replaceAll("\\s+", "_").toLowerCase();
-        Event event = new Event(eventId, title, description, registrationStartMillis, registrationEndMillis);
+        // Blank capacity means "use the app default". Any provided value must be a positive whole
+        // number because browse-time filtering compares numeric capacities.
+        int capacity = Event.DEFAULT_CAPACITY;
+        if (!capacityText.isEmpty()) {
+            try {
+                capacity = Integer.parseInt(capacityText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(),
+                        "Maximum entrants must be a whole number",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (capacity <= 0) {
+                Toast.makeText(getContext(),
+                        "Maximum entrants must be greater than zero",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
+        // Current app flow still derives an id from the title. Not ideal long-term, but kept
+        // unchanged here so the new filtering work does not alter navigation semantics.
+        String eventId = title.replaceAll("\\s+", "_").toLowerCase();
+
+        Event event = new Event(
+                eventId,
+                title,
+                description,
+                registrationStartMillis,
+                registrationEndMillis,
+                capacity
+        );
+
+        // Disable the button while Firestore writes so duplicate taps do not create duplicate
+        // events or enqueue multiple draw workers.
         binding.loading.setVisibility(View.VISIBLE);
         binding.createEvent.setEnabled(false);
 
@@ -141,13 +180,24 @@ public class CreateEventFragment extends Fragment {
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
 
-                // Ethan's Worker Logic sorry I had to edit this making qr work was bad
+                // Worker delay is based on the registration close time. This keeps entrant drawing
+                // aligned with the same registration window used by browse-event availability
+                // filtering.
                 long delay = registrationEndMillis - System.currentTimeMillis();
-                Data inputData = new Data.Builder().putString("eventId", eventId).build();
-                OneTimeWorkRequest drawRequest = new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
-                        .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                        .setInputData(inputData)
+
+                // Pass the event id into the worker so the background draw job knows which event
+                // should be processed once registration closes.
+                Data inputData = new Data.Builder()
+                        .putString("eventId", eventId)
                         .build();
+
+                // Queue a one-time worker instead of blocking the UI thread or relying on the
+                // fragment still being alive when registration closes.
+                OneTimeWorkRequest drawRequest =
+                        new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
+                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                                .setInputData(inputData)
+                                .build();
                 WorkManager.getInstance(requireContext()).enqueue(drawRequest);
 
                 Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
