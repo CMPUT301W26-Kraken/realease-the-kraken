@@ -28,6 +28,19 @@ import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
 
+/**
+ * A fragment that shows the details of an event that can be accessed when an event is clicked from
+ * the your events or browse events pages. It displays all of the relevant information for an event
+ * as well as displays control buttons at the bottom that are dependent upon the user's role.
+ *
+ * When this event is navigated to it takes three arguments
+ * String eventId that is the id of the event that is being viewed and is used to fill in fields with
+ *  the relevant event information.
+ * UserRole userType that informs the fragment of what type of user is accessing the fragment so it can
+ *  display the proper control buttons.
+ * Boolean cameFromYourEvents that determines if the details page was accessed through the your events
+ *  page or the browse all events page and is used for backwards navigability.
+ */
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
@@ -74,27 +87,29 @@ public class EventDetailsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Group organizerButtonGroup = view.findViewById(R.id.organizer_button_group);
-        Group entrantButtonGroup = view.findViewById(R.id.entrant_button_group);
-
         titleTextView = view.findViewById(R.id.event_title_text);
         descriptionTextView = view.findViewById(R.id.event_description_display);
         registrationStartTextView = view.findViewById(R.id.registration_start_display);
         registrationEndTextView = view.findViewById(R.id.registration_end_display);
-        
+
         Button signupOptOutButton = view.findViewById(R.id.signup_optout_button);
         Button returnToBrowseButton = view.findViewById(R.id.return_button);
         Button deleteEventButton = view.findViewById(R.id.delete_event_button);
         Button createNotificationButton = view.findViewById(R.id.create_notification_button);
         Button editEventButton = view.findViewById(R.id.edit_event_button);
+        Button viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         Button viewQrButton = view.findViewById(R.id.view_qr_button);
+        Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
 
+        // Toggle visibilities of button groups based on the user's role
         if (userType == UserRole.ENTRANT) {
-            organizerButtonGroup.setVisibility(View.GONE);
-            entrantButtonGroup.setVisibility(View.VISIBLE);
-        } else {
-            organizerButtonGroup.setVisibility(View.VISIBLE);
-            entrantButtonGroup.setVisibility(View.GONE);
+            viewEntrantMapButton.setVisibility(View.GONE);
+            createNotificationButton.setVisibility(View.GONE);
+            viewQrButton.setVisibility(View.GONE);
+            editEventButton.setVisibility(View.GONE);
+            deleteEventButton.setVisibility(View.GONE);
+        } else if (userType == UserRole.ORGANIZER) {
+            signupOptOutButton.setVisibility(View.GONE);
         }
 
         loadEventDetails();
@@ -110,7 +125,17 @@ public class EventDetailsFragment extends Fragment {
 
         deleteEventButton.setOnClickListener(v -> showDeleteConfirmationDialog(v));
         createNotificationButton.setOnClickListener(v -> showCreateNotificationDialog());
-        editEventButton.setOnClickListener(v -> navigateToEditEvent(view));
+        editEventButton.setOnClickListener(v -> navigateToEditEvent(v));
+
+        viewWaitingListButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putBoolean("adminView", false);
+            args.putString(ARG_EVENT_ID, eventId);
+            args.putSerializable("userRole", userType);
+            args.putBoolean("cameFromYourEvents", cameFromYourEvents);
+
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
+        });
     }
 
     private void showQrCodeDialog() {
@@ -135,6 +160,7 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    //load real event details from Firestore
     private void loadEventDetails() {
         if (eventId == null) return;
         eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
@@ -151,6 +177,10 @@ public class EventDetailsFragment extends Fragment {
         });
     }
 
+    /**
+     * This is a method that is used to set all of the display fields to contain the information stored
+     * by the event object being accessed
+     */
     private void bindEventToViews() {
         titleTextView.setText(currentEvent.getTitle());
         descriptionTextView.setText(currentEvent.getDescription());
@@ -159,14 +189,14 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void handleSignupToggle(Button button) {
-        String entrantId = "testEntrant001"; 
+        String entrantId = "testEntrant001";
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
                 @Override
                 public void onResult(WaitingListService.JoinResult result) {
                     if (result == WaitingListService.JoinResult.SUCCESS) {
                         isJoined = true;
-                        button.setText("Leave Waiting List");
+                        button.setText(R.string.opt_out_button);
                     }
                     Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
                 }
@@ -178,7 +208,7 @@ public class EventDetailsFragment extends Fragment {
                 public void onResult(WaitingListService.LeaveResult result) {
                     if (result == WaitingListService.LeaveResult.SUCCESS) {
                         isJoined = false;
-                        button.setText("Join Waiting List");
+                        button.setText(R.string.signup_button);
                     }
                 }
                 @Override public void onError(Exception e) {}
@@ -200,6 +230,12 @@ public class EventDetailsFragment extends Fragment {
         });
     }
 
+    /**
+     * Converts a time given in milliseconds into a time displayed in YYYY-MM-DD so that it can be displayed.
+     *
+     * @param millis the time that is stored in milliseconds
+     * @return a String version of the date converted into YYYY-MM-DD format
+     */
     private String formatMillis(long millis) {
         return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
     }
@@ -217,15 +253,44 @@ public class EventDetailsFragment extends Fragment {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-
+    /**
+     * Creates a text box where an organizer can create a notification and allow them to post it.
+     *
+     * //@param notificationRespository repository where the notification will be sent to after it is created
+     */
+    // TODO: ADD ARGUMENTS (NotificationRepository notificationRespository) (if necessary, I'm not entirely sure how creating notifications works)
+    /*
+    The below code was created by ChatGPT after showing it the function above and asking if there was a way to add an edit text field for notifications instead
+     */
     private void showCreateNotificationDialog() {
+
         EditText input = new EditText(requireContext());
-        input.setHint("Notification Message");
+        input.setHint("Enter notification message");
+        input.setMinLines(7);
+        input.setGravity(Gravity.TOP);
+
         new AlertDialog.Builder(requireContext())
                 .setTitle("Create Notification")
                 .setView(input)
-                .setPositiveButton("Send", (dialog, which) -> Toast.makeText(requireContext(), "Notification Sent", Toast.LENGTH_SHORT).show())
-                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Post Notification", (dialog, which) -> {
+
+                    String notificationText = input.getText().toString().trim();
+
+                    if (!notificationText.isEmpty()) {
+
+                        // TODO: Send notification to Firebase
+
+                        Toast.makeText(requireContext(),
+                                "Notification created: " + notificationText,
+                                Toast.LENGTH_SHORT).show();
+
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "Notification cannot be empty",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 

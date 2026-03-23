@@ -57,6 +57,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_qrScanFragment"
             app:destination="@id/qrScanFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_userListFragment"
+            app:destination="@id/userListFragment" />
     </fragment>
 
     <fragment
@@ -141,6 +144,9 @@
         <action
             android:id="@+id/action_eventDetailsFragment_to_createEventFragment"
             app:destination="@id/createEventFragment" />
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_userListFragment"
+            app:destination="@id/userListFragment" />
 
         <argument
             android:name="UserType"
@@ -161,6 +167,24 @@
         <action
             android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/userListFragment"
+        android:name="com.example.releasethekraken.view.UserListFragment"
+        android:label="fragment_user_list"
+        tools:layout="@layout/fragment_user_list" >
+        <action
+            android:id="@+id/action_userListFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+        <action
+            android:id="@+id/action_userListFragment_to_viewProfileFragment"
+            app:destination="@id/viewProfileFragment" />
+        <action
+            android:id="@+id/action_userListFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
+        <action
+            android:id="@+id/action_userListFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
     </fragment>
 
     <!-- QR SCAN FRAGMENT -->

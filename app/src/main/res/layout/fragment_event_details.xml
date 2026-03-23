@@ -13,18 +13,6 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/organizer_button_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="view_entrant_map_button, create_notification_button, view_qr_button, edit_event_button, delete_event_button" />
-
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/entrant_button_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:constraint_referenced_ids="signup_optout_button" />
-
         <ImageView
             android:id="@+id/event_poster"
             android:layout_width="326dp"
@@ -105,113 +93,69 @@
             app:layout_constraintStart_toStartOf="@+id/registration_end_display"
             app:layout_constraintTop_toBottomOf="@+id/registration_end_display" />
 
-        <Button
-            android:id="@+id/view_entrant_map_button"
+        <ScrollView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/view_entrant_map_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/view_qr_button"
-            app:layout_constraintEnd_toStartOf="@+id/create_notification_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView9" />
-
-        <Button
-            android:id="@+id/create_notification_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/create_notification_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/edit_event_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/view_entrant_map_button"
-            app:layout_constraintTop_toBottomOf="@+id/textView10" />
-
-        <Button
-            android:id="@+id/view_qr_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/view_qr_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/delete_event_button"
-            app:layout_constraintEnd_toStartOf="@+id/edit_event_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_entrant_map_button" />
-
-        <Button
-            android:id="@+id/edit_event_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/edit_event_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/return_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/view_qr_button"
-            app:layout_constraintTop_toBottomOf="@+id/create_notification_button" />
-
-        <Button
-            android:id="@+id/delete_event_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:backgroundTint="@color/delete_cancel_button"
-            android:text="@string/delete_event_button"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/return_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_qr_button" />
-
-        <Button
-            android:id="@+id/return_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/return_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
+            android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/delete_event_button"
-            app:layout_constraintTop_toBottomOf="@+id/edit_event_button" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textView10">
 
-        <Button
-            android:id="@+id/signup_optout_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginBottom="50dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/signup_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            <GridLayout
+                android:id="@+id/button_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="1"
+                android:padding="16dp"
+                android:useDefaultMargins="true">
+
+                <Button
+                    android:id="@+id/view_entrant_map_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/view_entrant_map_button" />
+
+                <Button
+                    android:id="@+id/view_waiting_list_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/view_waiting_list_button" />
+
+                <Button
+                    android:id="@+id/create_notification_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/create_notification_button" />
+
+                <Button
+                    android:id="@+id/view_qr_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/view_qr_button" />
+
+                <Button
+                    android:id="@+id/view_comments_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/view_comments_button" />
+
+                <Button
+                    android:id="@+id/edit_event_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/edit_event_button" />
+
+                <Button
+                    android:id="@+id/signup_optout_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/signup_button" />
+
+                <Button
+                    android:id="@+id/delete_event_button"
+                    style="@style/DeleteButtonStyle"
+                    android:text="@string/delete_event_button" />
+
+                <Button
+                    android:id="@+id/return_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/return_button" />
+
+            </GridLayout>
+        </ScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

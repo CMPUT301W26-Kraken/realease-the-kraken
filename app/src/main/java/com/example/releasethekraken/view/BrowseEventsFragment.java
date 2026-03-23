@@ -140,7 +140,7 @@ public class BrowseEventsFragment extends Fragment {
                 .setOnClickListener(v -> {
                     Bundle args = new Bundle();
                     args.putBoolean("editEvent", false);
-                    args.putBoolean("cameFromYourEvents", true);
+                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
 
                     Navigation.findNavController(v)
                             .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);

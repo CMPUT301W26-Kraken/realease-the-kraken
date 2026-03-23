@@ -13,6 +13,7 @@ import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentMainMenuBinding;
+import com.example.releasethekraken.model.UserRole;
 
 /**
  * This is the fragment that is responsible for displaying the main menu of the program and offering the
@@ -68,6 +69,16 @@ public class MainMenuFragment extends Fragment {
 
             Navigation.findNavController(v)
                     .navigate(R.id.action_mainMenuFragment_to_browseEventsFragment, bundle);
+        });
+
+        // Navigate to User List view as an admin
+        binding.adminBrowseUsersButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("adminView", true);
+            bundle.putSerializable("userRole", UserRole.ADMIN);
+
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_mainMenuFragment_to_userListFragment, bundle);
         });
 
         // Navigate to Ticket Test (role access, filtering, history)
