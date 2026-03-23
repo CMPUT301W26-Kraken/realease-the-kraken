@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -201,7 +202,7 @@ public class WaitingListRepository {
          *
          * @param entrants list of entrant IDs
          */
-        void onResult(ArrayList<String> entrants);
+        void onResult(List<String> entrants);
 
         /**
          * Called when an error occurs.
@@ -211,31 +212,68 @@ public class WaitingListRepository {
         void onError(Exception e);
     }
 
+
+    //Updated by chatGPT from original implementation "update this code based on changes to DrawEntrantsWorker" 2026-03-23
     /**
-     * Saves accepted entrants (winners) for an event into Firestore.
-     * Each winner is stored under a separate document in the "accepted" collection.
+     * Saves the results of a lottery draw for an event.
      *
-     * @param eventId the ID of the event
-     * @param winners list of entrant IDs selected as winners
-     * @param callback callback to indicate when all writes succeed or if an error occurs
+     * <p>Saves accepted entrants to the "accepted" subcollection and rejected
+     * entrants to the "rejected" subcollection. Calls the provided callback
+     * after all writes succeed or if any write fails.
+     *
+     * @param eventId   The ID of the event.
+     * @param accepted  List of accepted entrants (winners).
+     * @param rejected  List of rejected entrants.
+     * @param callback  Callback to notify when the operation completes or fails.
      */
-    public void saveAcceptedEntrants(String eventId, ArrayList<String> winners, CompletionCallback callback) {
-        int total = winners.size();
+    public void saveDrawnEntrants(
+            String eventId,
+            List<String> accepted,
+            List<String> rejected,
+            CompletionCallback callback
+    ) {
+        int total = accepted.size() + rejected.size();
+
+        // If there’s nothing to save, return immediately
+        if (total == 0) {
+            callback.onSuccess();
+            return;
+        }
+
         final int[] savedCount = {0};
         final boolean[] errorOccurred = {false};
 
-        for (String winnerId : winners) {
+        Runnable checkComplete = () -> {
+            savedCount[0]++;
+            if (savedCount[0] == total && !errorOccurred[0]) {
+                callback.onSuccess();
+            }
+        };
+
+        // Save accepted entrants
+        for (String winnerId : accepted) {
             db.collection("events")
                     .document(eventId)
                     .collection("accepted")
                     .document(winnerId)
                     .set(Map.of("selected", true))
-                    .addOnSuccessListener(unused -> {
-                        savedCount[0]++;
-                        if (savedCount[0] == total && !errorOccurred[0]) {
-                            callback.onSuccess();
+                    .addOnSuccessListener(unused -> checkComplete.run())
+                    .addOnFailureListener(e -> {
+                        if (!errorOccurred[0]) {
+                            errorOccurred[0] = true;
+                            callback.onError(e);
                         }
-                    })
+                    });
+        }
+
+        // Save rejected entrants
+        for (String rejectedId : rejected) {
+            db.collection("events")
+                    .document(eventId)
+                    .collection("rejected")
+                    .document(rejectedId)
+                    .set(Map.of("selected", false))
+                    .addOnSuccessListener(unused -> checkComplete.run())
                     .addOnFailureListener(e -> {
                         if (!errorOccurred[0]) {
                             errorOccurred[0] = true;

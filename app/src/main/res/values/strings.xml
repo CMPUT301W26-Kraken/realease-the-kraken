@@ -111,7 +111,7 @@
     <!-- Strings related to the User List -->
     <string name="admin_user_list_welcome">All Users</string>
     <string name="waiting_list_welcome">Event Waiting List</string>
-
+    <string name="prompt_search">Search</string>
 
     <!-- Misc strings -->
     <string name="dummy_button">Dummy Button</string>

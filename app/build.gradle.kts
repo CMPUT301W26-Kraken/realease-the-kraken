@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.navigation.runtime)
     implementation("androidx.work:work-runtime:2.9.0")
+    implementation("androidx.concurrent:concurrent-futures:1.1.0")
 
     // CameraX
     val camerax_version = "1.3.4"
