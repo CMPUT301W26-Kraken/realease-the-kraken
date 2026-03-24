@@ -207,7 +207,7 @@ public class EventDetailsFragment extends Fragment {
         //Ethan adding real entrant to sign up
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
         Profile profile = profileRepository.getProfile();
-        String entrantId = profile.getDeviceId(); //TO BE CHANGED IF CHANGING DEVICE ID TO USERID
+        String entrantId = profile.getUserId(); //TO BE CHANGED IF CHANGING DEVICE ID TO USERID
         //End of Ethan's edit
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
