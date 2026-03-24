@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.releasethekraken.model.Profile;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -13,15 +15,15 @@ import java.util.Map;
 /**
  * Repository class responsible for storing and retrieving Profile data.
  *
- * Profile data is currently stored in two places:
+ * Profile data is stored:
  * 1. Locally using SharedPreferences
  * 2. Remotely using Firebase Firestore
  *
- * Local storage is used as a fallback while Firebase integration is being completed.
+ * Firestore document ID is the Firebase Auth UID.
  */
 public class ProfileRepository {
     private static final String PREFS_NAME = "profile_prefs";
-    private static final String KEY_DEVICE_ID = "profile_device_id"; // ANDROID_ID: this is stored locally, used as Firestore doc ID
+    private static final String KEY_USER_ID = "profile_user_id";
     private static final String KEY_NAME = "profile_name";
     private static final String KEY_EMAIL = "profile_email";
     private static final String KEY_PHONE = "profile_phone";
@@ -36,42 +38,35 @@ public class ProfileRepository {
         firestore = FirebaseFirestore.getInstance();
     }
 
-    /**
-     * Callback interface for asynchronous Firestore operations.
-     */
     public interface ProfileRepositoryCallback<T> {
         void onSuccess(T result);
         void onFailure(Exception exception);
     }
 
-    /**
-     * Saves the profile locally in SharedPreferences.
-     *
-     * @param profile The profile to save locally
-     */
+    private FirebaseUser requireCurrentUser() {
+        return FirebaseAuth.getInstance().getCurrentUser();
+    }
+
     public void saveProfileLocally(Profile profile) {
         sharedPreferences.edit()
-                .putString(KEY_DEVICE_ID, profile.getDeviceId())
+                .putString(KEY_USER_ID, profile.getUserId())
                 .putString(KEY_NAME, profile.getName())
                 .putString(KEY_EMAIL, profile.getEmail())
                 .putString(KEY_PHONE, profile.getPhone())
                 .apply();
     }
 
-    /**
-     * Saves the profile only to Firestore.
-     *
-     * Firestore document ID is the device ID (ANDROID_ID).
-     * To add login: swap profile.getDeviceId() with FirebaseAuth.getInstance().getCurrentUser().getUid()
-     *
-     * @param profile   The profile to save
-     * @param callback  Callback for Firestore success/failure
-     */
     public void saveProfileToFirestore(Profile profile, ProfileRepositoryCallback<Void> callback) {
-        String documentId = profile.getDeviceId(); // doc ID = ANDROID_ID, swap to UID when login is added
+        FirebaseUser currentUser = requireCurrentUser();
+        if (currentUser == null) {
+            callback.onFailure(new Exception("No authenticated user found."));
+            return;
+        }
+
+        String documentId = currentUser.getUid();
 
         Map<String, Object> profileData = new HashMap<>();
-        profileData.put("deviceId", profile.getDeviceId());
+        profileData.put("userId", profile.getUserId());
         profileData.put("name", profile.getName());
         profileData.put("email", profile.getEmail());
         profileData.put("phone", profile.getPhone());
@@ -91,48 +86,34 @@ public class ProfileRepository {
                 });
     }
 
-    /**
-     * Backward-compatible method that saves both locally and to Firestore.
-     *
-     * @param profile   The profile to save
-     * @param callback  Callback for Firestore success/failure
-     */
     public void saveProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
         saveProfileLocally(profile);
         saveProfileToFirestore(profile, callback);
     }
 
-    /**
-     * Returns the locally stored profile.
-     *
-     * @return locally stored Profile object
-     */
     public Profile getLocalProfile() {
-        String deviceId = sharedPreferences.getString(KEY_DEVICE_ID, "");
+        String userId = sharedPreferences.getString(KEY_USER_ID, "");
         String name = sharedPreferences.getString(KEY_NAME, "");
         String email = sharedPreferences.getString(KEY_EMAIL, "");
         String phone = sharedPreferences.getString(KEY_PHONE, "");
-        return new Profile(deviceId, name, email, phone);
+        return new Profile(userId, name, email, phone);
     }
 
-    /**
-     * Backward-compatible method for existing code that expects getProfile().
-     *
-     * @return locally stored Profile object
-     */
     public Profile getProfile() {
         return getLocalProfile();
     }
 
-    /**
-     * Retrieves a profile from Firestore using device ID as the document ID.
-     *
-     * @param deviceId  Device ID used to identify the Firestore document
-     * @param callback  Callback for success/failure
-     */
-    public void getProfileFromFirestore(String deviceId, ProfileRepositoryCallback<Profile> callback) {
+    public void getProfileFromFirestore(ProfileRepositoryCallback<Profile> callback) {
+        FirebaseUser currentUser = requireCurrentUser();
+        if (currentUser == null) {
+            callback.onFailure(new Exception("No authenticated user found."));
+            return;
+        }
+
+        String documentId = currentUser.getUid();
+
         firestore.collection(COLLECTION_PROFILES)
-                .document(deviceId)
+                .document(documentId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -151,72 +132,35 @@ public class ProfileRepository {
     }
 
     public void updateProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
-
-        // Save locally first
         saveProfileLocally(profile);
-
-        String documentId = profile.getDeviceId(); // doc ID = ANDROID_ID, swap to UID when login is added
-
-        Map<String, Object> profileData = new HashMap<>();
-        profileData.put("deviceId", profile.getDeviceId());
-        profileData.put("name", profile.getName());
-        profileData.put("email", profile.getEmail());
-        profileData.put("phone", profile.getPhone());
-
-        firestore.collection(COLLECTION_PROFILES)
-                .document(documentId)
-                .set(profileData)
-                .addOnSuccessListener(unused -> {
-                    Log.d("ProfileRepository", "Profile updated in Firestore");
-                    callback.onSuccess(null);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ProfileRepository", "Profile update failed", e);
-                    callback.onFailure(e);
-                });
+        saveProfileToFirestore(profile, callback);
     }
 
-    /**
-     * Checks whether a profile exists locally.
-     *
-     * @return true if required local profile fields are present
-     */
     public boolean hasProfile() {
         return !sharedPreferences.getString(KEY_NAME, "").isEmpty()
                 && !sharedPreferences.getString(KEY_EMAIL, "").isEmpty();
     }
 
-    /**
-     * Normalizes email for safe and consistent Firestore document IDs.
-     *
-     * @param email input email
-     * @return normalized email
-     */
-    private String normalizeEmail(String email) {
-        return email == null ? "" : email.trim().toLowerCase();
-    }
-
-    /**
-     * Deletes the locally stored profile from SharedPreferences.
-     */
     public void deleteLocalProfile() {
         sharedPreferences.edit()
-                .remove(KEY_DEVICE_ID)
+                .remove(KEY_USER_ID)
                 .remove(KEY_NAME)
                 .remove(KEY_EMAIL)
                 .remove(KEY_PHONE)
                 .apply();
     }
 
-    /**
-     * Deletes the profile from Firestore using device ID as the document ID.
-     *
-     * @param deviceId  device ID used to identify the Firestore document
-     * @param callback  callback for success/failure
-     */
-    public void deleteProfileFromFirestore(String deviceId, ProfileRepositoryCallback<Void> callback) {
+    public void deleteProfileFromFirestore(ProfileRepositoryCallback<Void> callback) {
+        FirebaseUser currentUser = requireCurrentUser();
+        if (currentUser == null) {
+            callback.onFailure(new Exception("No authenticated user found."));
+            return;
+        }
+
+        String documentId = currentUser.getUid();
+
         firestore.collection(COLLECTION_PROFILES)
-                .document(deviceId)
+                .document(documentId)
                 .delete()
                 .addOnSuccessListener(unused -> {
                     Log.d("ProfileRepository", "Profile deleted from Firestore");

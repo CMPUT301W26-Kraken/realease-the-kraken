@@ -15,20 +15,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import android.provider.Settings;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
-/**
- * Fragment responsible for creating or updating a user profile.
- *
- * Mode is determined by navigation argument:
- * - false -> create mode
- * - true  -> update mode
- */
 public class AccountCreateFragment extends Fragment {
 
     private FragmentAccountCreateBinding binding;
@@ -59,7 +53,6 @@ public class AccountCreateFragment extends Fragment {
             isEditMode = getArguments().getBoolean("isEditMode", false);
         }
 
-        // Only prefill fields when explicitly opened in edit mode
         if (isEditMode) {
             Profile existingProfile = profileRepository.getProfile();
             nameEditText.setText(existingProfile.getName());
@@ -72,21 +65,22 @@ public class AccountCreateFragment extends Fragment {
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             saveProfileButton.setText(R.string.action_create_profile);
+            cancelAccountButton.setText(R.string.action_cancel_account_creation);
 
-            // Clear fields in create mode
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null && currentUser.getEmail() != null) {
+                emailEditText.setText(currentUser.getEmail());
+            } else {
+                emailEditText.setText("");
+            }
+
             nameEditText.setText("");
-            emailEditText.setText("");
             phoneEditText.setText("");
         }
 
         TextWatcher validationWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -106,14 +100,18 @@ public class AccountCreateFragment extends Fragment {
                 return;
             }
 
-            //Added to fix crash. Gets device id and constructs profile with it
-            String deviceId = Settings.Secure.getString(
-                    requireContext().getContentResolver(),
-                    Settings.Secure.ANDROID_ID
-            );
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(requireContext(),
+                        "No authenticated user found. Please log in again.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String uid = currentUser.getUid();
 
             Profile profile = new Profile(
-                    deviceId,
+                    uid,
                     nameEditText.getText().toString().trim(),
                     emailEditText.getText().toString().trim(),
                     phoneEditText.getText().toString().trim()
@@ -127,15 +125,11 @@ public class AccountCreateFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
 
                 profileRepository.updateProfile(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                    }
+                    @Override public void onSuccess(Void result) {}
 
                     @Override
                     public void onFailure(Exception exception) {
-                        if (!isAdded()) {
-                            return;
-                        }
+                        if (!isAdded()) return;
 
                         Toast.makeText(requireContext(),
                                 "Profile updated locally, but Firestore sync failed: " + exception.getMessage(),
@@ -154,15 +148,11 @@ public class AccountCreateFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
 
                 profileRepository.saveProfileToFirestore(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                    }
+                    @Override public void onSuccess(Void result) {}
 
                     @Override
                     public void onFailure(Exception exception) {
-                        if (!isAdded()) {
-                            return;
-                        }
+                        if (!isAdded()) return;
 
                         Toast.makeText(requireContext(),
                                 "Profile was saved locally, but Firestore sync failed: " + exception.getMessage(),
@@ -194,28 +184,20 @@ public class AccountCreateFragment extends Fragment {
         boolean isValid = true;
 
         if (name.isEmpty()) {
-            if (showErrors) {
-                binding.nameCreate.setError(getString(R.string.error_name_required));
-            }
+            if (showErrors) binding.nameCreate.setError(getString(R.string.error_name_required));
             isValid = false;
         }
 
         if (email.isEmpty()) {
-            if (showErrors) {
-                binding.emailCreate.setError(getString(R.string.error_email_required));
-            }
+            if (showErrors) binding.emailCreate.setError(getString(R.string.error_email_required));
             isValid = false;
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            if (showErrors) {
-                binding.emailCreate.setError(getString(R.string.error_email_invalid));
-            }
+            if (showErrors) binding.emailCreate.setError(getString(R.string.error_email_invalid));
             isValid = false;
         }
 
         if (!phone.isEmpty() && phone.length() < 7) {
-            if (showErrors) {
-                binding.phoneCreate.setError(getString(R.string.error_phone_invalid));
-            }
+            if (showErrors) binding.phoneCreate.setError(getString(R.string.error_phone_invalid));
             isValid = false;
         }
 

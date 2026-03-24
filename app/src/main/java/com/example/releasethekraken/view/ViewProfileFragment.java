@@ -15,15 +15,9 @@ import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
-import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
 
-/**
- * Fragment that displays the currently saved user profile information.
- *
- * The profile information is loaded from local storage and shown on screen.
- * Users can view, edit, sign out, or delete their profile from here.
- */
 public class ViewProfileFragment extends Fragment {
 
     private FragmentViewProfileBinding binding;
@@ -33,7 +27,6 @@ public class ViewProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         binding = FragmentViewProfileBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -51,17 +44,11 @@ public class ViewProfileFragment extends Fragment {
         }
 
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
-        Profile profile = profileRepository.getProfile();
+        com.example.releasethekraken.model.Profile profile = profileRepository.getProfile();
 
-        binding.profileName.setText(
-                getDisplayValue(profile.getName(), getString(R.string.profile_not_set))
-        );
-        binding.profileEmail.setText(
-                getDisplayValue(profile.getEmail(), getString(R.string.profile_not_set))
-        );
-        binding.profilePhone.setText(
-                getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided))
-        );
+        binding.profileName.setText(getDisplayValue(profile.getName(), getString(R.string.profile_not_set)));
+        binding.profileEmail.setText(getDisplayValue(profile.getEmail(), getString(R.string.profile_not_set)));
+        binding.profilePhone.setText(getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided)));
 
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
@@ -81,73 +68,66 @@ public class ViewProfileFragment extends Fragment {
                     .navigate(R.id.action_viewProfileFragment_to_accountCreateFragment, bundle);
         });
 
-        binding.profileSignoutButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_viewProfileFragment_to_loginFragment)
-        );
+        binding.profileSignoutButton.setOnClickListener(v -> {
+            ProfileRepository repo = new ProfileRepository(requireContext());
+            repo.deleteLocalProfile();
+
+            FirebaseAuth.getInstance().signOut();
+
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_viewProfileFragment_to_loginFragment);
+        });
 
         binding.profileAccountDeleteButton.setOnClickListener(v ->
-                showDeleteConfirmationDialog(profile, profileRepository, v)
+                showDeleteConfirmationDialog(profileRepository, v)
         );
     }
 
-    /**
-     * Shows a confirmation dialog before permanently deleting the profile.
-     *
-     * @param profile current profile being deleted
-     * @param profileRepository repository used for local and Firestore deletion
-     * @param view current fragment view used for navigation
-     */
-    private void showDeleteConfirmationDialog(Profile profile,
-                                              ProfileRepository profileRepository,
-                                              View view) {
+    private void showDeleteConfirmationDialog(ProfileRepository profileRepository, View view) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Profile")
-                .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
-                .setPositiveButton("Yes, Delete", (dialog, which) -> {
-                    String email = profile.getEmail();
-
-                    // Delete local profile first so UI updates immediately
+                .setTitle(R.string.delete_profile_title)
+                .setMessage(R.string.delete_profile_confirmation)
+                .setPositiveButton(R.string.delete_button_text, (dialog, which) -> {
                     profileRepository.deleteLocalProfile();
 
-                    Toast.makeText(requireContext(),
-                            R.string.profile_deleted_message,
-                            Toast.LENGTH_SHORT).show();
+                    profileRepository.deleteProfileFromFirestore(new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            if (!isAdded()) {
+                                return;
+                            }
 
-                    // Delete from Firestore in the background
-                    profileRepository.deleteProfileFromFirestore(email,
-                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
-                                @Override
-                                public void onSuccess(Void result) {
-                                    // No extra UI action needed
-                                }
+                            Toast.makeText(requireContext(),
+                                    R.string.profile_deleted_message,
+                                    Toast.LENGTH_SHORT).show();
 
-                                @Override
-                                public void onFailure(Exception exception) {
-                                    if (!isAdded()) {
-                                        return;
-                                    }
+                            FirebaseAuth.getInstance().signOut();
 
-                                    Toast.makeText(requireContext(),
-                                            "Profile deleted locally, but Firestore delete failed: " + exception.getMessage(),
-                                            Toast.LENGTH_LONG).show();
-                                }
-                            });
+                            Navigation.findNavController(view)
+                                    .navigate(R.id.action_viewProfileFragment_to_loginFragment);
+                        }
 
-                    Navigation.findNavController(view)
-                            .navigate(R.id.action_viewProfileFragment_to_loginFragment);
+                        @Override
+                        public void onFailure(Exception exception) {
+                            if (!isAdded()) {
+                                return;
+                            }
+
+                            Toast.makeText(requireContext(),
+                                    "Profile deleted locally, but Firestore delete failed: " + exception.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+
+                            FirebaseAuth.getInstance().signOut();
+
+                            Navigation.findNavController(view)
+                                    .navigate(R.id.action_viewProfileFragment_to_loginFragment);
+                        }
+                    });
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel_button_text, (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
-    /**
-     * Returns a fallback string when the stored value is null or empty.
-     *
-     * @param value the profile value to display
-     * @param fallback text shown when value is missing
-     * @return value if present, otherwise fallback
-     */
     private String getDisplayValue(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }
