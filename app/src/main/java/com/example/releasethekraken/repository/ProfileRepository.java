@@ -2,10 +2,13 @@ package com.example.releasethekraken.repository;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.util.Log;
 
 import com.example.releasethekraken.model.Profile;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -224,6 +227,67 @@ public class ProfileRepository {
                 })
                 .addOnFailureListener(e -> {
                     Log.e("ProfileRepository", "Profile delete failed", e);
+                    callback.onFailure(e);
+                });
+    }
+
+    // image storing with Glide:
+    // Root reference to the Firebase Storage bucket
+    private final StorageReference storageRef =
+            FirebaseStorage.getInstance().getReference();
+
+    /**
+     * Uploads a profile image to Firebase Storage and returns the HTTPS download URL.
+     *
+     * Storage path: profile_images/{documentId}.jpg
+     * Using documentId as the filename means re-uploading overwrites the old photo —
+     * no orphaned files accumulate in Storage.
+     *
+     * After getting the URL, call saveProfileImageUrl() to persist it to Firestore.
+     *
+     * @param documentId  Firestore document ID for this profile (deviceId or Firebase UID)
+     * @param imageUri    local URI of the image chosen by the user from gallery
+     * @param callback    called with the HTTPS download URL on success, exception on failure
+     */
+    public void uploadProfileImage(String documentId, Uri imageUri,
+                                   ProfileRepositoryCallback<String> callback) {
+        // profile_images/{documentId}.jpg — overwrites on re-upload, no duplicates
+        StorageReference imageRef = storageRef.child("profile_images/" + documentId + ".jpg");
+
+        // putFile() streams the local file up to Firebase Storage
+        imageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    // Upload succeeded — get the permanent HTTPS download URL
+                    imageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                        Log.d("ProfileRepository", "Image uploaded: " + downloadUri);
+                        callback.onSuccess(downloadUri.toString()); // return URL string to caller
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileRepository", "Image upload failed", e);
+                    callback.onFailure(e);
+                });
+    }
+
+    /**
+     * Saves the profile image URL to the existing Firestore profile document.
+     * Uses update() so only the profileImageUrl field changes — all other fields untouched.
+     *
+     * @param documentId  Firestore document ID for this profile
+     * @param imageUrl    HTTPS download URL returned by uploadProfileImage()
+     * @param callback    called on success or failure
+     */
+    public void saveProfileImageUrl(String documentId, String imageUrl,
+                                    ProfileRepositoryCallback<Void> callback) {
+        firestore.collection(COLLECTION_PROFILES)
+                .document(documentId)
+                .update("profileImageUrl", imageUrl) // update() only touches this one field
+                .addOnSuccessListener(unused -> {
+                    Log.d("ProfileRepository", "Image URL saved to Firestore");
+                    callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileRepository", "Failed to save image URL", e);
                     callback.onFailure(e);
                 });
     }

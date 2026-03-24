@@ -31,15 +31,32 @@ public class WaitingListEntry {
         this.joinedAtMillis = joinedAtMillis;
     }
 
-    public String getEventId() { //return event id
+    public String getEventId() {
         return eventId;
     }
 
-    public String getEntrantId() { //return entrant id
+    public String getEntrantId() {
         return entrantId;
     }
 
-    public long getJoinedAtMillis() { //return time joined
+    public long getJoinedAtMillis() {
         return joinedAtMillis;
+    }
+
+    // Firestore collection structure:
+    // All fields are final and populated via the existing constructor.
+    // Firestore requires a no-arg constructor, which means the final
+    // fields must be explicitly assigned to null/0 inside it.
+    // This constructor is only ever called by Firestore — never in app.
+
+    /**
+     * No-arg constructor required by Firestore to deserialize document snapshots
+     * back into WaitingListEntry objects. Without this, any .toObject(WaitingListEntry.class)
+     * call will crash at runtime.
+     */
+    public WaitingListEntry() {
+        this.eventId = null;
+        this.entrantId = null;
+        this.joinedAtMillis = 0;
     }
 }

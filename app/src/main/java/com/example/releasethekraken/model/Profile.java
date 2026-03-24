@@ -90,4 +90,27 @@ public class Profile {
     public String getPhone() {
         return phone;
     }
+
+    // image storing with Glide:
+    // HTTPS download URL from Firebase Storage.
+    // The actual image file lives in Storage — this field stores only the URL string.
+    // Glide loads the image from this URL into an ImageView.
+    // Empty string means no photo has been uploaded yet.
+    private String profileImageUrl = "";
+
+    /**
+     * Returns the HTTPS URL of the profile image stored in Firebase Storage.
+     * Empty string if no image has been uploaded yet.
+     */
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    /**
+     * Sets the HTTPS URL of the profile image.
+     * Called after a successful Firebase Storage upload.
+     */
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
 }

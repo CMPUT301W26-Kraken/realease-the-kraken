@@ -14,6 +14,7 @@ import com.example.releasethekraken.controller.SessionManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+
 public class MainActivity extends AppCompatActivity {
 
     @Override

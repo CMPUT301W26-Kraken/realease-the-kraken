@@ -174,7 +174,7 @@ public class WaitingListRepository {
     /**
      * Retrieves all entrant IDs currently on the waiting list for a given event.
      *
-     * @param eventId the ID of the event
+     * @param eventId  the ID of the event
      * @param callback callback returning a list of entrant IDs
      */
     public void getAllEntrants(String eventId, EntrantsCallback callback) {
@@ -212,7 +212,6 @@ public class WaitingListRepository {
         void onError(Exception e);
     }
 
-
     //Updated by chatGPT from original implementation "update this code based on changes to DrawEntrantsWorker" 2026-03-23
     /**
      * Saves the results of a lottery draw for an event.
@@ -234,7 +233,7 @@ public class WaitingListRepository {
     ) {
         int total = accepted.size() + rejected.size();
 
-        // If there’s nothing to save, return immediately
+        // If there's nothing to save, return immediately
         if (total == 0) {
             callback.onSuccess();
             return;

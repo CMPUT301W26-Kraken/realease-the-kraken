@@ -4,10 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,10 +23,12 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.provider.Settings;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
+import androidx.navigation.Navigation;
 
 /**
  * Fragment responsible for creating or updating a user profile.
@@ -33,6 +41,31 @@ public class AccountCreateFragment extends Fragment {
 
     private FragmentAccountCreateBinding binding;
     private boolean isEditMode = false;
+
+    // --- Added for image storing with Glide ---
+    // holds the URI of the image the user picked from their gallery
+    // null means no image selected yet
+    private Uri selectedImageUri = null;
+
+    // ActivityResultLauncher replaces the deprecated startActivityForResult()
+    // It opens the photo gallery and receives the chosen image URI back
+    private final ActivityResultLauncher<Intent> imagePickerLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        // check the user actually picked something and didn't cancel
+                        if (result.getResultCode() == Activity.RESULT_OK
+                                && result.getData() != null) {
+                            selectedImageUri = result.getData().getData();
+
+                            // show the chosen image in the imageButton immediately using Glide
+                            Glide.with(this)
+                                    .load(selectedImageUri)   // load from local URI
+                                    .circleCrop()             // crop to circle for avatar look
+                                    .into(binding.imageButton);
+                        }
+                    });
+    // --- End image additions ---
 
     @Nullable
     @Override
@@ -78,6 +111,15 @@ public class AccountCreateFragment extends Fragment {
             emailEditText.setText("");
             phoneEditText.setText("");
         }
+
+        // --- Added for image storing with Glide ---
+        // open the photo gallery when the user taps the image button
+        binding.imageButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*"); // filter to images only
+            imagePickerLauncher.launch(intent);
+        });
+        // --- End image additions ---
 
         TextWatcher validationWatcher = new TextWatcher() {
             @Override
@@ -143,6 +185,37 @@ public class AccountCreateFragment extends Fragment {
                     }
                 });
 
+                // --- Added for image storing with Glide ---
+                // if the user picked an image, upload it to Firebase Storage
+                // then save the returned HTTPS URL to the Firestore profile document
+                if (selectedImageUri != null) {
+                    profileRepository.uploadProfileImage(
+                            profile.getDeviceId(),
+                            selectedImageUri,
+                            new ProfileRepository.ProfileRepositoryCallback<String>() {
+                                @Override
+                                public void onSuccess(String imageUrl) {
+                                    profileRepository.saveProfileImageUrl(
+                                            profile.getDeviceId(),
+                                            imageUrl,
+                                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                                                @Override public void onSuccess(Void result) {}
+                                                @Override public void onFailure(Exception e) {
+                                                    Log.e("AccountCreateFragment", "Failed to save image URL", e);
+                                                }
+                                            });
+                                }
+                                @Override
+                                public void onFailure(Exception e) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(),
+                                            "Image upload failed: " + e.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
+                // --- End image additions ---
+
                 Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
 
@@ -169,6 +242,35 @@ public class AccountCreateFragment extends Fragment {
                                 Toast.LENGTH_LONG).show();
                     }
                 });
+
+                // --- Added for image storing with Glide ---
+                if (selectedImageUri != null) {
+                    profileRepository.uploadProfileImage(
+                            profile.getDeviceId(),
+                            selectedImageUri,
+                            new ProfileRepository.ProfileRepositoryCallback<String>() {
+                                @Override
+                                public void onSuccess(String imageUrl) {
+                                    profileRepository.saveProfileImageUrl(
+                                            profile.getDeviceId(),
+                                            imageUrl,
+                                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                                                @Override public void onSuccess(Void result) {}
+                                                @Override public void onFailure(Exception e) {
+                                                    Log.e("AccountCreateFragment", "Failed to save image URL", e);
+                                                }
+                                            });
+                                }
+                                @Override
+                                public void onFailure(Exception e) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(),
+                                            "Image upload failed: " + e.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
+                // --- End image additions ---
 
                 Navigation.findNavController(v)
                         .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);

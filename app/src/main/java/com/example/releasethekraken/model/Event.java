@@ -91,4 +91,43 @@ public class Event {
     public int getCapacity() {
         return capacity;
     }
+
+    // Firestore collection structure:
+    // Firestore requires a no-arg constructor plus non-final fields
+    // with setters, so the additional collection fields are declared separately here.
+    // existing constructors are untouched.
+
+    private String location;
+    private String posterImageUrl;
+    private boolean registrationOpen;
+    private String organizerId;
+
+    /**
+     * No-arg constructor required by Firestore to deserialize document snapshots
+     * back into Event objects. Without this, any .toObject(Event.class) call crashes.
+     * The final fields default to null/0/false, which is acceptable because Firestore
+     * deserialization populates them via the setters below.
+     */
+    public Event() {
+        // Firestore populates fields via setters after calling this constructor,
+        // so the final fields are left at their defaults (null, 0, false).
+        // This constructors are used only via Firestore — never in app code.
+        this.eventId = null;
+        this.title = null;
+        this.description = null;
+        this.registrationStartMillis = 0;
+        this.registrationEndMillis = 0;
+        this.capacity = DEFAULT_CAPACITY;
+    }
+
+    public String getLocation()         { return location; }
+    public String getPosterImageUrl()   { return posterImageUrl; }
+    public boolean isRegistrationOpen() { return registrationOpen; }
+    public String getOrganizerId()      { return organizerId; }
+
+    public void setLocation(String location)                  { this.location = location; }
+    public void setPosterImageUrl(String url)                 { this.posterImageUrl = url; }
+    public void setRegistrationOpen(boolean registrationOpen) { this.registrationOpen = registrationOpen; }
+    public void setOrganizerId(String organizerId)            { this.organizerId = organizerId; }
+
 }

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 import com.example.releasethekraken.model.Profile;
@@ -62,6 +63,36 @@ public class ViewProfileFragment extends Fragment {
         binding.profilePhone.setText(
                 getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided))
         );
+
+        // --- Added for image storing with Glide ---
+        // Load the profile image from Firestore into the profile_picture ImageView.
+        // getProfileFromFirestore fetches the full profile including profileImageUrl.
+        // Glide handles caching, placeholder, and error states automatically.
+        if (profile.getDeviceId() != null && !profile.getDeviceId().isEmpty()) {
+            profileRepository.getProfileFromFirestore(profile.getDeviceId(),
+                    new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                        @Override
+                        public void onSuccess(Profile firestoreProfile) {
+                            if (!isAdded()) return;
+                            String imageUrl = firestoreProfile.getProfileImageUrl();
+                            if (imageUrl != null && !imageUrl.isEmpty()) {
+                                // load the HTTPS URL from Firebase Storage into the ImageView
+                                Glide.with(ViewProfileFragment.this)
+                                        .load(imageUrl)
+                                        .circleCrop()                              // circle crop for avatar
+                                        .placeholder(R.drawable.ic_launcher_foreground) // shown while loading
+                                        .error(R.drawable.ic_launcher_foreground)       // shown if URL is broken
+                                        .into(binding.profilePicture);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception exception) {
+                            // no image to show — leave the default drawable in place
+                        }
+                    });
+        }
+        // --- End image additions ---
 
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
