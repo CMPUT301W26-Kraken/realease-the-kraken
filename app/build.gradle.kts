@@ -44,6 +44,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-auth")
 
     // Glide — loads Firebase Storage image URLs into ImageViews
     implementation("com.github.bumptech.glide:glide:4.16.0")

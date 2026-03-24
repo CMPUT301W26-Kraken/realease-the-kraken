@@ -28,7 +28,8 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
-import androidx.navigation.Navigation;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Fragment responsible for creating or updating a user profile.
@@ -161,6 +162,14 @@ public class AccountCreateFragment extends Fragment {
                     phoneEditText.getText().toString().trim()
             );
 
+            // --- Added for image storing with Glide ---
+            // Get Firebase UID to use as the Storage/Firestore document ID for the image.
+            // profile.getDeviceId() returns ANDROID_ID which no longer matches the Firestore
+            // document ID — profiles are now keyed by Firebase Auth UID.
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            String imageDocumentId = currentUser != null ? currentUser.getUid() : deviceId;
+            // --- End image additions ---
+
             if (isEditMode) {
                 profileRepository.saveProfileLocally(profile);
 
@@ -186,17 +195,15 @@ public class AccountCreateFragment extends Fragment {
                 });
 
                 // --- Added for image storing with Glide ---
-                // if the user picked an image, upload it to Firebase Storage
-                // then save the returned HTTPS URL to the Firestore profile document
                 if (selectedImageUri != null) {
                     profileRepository.uploadProfileImage(
-                            profile.getDeviceId(),
+                            imageDocumentId, // Firebase UID — matches the Firestore profile document
                             selectedImageUri,
                             new ProfileRepository.ProfileRepositoryCallback<String>() {
                                 @Override
                                 public void onSuccess(String imageUrl) {
                                     profileRepository.saveProfileImageUrl(
-                                            profile.getDeviceId(),
+                                            imageDocumentId, // same UID used for the upload path
                                             imageUrl,
                                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                                 @Override public void onSuccess(Void result) {}
@@ -246,13 +253,13 @@ public class AccountCreateFragment extends Fragment {
                 // --- Added for image storing with Glide ---
                 if (selectedImageUri != null) {
                     profileRepository.uploadProfileImage(
-                            profile.getDeviceId(),
+                            imageDocumentId, // Firebase UID — matches the Firestore profile document
                             selectedImageUri,
                             new ProfileRepository.ProfileRepositoryCallback<String>() {
                                 @Override
                                 public void onSuccess(String imageUrl) {
                                     profileRepository.saveProfileImageUrl(
-                                            profile.getDeviceId(),
+                                            imageDocumentId, // same UID used for the upload path
                                             imageUrl,
                                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                                 @Override public void onSuccess(Void result) {}

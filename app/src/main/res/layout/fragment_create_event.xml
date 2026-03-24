@@ -139,14 +139,14 @@
         android:layout_width="110dp"
         android:layout_height="110dp"
         android:layout_marginTop="30dp"
+        android:background="@null"
         android:padding="25dp"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
         android:src="@android:drawable/stat_sys_upload_done"
         app:layout_constraintBottom_toTopOf="@+id/create_account"
         app:layout_constraintEnd_toStartOf="@+id/max_entrants_editText"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3"
-        app:tint="@color/dark_blue_text" />
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
 
     <TextView
         android:id="@+id/upload_poster_text"

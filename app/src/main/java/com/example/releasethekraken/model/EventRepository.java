@@ -1,8 +1,13 @@
 package com.example.releasethekraken.model;
 
+import android.net.Uri;
+import android.util.Log;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,12 +21,20 @@ import java.util.Map;
 public class EventRepository {
 
     private final FirebaseFirestore db;
+
+    // --- Added for event image upload ---
+    // Root reference to Firebase Storage bucket — used by uploadEventPoster()
+    private final StorageReference storageRef =
+            FirebaseStorage.getInstance().getReference();
+    // --- End event image additions ---
+
     /**
      * creates an EventRepository using the default Firestore instance
      */
     public EventRepository() {
         this(FirebaseFirestore.getInstance());
     }
+
     /**
      * creates an EventRepository with a specific Firestore instance
      *
@@ -30,6 +43,7 @@ public class EventRepository {
     public EventRepository(FirebaseFirestore db) {
         this.db = db;
     }
+
     /**
      * callback interface for returning a single Event result
      */
@@ -37,6 +51,7 @@ public class EventRepository {
         void onSuccess(Event event);
         void onError(Exception e);
     }
+
     /**
      * callback interface for returning a list of Event objects
      */
@@ -44,13 +59,26 @@ public class EventRepository {
         void onSuccess(List<Event> events);
         void onError(Exception e);
     }
+
     /**
-     * callback interface for operations that  report completion status
+     * callback interface for operations that report completion status
      */
     public interface CompletionCallback {
         void onSuccess();
         void onError(Exception e);
     }
+
+    // --- Added for event image upload ---
+    /**
+     * Callback interface for operations that return a String result.
+     * Used by uploadEventPoster() to return the HTTPS download URL back to the caller.
+     * The existing CompletionCallback only signals success/failure with no return value.
+     */
+    public interface CompletionCallback2 {
+        void onSuccess(String result); // result = the HTTPS download URL from Storage
+        void onError(Exception e);
+    }
+    // --- End event image additions ---
 
     /**
      * creates a new event in Firestore
@@ -237,6 +265,54 @@ public class EventRepository {
                             capacity.intValue()
                     );
                     callback.onSuccess(event);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Uploads an event poster image to Firebase Storage.
+     * Storage path: event_posters/{eventId}.jpg
+     * Using eventId as the filename means re-uploading overwrites the old poster.
+     * After getting the URL back, call savePosterImageUrl() to save it to Firestore.
+     *
+     * @param eventId   the Firestore document ID of the event
+     * @param imageUri  local URI of the image the organizer picked from gallery
+     * @param callback  called with the HTTPS download URL on success
+     */
+    public void uploadEventPoster(String eventId, Uri imageUri, CompletionCallback2 callback) {
+        // event_posters/{eventId}.jpg — overwrites on re-upload, no duplicate files
+        StorageReference imageRef = storageRef.child("event_posters/" + eventId + ".jpg");
+
+        // putFile() streams the local file up to Firebase Storage
+        imageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    // upload succeeded — get the permanent HTTPS download URL
+                    imageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                        Log.d("EventRepository", "Poster uploaded: " + downloadUri);
+                        callback.onSuccess(downloadUri.toString()); // pass URL back to caller
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EventRepository", "Poster upload failed", e);
+                    callback.onError(e);
+                });
+    }
+
+    /**
+     * Saves the poster image URL to the existing Firestore event document.
+     * Uses update() so only the posterImageUrl field changes — all other fields untouched.
+     *
+     * @param eventId   the Firestore document ID of the event
+     * @param imageUrl  the HTTPS download URL returned by uploadEventPoster()
+     * @param callback  called on success or failure
+     */
+    public void savePosterImageUrl(String eventId, String imageUrl, CompletionCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .update("posterImageUrl", imageUrl) // update() only touches this one field
+                .addOnSuccessListener(unused -> {
+                    Log.d("EventRepository", "Poster URL saved to Firestore");
+                    callback.onSuccess();
                 })
                 .addOnFailureListener(callback::onError);
     }

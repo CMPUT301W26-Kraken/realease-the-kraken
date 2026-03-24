@@ -1,7 +1,11 @@
 package com.example.releasethekraken.view;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +13,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
@@ -16,6 +22,7 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
@@ -42,6 +49,30 @@ public class CreateEventFragment extends Fragment {
     private FragmentCreateEventBinding binding;
     private boolean editEvent, cameFromYourEvents;
     private String eventID;
+
+    // --- Added for event image upload ---
+    // holds the URI of the poster image the organizer picked from gallery
+    // null means no image selected yet
+    private Uri selectedPosterUri = null;
+
+    // opens the photo gallery and receives the chosen image URI back
+    // replaces the deprecated startActivityForResult()
+    private final ActivityResultLauncher<Intent> posterPickerLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == Activity.RESULT_OK
+                                && result.getData() != null) {
+                            selectedPosterUri = result.getData().getData();
+
+                            // show the chosen image in the imageButton immediately using Glide
+                            Glide.with(this)
+                                    .load(selectedPosterUri)  // load from local URI
+                                    .centerCrop()             // crop to fill the button
+                                    .into(binding.imageButton);
+                        }
+                    });
+    // --- End event image additions ---
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +121,15 @@ public class CreateEventFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
+
+        // --- Added for event image upload ---
+        // open the photo gallery when the organizer taps the poster image button
+        binding.imageButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*"); // filter to images only
+            posterPickerLauncher.launch(intent);
+        });
+        // --- End event image additions ---
 
         // Create event and save to Firestore
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
@@ -179,6 +219,37 @@ public class CreateEventFragment extends Fragment {
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
+
+                // event image upload:
+                // if the organizer picked a poster, upload it to Firebase Storage
+                // then save the returned HTTPS URL to the Firestore event document
+                if (selectedPosterUri != null) {
+                    new EventRepository().uploadEventPoster(
+                            eventId,
+                            selectedPosterUri,
+                            new EventRepository.CompletionCallback2() {
+                                @Override
+                                public void onSuccess(String imageUrl) {
+                                    // save the URL into the event document under posterImageUrl
+                                    new EventRepository().savePosterImageUrl(
+                                            eventId,
+                                            imageUrl,
+                                            new EventRepository.CompletionCallback() {
+                                                @Override public void onSuccess() {}
+                                                @Override public void onError(Exception e) {
+                                                    Log.e("CreateEventFragment", "Failed to save poster URL", e);
+                                                }
+                                            });
+                                }
+                                @Override
+                                public void onError(Exception e) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(getContext(),
+                                            "Poster upload failed: " + e.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
 
                 // Worker delay is based on the registration close time. This keeps entrant drawing
                 // aligned with the same registration window used by browse-event availability

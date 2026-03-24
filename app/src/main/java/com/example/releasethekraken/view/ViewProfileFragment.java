@@ -18,6 +18,8 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Fragment that displays the currently saved user profile information.
@@ -65,11 +67,13 @@ public class ViewProfileFragment extends Fragment {
         );
 
         // --- Added for image storing with Glide ---
-        // Load the profile image from Firestore into the profile_picture ImageView.
-        // getProfileFromFirestore fetches the full profile including profileImageUrl.
-        // Glide handles caching, placeholder, and error states automatically.
-        if (profile.getDeviceId() != null && !profile.getDeviceId().isEmpty()) {
-            profileRepository.getProfileFromFirestore(profile.getDeviceId(),
+        // Use Firebase Auth UID as the document ID instead of deviceId.
+        // Profiles are now stored by UID since the auth migration, so deviceId
+        // would look up the wrong document and always return nothing.
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String uid = currentUser.getUid(); // Firebase UID = correct Firestore document ID
+            profileRepository.getProfileFromFirestore(uid,
                     new ProfileRepository.ProfileRepositoryCallback<Profile>() {
                         @Override
                         public void onSuccess(Profile firestoreProfile) {
@@ -79,9 +83,9 @@ public class ViewProfileFragment extends Fragment {
                                 // load the HTTPS URL from Firebase Storage into the ImageView
                                 Glide.with(ViewProfileFragment.this)
                                         .load(imageUrl)
-                                        .circleCrop()                              // circle crop for avatar
-                                        .placeholder(R.drawable.ic_launcher_foreground) // shown while loading
-                                        .error(R.drawable.ic_launcher_foreground)       // shown if URL is broken
+                                        .circleCrop()
+                                        .placeholder(R.drawable.ic_launcher_foreground)
+                                        .error(R.drawable.ic_launcher_foreground)
                                         .into(binding.profilePicture);
                             }
                         }

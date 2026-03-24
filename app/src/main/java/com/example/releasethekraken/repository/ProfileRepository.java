@@ -141,6 +141,12 @@ public class ProfileRepository {
                     if (documentSnapshot.exists()) {
                         Profile profile = documentSnapshot.toObject(Profile.class);
                         if (profile != null) {
+                            // toObject() may not populate profileImageUrl if the field was added
+                            // after the document was first created — read it explicitly to be safe
+                            String imageUrl = documentSnapshot.getString("profileImageUrl");
+                            if (imageUrl != null) {
+                                profile.setProfileImageUrl(imageUrl);
+                            }
                             saveProfileLocally(profile);
                             callback.onSuccess(profile);
                         } else {

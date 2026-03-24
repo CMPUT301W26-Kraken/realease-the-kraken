@@ -86,18 +86,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/phone_create" />
 
+    <!-- removed app:tint, added background=@null, changed scaleType to centerCrop -->
     <ImageButton
         android:id="@+id/imageButton"
         android:layout_width="110dp"
         android:layout_height="110dp"
+        android:background="@null"
         android:padding="25dp"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
         android:src="@android:drawable/stat_sys_upload_done"
         app:layout_constraintBottom_toTopOf="@+id/create_account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/password_create"
-        app:tint="@color/dark_blue_text" />
+        app:layout_constraintTop_toBottomOf="@+id/password_create" />
 
     <TextView
         android:id="@+id/upload_photo_text"
