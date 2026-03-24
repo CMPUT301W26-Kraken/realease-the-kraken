@@ -130,7 +130,7 @@ public class BrowseEventsFragment extends Fragment {
         wireSearchAndFilters(view);
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
-        // Only organizers on the "Your Events" path should see event creation controls here.
+        // Hide button visibility to people browsing from the Browse Events button option
         if (!yourEvents) {
             createEventButton.setVisibility(View.GONE);
         }

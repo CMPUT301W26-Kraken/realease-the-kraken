@@ -102,14 +102,19 @@ public class EventDetailsFragment extends Fragment {
         Button viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         Button viewQrButton = view.findViewById(R.id.view_qr_button);
         Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
+        Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
+        Button exportToCsvButton = view.findViewById(R.id.export_csv_button);
+        Button redrawButton = view.findViewById(R.id.redraw_button);
 
-        // Toggle visibilities of button groups based on the user's role
+        // Toggle visibilities of buttons based on the user's role
         if (userType == UserRole.ENTRANT) {
             viewEntrantMapButton.setVisibility(View.GONE);
             createNotificationButton.setVisibility(View.GONE);
             viewQrButton.setVisibility(View.GONE);
             editEventButton.setVisibility(View.GONE);
             deleteEventButton.setVisibility(View.GONE);
+            exportToCsvButton.setVisibility(View.GONE);
+            redrawButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER) {
             signupOptOutButton.setVisibility(View.GONE);
         }
@@ -134,9 +139,16 @@ public class EventDetailsFragment extends Fragment {
             args.putBoolean("adminView", false);
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-            args.putBoolean("cameFromYourEvents", cameFromYourEvents);
 
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
+        });
+
+        viewCommentsButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putString(ARG_EVENT_ID, eventId);
+            args.putSerializable("userRole", userType);
+
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment);
         });
     }
 

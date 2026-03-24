@@ -157,6 +157,9 @@
             android:name="eventId"
             app:argType="string"
             app:nullable="true" />
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" />
     </fragment>
 
     <fragment
@@ -197,5 +200,10 @@
             android:id="@+id/action_qrScanFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/commentsFragment"
+        android:name="com.example.releasethekraken.view.CommentsFragment"
+        android:label="fragment_comments"
+        tools:layout="@layout/fragment_comments" />
 
 </navigation>
