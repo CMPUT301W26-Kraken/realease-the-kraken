@@ -24,8 +24,10 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
+import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
 
 /**
@@ -189,7 +191,12 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void handleSignupToggle(Button button) {
-        String entrantId = "testEntrant001";
+
+        //Ethan adding real entrant to sign up
+        ProfileRepository profileRepository = new ProfileRepository(requireContext());
+        Profile profile = profileRepository.getProfile();
+        String entrantId = profile.getDeviceId(); //TO BE CHANGED IF CHANGING DEVICE ID TO USERID
+        //End of Ethan's edit
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
                 @Override
