@@ -104,6 +104,7 @@ public class EventDetailsFragment extends Fragment {
         Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
         Button exportToCsvButton = view.findViewById(R.id.export_csv_button);
+        Button redrawButton = view.findViewById(R.id.redraw_button);
 
         // Toggle visibilities of buttons based on the user's role
         if (userType == UserRole.ENTRANT) {
@@ -113,6 +114,7 @@ public class EventDetailsFragment extends Fragment {
             editEventButton.setVisibility(View.GONE);
             deleteEventButton.setVisibility(View.GONE);
             exportToCsvButton.setVisibility(View.GONE);
+            redrawButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER) {
             signupOptOutButton.setVisibility(View.GONE);
         }

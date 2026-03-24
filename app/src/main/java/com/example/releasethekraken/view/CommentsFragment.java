@@ -3,27 +3,25 @@ package com.example.releasethekraken.view;
 import android.app.AlertDialog;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.releasethekraken.R;
-import com.example.releasethekraken.controller.WaitingListService;
-import com.example.releasethekraken.databinding.FragmentCommentsBinding;
-import com.example.releasethekraken.model.EventRepository;
-import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.model.Comment;
 import com.example.releasethekraken.model.UserRole;
-import com.example.releasethekraken.model.WaitingListRepository;
-import com.example.releasethekraken.repository.ProfileRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The class that supports the fragment that shows all of the comments for an event which is determined
@@ -32,8 +30,9 @@ import com.example.releasethekraken.repository.ProfileRepository;
 public class CommentsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
-
-    private FragmentCommentsBinding binding;
+    private final List<Comment> comments = new ArrayList<>();
+    //private FragmentCommentsBinding binding;
+    private CommentAdapter adapter;
     private String eventId;
     private UserRole userRole; // Will be needed for determining if comments can be deleted
 
@@ -54,35 +53,39 @@ public class CommentsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        binding = FragmentCommentsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
-    }
+        View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        RecyclerView recyclerView = view.findViewById(R.id.comments_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        binding.returnToDetailsButton.setOnClickListener(v -> {
+        adapter = new CommentAdapter(comments, comment -> {
+            // TODO: ADD LOGIC TO CHECK IF USER IS AN ORGANIZER/ADMIN WHO HAS THE ABILITY TO DELETE COMMENTS
+            //showDeleteConfirmationDialog
+        });
+
+        recyclerView.setAdapter(adapter);
+
+        loadComments();
+
+        Button createCommentButton = view.findViewById(R.id.create_comment_button);
+        createCommentButton.setOnClickListener(v -> showCommentCreateDialog(eventId, v));
+
+        view.findViewById(R.id.return_to_details_button).setOnClickListener(v -> {
             Navigation.findNavController(v).popBackStack();
         });
 
-        binding.createCommentButton.setOnClickListener(v -> showCommentCreateDialog(eventId, v));
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
+        return view;
     }
 
     /**
      * Shows a confirmation dialog before permanently deleting the profile.
      *
      * @param eventId current event having a comment added to it
-     *                // May need a repository of some sort to be added later
+     * //@param userId current user ID of the user writing the comment
      * @param view current fragment view used for navigation
      */
     private void showCommentCreateDialog(String eventId,
+                                              //String userId,
                                               View view) {
 
         EditText input = new EditText(requireContext());
@@ -112,5 +115,15 @@ public class CommentsFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
+    }
+
+    private void loadComments() {
+        // TODO: PULL ACTUAL COMMENTS FROM THE FIREBASE
+
+        Comment test1 = new Comment(eventId, "Test1", "I am organizer making comment", System.currentTimeMillis());
+        Comment test2 = new Comment(eventId, "Test2", "I am entrant making comment", System.currentTimeMillis());
+
+        comments.add(test1);
+        comments.add(test2);
     }
 }

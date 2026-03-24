@@ -140,6 +140,11 @@
                     android:text="@string/export_csv_button" />
 
                 <Button
+                    android:id="@+id/redraw_button"
+                    style="@style/ButtonStyle"
+                    android:text="@string/redraw_button" />
+
+                <Button
                     android:id="@+id/edit_event_button"
                     style="@style/ButtonStyle"
                     android:text="@string/edit_event_button" />
