@@ -3,6 +3,8 @@ package com.example.releasethekraken.model;
 import com.example.releasethekraken.controller.NotificationService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /// Responsibilities                                                    Collaborators
@@ -32,36 +34,34 @@ public class LotteryManager {
     /**
      * Performs the initial lottery draw for an event.
      *
-     * Randomly selects up to {@code capacity} entrants from the provided list and
-     * notifies each winner. Selected entrants are removed from the original list.
+     * Randomly selects up to {@code capacity} entrants from the provided list.
      *
      * @param event       The event for which to draw winners
-     * @param allEntrants List of all current entrants
+     * @param allEntrantsList List of all current entrants
      * @param capacity    Maximum number of winners to select
-     * @return List of accepted entrants
+     * @return LotteryResult class containing accepted entrants and rejected entrants
      */
-    public ArrayList<String> drawEntrants(Event event, ArrayList<String> allEntrants, int capacity) {
+    public LotteryResult drawEntrants(Event event, List<String> allEntrantsList, int capacity) {
         Random rand = new Random();
+        ArrayList<String> allEntrants = new ArrayList<>(allEntrantsList);
         ArrayList<String> acceptedEntrants = new ArrayList<String>();
 
+        //Loops through all entrants until reaches capacity, or no more entrants
         for (int i = 0; (i < capacity) && (!allEntrants.isEmpty()); i++) {
             String acceptedEntrant = allEntrants.remove(rand.nextInt(allEntrants.size()));
             acceptedEntrants.add(acceptedEntrant);
 
-            //Notifications!
-            notifService.sendWinNotification(event, acceptedEntrant, new NotificationService.NotificationCallback() {
-                @Override
-                public void onResult(NotificationService.NotificationResult result) {
-                    //add result handling later potentially
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    //add error handling later potentially
-                }
-            });
         }
-        return acceptedEntrants;
+
+        ArrayList<String> rejectedEntrants = new ArrayList<String>();
+        //Loops through all remaining undrawn entrants and adds them to a rejectedEntrant arrayList
+        while (!allEntrants.isEmpty()) {
+            String rejectedEntrant = allEntrants.remove(0);
+            rejectedEntrants.add(rejectedEntrant);
+        }
+
+
+        return new LotteryResult(acceptedEntrants, rejectedEntrants);
     }
 
     //Takes in remaining entrants from event, accepted entrants and capacity, and fills up the accepted entrants with randomly from remaining entrants
@@ -84,18 +84,6 @@ public class LotteryManager {
             String acceptedEntrant = allEntrants.remove(rand.nextInt(allEntrants.size()));
             acceptedEntrants.add(acceptedEntrant);
 
-            //Notifications! (Could change this to be more custom later to indicate that you were part of a *redraw*)
-            notifService.sendWinNotification(event, acceptedEntrant, new NotificationService.NotificationCallback() {
-                @Override
-                public void onResult(NotificationService.NotificationResult result) {
-                    //add result handling later potentially
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    //add error handling later potentially
-                }
-            });
         }
         return acceptedEntrants;
     }

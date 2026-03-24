@@ -54,7 +54,6 @@
     <string name="delete_profile_confirmation">Are you sure you want to delete your profile? This action cannot be undone.</string>
     <string name="delete_button_text">Delete</string>
     <string name="cancel_button_text">Cancel</string>
-
     <string name="sign_out_button">Sign Out</string>
 
     <!-- Strings related to the bottom toolbar -->
@@ -66,6 +65,12 @@
     <string name="browse_events_welcome">Available Events</string>
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
+    <string name="search_events_hint">Search by title or description</string>
+    <string name="filter_available_at_hint">Available at (dd/MM/yyyy h:mm AM/PM)</string>
+    <string name="filter_capacity_hint">Min capacity</string>
+    <string name="apply_filters_button">Apply Filters</string>
+    <string name="clear_filters_button">Clear Filters</string>
+    <string name="no_matching_events">No events match the current search and filters.</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
@@ -76,7 +81,7 @@
     <string name="edit_event_confirm_button">Confirm Changes</string>
     <string name="prompt_event_name">Event Title</string>
     <string name="prompt_event_description">Event Description…</string>
-    <string name="prompt_date">DD/MM/YYYY</string>
+    <string name="prompt_date">DD/MM/YYYY HH:MM AM/PM</string>
     <string name="prompt_maximum_entrants">Max Entrants</string>
     <string name="registration_start_text">Registration Start</string>
     <string name="registration_end_text">Registration End</string>
@@ -86,20 +91,32 @@
     <string name="cancel_button">Cancel</string>
 
     <!-- Strings related to Event Details -->
-    <string name="view_entrant_map_button">View Entrant&#10;Map (Optional)</string>
-    <string name="create_notification_button">Create&#10;Notification</string>
+    <string name="view_entrant_map_button">View Entrant Map</string>
+    <string name="create_notification_button">Create Notification</string>
     <string name="view_qr_button">View QR Code</string>
     <string name="edit_event_button">Edit Event</string>
     <string name="delete_event_button">Delete Event</string>
+    <string name="view_comments_button">View Comments</string>
     <string name="return_button">Return</string>
-    <string name="signup_button">Sign Up</string>
-    <string name="opt_out_button">Opt Out</string>
+    <string name="signup_button">Join Waiting List</string>
+    <string name="opt_out_button">Leave Waiting List</string>
+    <string name="export_csv_button">Export Waiting List to CSV</string>
+    <string name="redraw_button">Redraw Participants</string>
+    <string name="view_waiting_list_button">View Current Waiting List</string>
     <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
     <string name="confirm_delete_popup">Yes, Delete</string>
 
+    <!-- Strings related to the User List -->
+    <string name="admin_user_list_welcome">All Users</string>
+    <string name="waiting_list_welcome">Event Waiting List</string>
+    <string name="prompt_search">Search</string>
+
+    <!-- Strings related to the Comments -->
+    <string name="comments_welcome">Comments For This Event</string>
+    <string name="create_comment_button">Leave A Comment</string>
 
     <!-- Misc strings -->
     <string name="dummy_button">Dummy Button</string>

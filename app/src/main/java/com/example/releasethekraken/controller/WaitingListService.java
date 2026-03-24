@@ -1,12 +1,13 @@
 package com.example.releasethekraken.controller;
 
-
 import com.example.releasethekraken.model.LotteryManager;
+import com.example.releasethekraken.model.LotteryResult;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.model.WaitingListEntry;
 import com.example.releasethekraken.model.Event;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * service class responsible for handling waiting list logic
@@ -14,7 +15,6 @@ import java.util.ArrayList;
  * and delegates waiting list data storage to the WaitingListRepository
  * it belongs to the controller layer and contains no UI logic
  */
-
 public class WaitingListService {
 
     /** repository used to store and retrieve waiting list entries. */
@@ -46,6 +46,7 @@ public class WaitingListService {
         NOT_ON_WAITING_LIST,
         INVALID_INPUT,
     }
+
     /**
      * callback interface for join waiting list results
      */
@@ -53,6 +54,7 @@ public class WaitingListService {
         void onResult(JoinResult result);
         void onError(Exception e);
     }
+
     /**
      * callback interface for leave waiting list results
      */
@@ -68,17 +70,13 @@ public class WaitingListService {
      *
      * @param event event the entrant is trying to leave
      * @param entrantId entrant/device identifier
-     * @return LeaveResult indicating what happened
      */
-
     public void leaveWaitingList(Event event, String entrantId, LeaveCallback callback) {
-
         //to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            callback.onResult(LeaveResult.INVALID_INPUT);
+            if (callback != null) callback.onResult(LeaveResult.INVALID_INPUT);
             return;
         }
-
         // check if entrant is actually on the waiting list
         waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
@@ -87,23 +85,22 @@ public class WaitingListService {
                     @Override
                     public void onResult(boolean alreadyWaiting) {
                         if (!alreadyWaiting) {
-                            callback.onResult(LeaveResult.NOT_ON_WAITING_LIST);
+                            if (callback != null) callback.onResult(LeaveResult.NOT_ON_WAITING_LIST);
                             return;
                         }
 
-                        // remove entrant from waiting list
                         waitingListRepository.removeFromWaitingList(
                                 event.getEventId(),
                                 entrantId,
                                 new WaitingListRepository.CompletionCallback() {
                                     @Override
                                     public void onSuccess() {
-                                        callback.onResult(LeaveResult.SUCCESS);
+                                        if (callback != null) callback.onResult(LeaveResult.SUCCESS);
                                     }
 
                                     @Override
                                     public void onError(Exception e) {
-                                        callback.onError(e);
+                                        if (callback != null) callback.onError(e);
                                     }
                                 }
                         );
@@ -111,7 +108,7 @@ public class WaitingListService {
 
                     @Override
                     public void onError(Exception e) {
-                        callback.onError(e);
+                        if (callback != null) callback.onError(e);
                     }
                 }
         );
@@ -126,7 +123,6 @@ public class WaitingListService {
      */
     public boolean isRegistrationOpen(Event event, long nowMillis) {
 
-        // registration is open if now is between start and end inclusive
         if (event == null) {
             return false;
         }
@@ -145,25 +141,22 @@ public class WaitingListService {
      * @param event event the entrant is trying to join
      * @param entrantId  entrant/device identifier
      * @return JoinResult indicating what happened
+     * @param entrantId entrant/device identifier
      */
     public void joinWaitingList(Event event, String entrantId, JoinCallback callback) {
-
         //validation to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            callback.onResult(JoinResult.INVALID_INPUT);
+            if (callback != null) callback.onResult(JoinResult.INVALID_INPUT);
             return;
         }
 
         long nowMillis = System.currentTimeMillis();
-
         // 1. validate registration window
         if (!isRegistrationOpen(event, nowMillis)) {
-            callback.onResult(JoinResult.REGISTRATION_CLOSED);
+            if (callback != null) callback.onResult(JoinResult.REGISTRATION_CLOSED);
             return;
         }
-
         // 2. prevent duplicates
-        // NOTE: This is asynchronous now because Firestore calls do not return immediately
         waitingListRepository.isEntrantAlreadyWaiting(
                 event.getEventId(),
                 entrantId,
@@ -171,29 +164,27 @@ public class WaitingListService {
                     @Override
                     public void onResult(boolean alreadyWaiting) {
                         if (alreadyWaiting) {
-                            callback.onResult(JoinResult.DUPLICATE_ENTRY);
+                            if (callback != null) callback.onResult(JoinResult.DUPLICATE_ENTRY);
                             return;
                         }
-
                         // 3. create the waiting list entry with exact join time
                         WaitingListEntry entry = new WaitingListEntry(
                                 event.getEventId(),
                                 entrantId,
                                 nowMillis
                         );
-
                         // 4. store it repository will later store in Firestore
                         waitingListRepository.addToWaitingList(
                                 entry,
                                 new WaitingListRepository.CompletionCallback() {
                                     @Override
                                     public void onSuccess() {
-                                        callback.onResult(JoinResult.SUCCESS);
+                                        if (callback != null) callback.onResult(JoinResult.SUCCESS);
                                     }
 
                                     @Override
                                     public void onError(Exception e) {
-                                        callback.onError(e);
+                                        if (callback != null) callback.onError(e);
                                     }
                                 }
                         );
@@ -201,41 +192,52 @@ public class WaitingListService {
 
                     @Override
                     public void onError(Exception e) {
-                        callback.onError(e);
+                        if (callback != null) callback.onError(e);
                     }
                 }
         );
     }
 
+    //Updated from original implementaion by ChatGPT "Update this method to work with changes made" 2026-03-23
     /**
      * Draws winners for the given event.
-     * Retrieves all entrants from Firebase and randomly selects winners
-     * based on the event's capacity, and saves the accepted winners
-     * back to Firebase.
-     * @param event    The event to be drawn from
+     *
+     * <p>Retrieves all entrants from Firebase, randomly selects winners based
+     * on the event's capacity, separates entrants into accepted and rejected
+     * groups, and saves both groups back to Firebase.
+     *
+     * @param event    The event to draw from
      * @param capacity The maximum number of winners to select
      */
     public void drawEntrants(Event event, int capacity) {
-        //get all the entrants from the firebase through waitingListRepository
+
         waitingListRepository.getAllEntrants(event.getEventId(), new WaitingListRepository.EntrantsCallback() {
             @Override
-            public void onResult(ArrayList<String> entrants) {
-                //Lottery!
-                ArrayList<String> winners = new LotteryManager().drawEntrants(event, entrants, capacity);
+            public void onResult(List<String> entrants) {
 
-                //save the winners in firebase! (got to do callback for firebase)
-                waitingListRepository.saveAcceptedEntrants(event.getEventId(), winners, new WaitingListRepository.CompletionCallback() {
-                    @Override
-                    public void onSuccess() {
-                        System.out.println("Winners saved successfully!");
-                        // optionally notify users via NotificationService here
-                    }
+                // Run the lottery
+                LotteryResult result = new LotteryManager().drawEntrants(event, entrants, capacity);
 
-                    @Override
-                    public void onError(Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+                List<String> winners = result.accepted;
+                List<String> rejected = result.rejected;
+
+                // Save both accepted and rejected entrants in Firebase
+                waitingListRepository.saveDrawnEntrants(
+                        event.getEventId(),
+                        winners,
+                        rejected,
+                        new WaitingListRepository.CompletionCallback() {
+                            @Override
+                            public void onSuccess() {
+                                System.out.println("Draw results saved successfully!");
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                );
             }
 
             @Override
