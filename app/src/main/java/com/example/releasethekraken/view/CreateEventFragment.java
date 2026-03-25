@@ -1,5 +1,6 @@
 package com.example.releasethekraken.view;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -7,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,12 +19,15 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +48,22 @@ public class CreateEventFragment extends Fragment {
     private FragmentCreateEventBinding binding;
     private boolean editEvent, cameFromYourEvents;
     private String eventID;
+
+    // Uri of the poster image the user picked from the gallery (null = no image chosen)
+    private Uri selectedPosterUri = null;
+
+    // Launcher for the gallery image picker
+    private final ActivityResultLauncher<String> imagePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) {
+                    selectedPosterUri = uri;
+                    // Preview the chosen poster immediately in the button
+                    Glide.with(this)
+                            .load(uri)
+                            .centerCrop()
+                            .into(binding.imageButton);
+                }
+            });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,6 +95,11 @@ public class CreateEventFragment extends Fragment {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
         }
+
+        // Open gallery when poster image button is tapped
+        binding.imageButton.setOnClickListener(v ->
+                imagePickerLauncher.launch("image/*")
+        );
 
         // Navigate back to main menu
         binding.cancelEventCreation.setOnClickListener(v -> {
@@ -172,7 +199,64 @@ public class CreateEventFragment extends Fragment {
         binding.loading.setVisibility(View.VISIBLE);
         binding.createEvent.setEnabled(false);
 
-        new EventRepository().createEvent(event, new EventRepository.CompletionCallback() {
+        if (selectedPosterUri != null) {
+            // Upload poster first, then save event with the returned URL
+            uploadPosterAndSave(event, eventId, registrationEndMillis);
+        } else {
+            saveEventToFirestore(event, eventId, registrationEndMillis, null);
+        }
+    }
+
+    /**
+     * Uploads the selected poster image to Firebase Storage, then saves the event
+     * with the returned download URL stored in Firestore.
+     *
+     * Storage path: event_posters/{eventId}.jpg
+     *
+     * @param event                the event to save
+     * @param eventId              the event document ID
+     * @param registrationEndMillis used to schedule the draw worker
+     */
+    private void uploadPosterAndSave(Event event, String eventId, long registrationEndMillis) {
+        StorageReference ref = FirebaseStorage.getInstance().getReference()
+                .child("event_posters")
+                .child(eventId + ".jpg");
+
+        ref.putFile(selectedPosterUri)
+                .addOnSuccessListener(taskSnapshot ->
+                        ref.getDownloadUrl()
+                                .addOnSuccessListener(uri ->
+                                        saveEventToFirestore(event, eventId, registrationEndMillis, uri.toString())
+                                )
+                                .addOnFailureListener(e -> {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(getContext(),
+                                            "Poster upload failed, saving event without image: " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show();
+                                    // Still save the event even if poster upload failed
+                                    saveEventToFirestore(event, eventId, registrationEndMillis, null);
+                                }))
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(),
+                            "Poster upload failed, saving event without image: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                    // Still save the event even if poster upload failed
+                    saveEventToFirestore(event, eventId, registrationEndMillis, null);
+                });
+    }
+
+    /**
+     * Saves the event to Firestore, optionally including a poster image URL.
+     *
+     * @param event                the event to save
+     * @param eventId              the event document ID
+     * @param registrationEndMillis used to schedule the draw worker
+     * @param posterImageUrl       Firebase Storage download URL, or null if no poster was uploaded
+     */
+    private void saveEventToFirestore(Event event, String eventId,
+                                      long registrationEndMillis, @Nullable String posterImageUrl) {
+        new EventRepository().createEvent(event, posterImageUrl, new EventRepository.CompletionCallback() {
             @Override
             public void onSuccess() {
                 if (!isAdded()) return;
