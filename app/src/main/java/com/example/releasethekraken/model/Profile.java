@@ -1,10 +1,9 @@
 package com.example.releasethekraken.model;
 
 /**
- * Profile model class representing a user's personal information in the app.
- * This class is used for both local storage and Firebase Firestore.
- * Firestore requires a public no-argument constructor and non-final fields
- * so that it can automatically deserialize documents into Profile objects.
+ * Profile model for a signed-in user.
+ *
+ * Firestore requires a public no-argument constructor.
  */
 public class Profile {
 
@@ -13,11 +12,7 @@ public class Profile {
 
     // User's full name (required field)
     private String name;
-
-    // User's email address (required field)
     private String email;
-
-    // User's phone number (optional field)
     private String phone;
 
     // Firebase Storage download URL for the user's profile picture.
@@ -28,6 +23,7 @@ public class Profile {
      * Required empty constructor for Firestore deserialization.
      */
     public Profile() {
+        // Required for Firestore
     }
 
     /**
@@ -76,29 +72,14 @@ public class Profile {
         this.uid = uid;
     }
 
-    /**
-     * Returns the user's full name.
-     *
-     * @return profile name
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Returns the user's email address.
-     *
-     * @return profile email
-     */
     public String getEmail() {
         return email;
     }
 
-    /**
-     * Returns the user's phone number.
-     *
-     * @return profile phone number
-     */
     public String getPhone() {
         return phone;
     }

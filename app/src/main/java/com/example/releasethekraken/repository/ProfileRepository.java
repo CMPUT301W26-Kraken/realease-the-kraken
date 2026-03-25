@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.example.releasethekraken.model.Profile;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -16,11 +18,11 @@ import java.util.Map;
 /**
  * Repository class responsible for storing and retrieving Profile data.
  *
- * Profile data is currently stored in two places:
+ * Profile data is stored:
  * 1. Locally using SharedPreferences
  * 2. Remotely using Firebase Firestore
  *
- * Local storage is used as a fallback while Firebase integration is being completed.
+ * Firestore document ID is the Firebase Auth UID.
  */
 public class ProfileRepository {
     private static final String PREFS_NAME = "profile_prefs";
@@ -43,19 +45,15 @@ public class ProfileRepository {
         storage = FirebaseStorage.getInstance();
     }
 
-    /**
-     * Callback interface for asynchronous Firestore operations.
-     */
     public interface ProfileRepositoryCallback<T> {
         void onSuccess(T result);
         void onFailure(Exception exception);
     }
 
-    /**
-     * Saves the profile locally in SharedPreferences.
-     *
-     * @param profile The profile to save locally
-     */
+    private FirebaseUser requireCurrentUser() {
+        return FirebaseAuth.getInstance().getCurrentUser();
+    }
+
     public void saveProfileLocally(Profile profile) {
         sharedPreferences.edit()
                 .putString(KEY_UID, profile.getUid())
@@ -99,22 +97,11 @@ public class ProfileRepository {
                 });
     }
 
-    /**
-     * Backward-compatible method that saves both locally and to Firestore.
-     *
-     * @param profile   The profile to save
-     * @param callback  Callback for Firestore success/failure
-     */
     public void saveProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
         saveProfileLocally(profile);
         saveProfileToFirestore(profile, callback);
     }
 
-    /**
-     * Returns the locally stored profile.
-     *
-     * @return locally stored Profile object
-     */
     public Profile getLocalProfile() {
         String uid      = sharedPreferences.getString(KEY_UID, "");
         String name     = sharedPreferences.getString(KEY_NAME, "");
@@ -126,11 +113,6 @@ public class ProfileRepository {
         return profile;
     }
 
-    /**
-     * Backward-compatible method for existing code that expects getProfile().
-     *
-     * @return locally stored Profile object
-     */
     public Profile getProfile() {
         return getLocalProfile();
     }
@@ -168,8 +150,6 @@ public class ProfileRepository {
      * @param callback  Callback for Firestore success/failure
      */
     public void updateProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
-
-        // Save locally first
         saveProfileLocally(profile);
 
         String documentId = profile.getUid();
@@ -194,29 +174,11 @@ public class ProfileRepository {
                 });
     }
 
-    /**
-     * Checks whether a profile exists locally.
-     *
-     * @return true if required local profile fields are present
-     */
     public boolean hasProfile() {
         return !sharedPreferences.getString(KEY_NAME, "").isEmpty()
                 && !sharedPreferences.getString(KEY_EMAIL, "").isEmpty();
     }
 
-    /**
-     * Normalizes email for safe and consistent Firestore document IDs.
-     *
-     * @param email input email
-     * @return normalized email
-     */
-    private String normalizeEmail(String email) {
-        return email == null ? "" : email.trim().toLowerCase();
-    }
-
-    /**
-     * Deletes the locally stored profile from SharedPreferences.
-     */
     public void deleteLocalProfile() {
         sharedPreferences.edit()
                 .remove(KEY_UID)
