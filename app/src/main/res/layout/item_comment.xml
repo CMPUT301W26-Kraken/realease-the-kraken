@@ -17,7 +17,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Author Name" />
+            android:text="Author Name"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/text_comment_date"
@@ -25,7 +26,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="HH:MM DD-MM-YYYY"
-            android:textAlignment="textEnd" />
+            android:textAlignment="textEnd"
+            android:textSize="12sp" />
 
     </LinearLayout>
 
@@ -33,7 +35,8 @@
         android:id="@+id/text_comment_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minLines="4"
+        android:minLines="2"
+        android:layout_marginTop="4dp"
         android:text="Comment Body" />
 
 </LinearLayout>

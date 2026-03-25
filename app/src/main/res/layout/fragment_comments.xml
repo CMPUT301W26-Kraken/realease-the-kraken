@@ -32,6 +32,15 @@
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/no_comments_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="12dp"
+        android:text="No comments yet"
+        android:visibility="gone" />
+
     <!-- List Area (RecyclerView Recommended) -->
 
     <androidx.recyclerview.widget.RecyclerView
@@ -39,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" >
+        android:padding="8dp">
 
     </androidx.recyclerview.widget.RecyclerView>
 

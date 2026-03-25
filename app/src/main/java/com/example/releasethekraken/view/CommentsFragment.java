@@ -14,11 +14,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.CommentService;
 import com.example.releasethekraken.model.Comment;
+import com.example.releasethekraken.model.CommentRepository;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.repository.ProfileRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +40,7 @@ public class CommentsFragment extends Fragment {
     private CommentAdapter adapter;
     private String eventId;
     private UserRole userRole; // Will be needed for determining if comments can be deleted
+    private CommentService commentService;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,7 +52,12 @@ public class CommentsFragment extends Fragment {
                 eventId = getArguments().getString("eventId");
             }
             userRole = (UserRole) getArguments().getSerializable("UserType");
+            if (userRole == null) {
+                userRole = (UserRole) getArguments().getSerializable("userRole");
+            }
         }
+
+        commentService = new CommentService(new CommentRepository());
     }
 
     @Override
@@ -85,8 +96,8 @@ public class CommentsFragment extends Fragment {
      * @param view current fragment view used for navigation
      */
     private void showCommentCreateDialog(String eventId,
-                                              //String userId,
-                                              View view) {
+                                         //String userId,
+                                         View view) {
 
         EditText input = new EditText(requireContext());
         input.setHint("Enter Comment Message");
@@ -102,11 +113,28 @@ public class CommentsFragment extends Fragment {
 
                     if (!commentText.isEmpty()) {
 
-                        // TODO: ADD FIREBASE COMMENT STORING
+                        ProfileRepository profileRepository = new ProfileRepository(requireContext());
+                        Profile profile = profileRepository.getProfile();
 
-                        Toast.makeText(requireContext(),
-                                "Comment would be created",
-                                Toast.LENGTH_SHORT).show();
+                        String userId = profile.getUserId();
+                        String authorName = profile.getName();
+
+                        commentService.submitComment(eventId, userId, authorName, commentText, result -> {
+                            if (result == CommentService.AddCommentResult.SUCCESS) {
+                                Toast.makeText(requireContext(),
+                                        "Comment posted",
+                                        Toast.LENGTH_SHORT).show();
+                                loadComments();
+                            } else if (result == CommentService.AddCommentResult.EMPTY_COMMENT) {
+                                Toast.makeText(requireContext(),
+                                        "Comment cannot be empty",
+                                        Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(requireContext(),
+                                        "Failed to post comment",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     } else {
                         Toast.makeText(requireContext(),
                                 "Comment cannot be empty",
@@ -118,12 +146,34 @@ public class CommentsFragment extends Fragment {
     }
 
     private void loadComments() {
-        // TODO: PULL ACTUAL COMMENTS FROM THE FIREBASE
+        commentService.fetchComments(eventId, new CommentService.FetchCommentsCallback() {
+            @Override
+            public void onSuccess(List<Comment> fetchedComments) {
+                comments.clear();
+                comments.addAll(fetchedComments);
+                adapter.notifyDataSetChanged();
 
-        Comment test1 = new Comment(eventId, "Test1", "I am organizer making comment", System.currentTimeMillis());
-        Comment test2 = new Comment(eventId, "Test2", "I am entrant making comment", System.currentTimeMillis());
+                View currentView = getView();
+                if (currentView != null) {
+                    TextView noCommentsText = currentView.findViewById(R.id.no_comments_text);
+                    RecyclerView recyclerView = currentView.findViewById(R.id.comments_recycler_view);
 
-        comments.add(test1);
-        comments.add(test2);
+                    if (comments.isEmpty()) {
+                        noCommentsText.setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.GONE);
+                    } else {
+                        noCommentsText.setVisibility(View.GONE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(requireContext(),
+                        "Failed to load comments",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
