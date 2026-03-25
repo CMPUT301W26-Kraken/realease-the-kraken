@@ -53,6 +53,14 @@ public class EventRepository {
     }
 
     /**
+     * callback interface for count-based queries.
+     */
+    public interface CountCallback {
+        void onSuccess(int count);
+        void onError(Exception e);
+    }
+
+    /**
      * creates a new event in Firestore
      *
      * @param event the event to save
@@ -68,6 +76,7 @@ public class EventRepository {
         data.put("registrationStartMillis", event.getRegistrationStartMillis());
         data.put("registrationEndMillis", event.getRegistrationEndMillis());
         data.put("capacity", event.getCapacity());
+        data.put("posterUrl", event.getPosterUrl());
         data.put("createdAt", System.currentTimeMillis()); // Added for sorting
 
         db.collection("events")
@@ -107,6 +116,7 @@ public class EventRepository {
                     Long registrationStartMillis = documentSnapshot.getLong("registrationStartMillis");
                     Long registrationEndMillis = documentSnapshot.getLong("registrationEndMillis");
                     Long capacity = documentSnapshot.getLong("capacity");
+                    String posterUrl = documentSnapshot.getString("posterUrl");
 
                     // Normalize missing strings so adapter and search code can treat event data
                     // as non-null without adding repeated null checks.
@@ -138,7 +148,8 @@ public class EventRepository {
                             description,
                             registrationStartMillis,
                             registrationEndMillis,
-                            capacity.intValue()
+                            capacity.intValue(),
+                            posterUrl
                     );
 
                     callback.onSuccess(event);
@@ -165,6 +176,7 @@ public class EventRepository {
                         Long registrationStartMillis = document.getLong("registrationStartMillis");
                         Long registrationEndMillis = document.getLong("registrationEndMillis");
                         Long capacity = document.getLong("capacity");
+                        String posterUrl = document.getString("posterUrl");
 
                         if (title == null) {
                             title = "";
@@ -190,7 +202,8 @@ public class EventRepository {
                                 description,
                                 registrationStartMillis,
                                 registrationEndMillis,
-                                capacity.intValue()
+                                capacity.intValue(),
+                                posterUrl
                         );
 
                         events.add(event);
@@ -223,6 +236,7 @@ public class EventRepository {
                     Long registrationStartMillis = document.getLong("registrationStartMillis");
                     Long registrationEndMillis = document.getLong("registrationEndMillis");
                     Long capacity = document.getLong("capacity");
+                    String posterUrl = document.getString("posterUrl");
 
                     if (capacity == null || capacity <= 0) {
                         capacity = (long) Event.DEFAULT_CAPACITY;
@@ -234,10 +248,26 @@ public class EventRepository {
                             description != null ? description : "",
                             registrationStartMillis != null ? registrationStartMillis : 0L,
                             registrationEndMillis != null ? registrationEndMillis : 0L,
-                            capacity.intValue()
+                            capacity.intValue(),
+                            posterUrl
                     );
                     callback.onSuccess(event);
                 })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * counts the number of entrants currently on an event waiting list.
+     *
+     * @param eventId the event to count entrants for
+     * @param callback callback returning the entrant count
+     */
+    public void getWaitingListCount(String eventId, CountCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .get()
+                .addOnSuccessListener(querySnapshot -> callback.onSuccess(querySnapshot.size()))
                 .addOnFailureListener(callback::onError);
     }
 }

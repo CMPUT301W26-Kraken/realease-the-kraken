@@ -2,7 +2,9 @@ package com.example.releasethekraken.view;
 
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -16,7 +18,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.Group;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -29,6 +30,7 @@ import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
+import com.google.firebase.storage.FirebaseStorage;
 
 /**
  * A fragment that shows the details of an event that can be accessed when an event is clicked from
@@ -46,18 +48,21 @@ import com.example.releasethekraken.util.QRCodeGenerator;
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
+    private static final long MAX_POSTER_BYTES = 5L * 1024L * 1024L;
 
     private String eventId;
     private TextView titleTextView;
     private TextView descriptionTextView;
     private TextView registrationStartTextView;
     private TextView registrationEndTextView;
+    private ImageView posterImageView;
 
     private WaitingListService waitingListService;
     private EventRepository eventRepository;
     private Event currentEvent;
     private UserRole userType;
     private boolean cameFromYourEvents;
+    private boolean showQrOnLoad;
 
     private boolean isJoined = false;
 
@@ -74,6 +79,7 @@ public class EventDetailsFragment extends Fragment {
             }
             userType = (UserRole) getArguments().getSerializable("UserType");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
+            showQrOnLoad = getArguments().getBoolean("showQrOnLoad", false);
         }
 
         waitingListService = new WaitingListService(new WaitingListRepository());
@@ -93,6 +99,7 @@ public class EventDetailsFragment extends Fragment {
         descriptionTextView = view.findViewById(R.id.event_description_display);
         registrationStartTextView = view.findViewById(R.id.registration_start_display);
         registrationEndTextView = view.findViewById(R.id.registration_end_display);
+        posterImageView = view.findViewById(R.id.event_poster);
 
         Button signupOptOutButton = view.findViewById(R.id.signup_optout_button);
         Button returnToBrowseButton = view.findViewById(R.id.return_button);
@@ -183,6 +190,10 @@ public class EventDetailsFragment extends Fragment {
                 currentEvent = event;
                 bindEventToViews();
                 checkIfJoined();
+                if (showQrOnLoad && userType == UserRole.ORGANIZER) {
+                    showQrOnLoad = false;
+                    showQrCodeDialog();
+                }
             }
             @Override
             public void onError(Exception e) {
@@ -200,15 +211,15 @@ public class EventDetailsFragment extends Fragment {
         descriptionTextView.setText(currentEvent.getDescription());
         registrationStartTextView.setText(formatMillis(currentEvent.getRegistrationStartMillis()));
         registrationEndTextView.setText(formatMillis(currentEvent.getRegistrationEndMillis()));
+        loadPosterIntoView(currentEvent.getPosterUrl());
     }
 
     private void handleSignupToggle(Button button) {
-
-        //Ethan adding real entrant to sign up
-        ProfileRepository profileRepository = new ProfileRepository(requireContext());
-        Profile profile = profileRepository.getProfile();
-        String entrantId = profile.getUserId(); //TO BE CHANGED IF CHANGING DEVICE ID TO USERID
-        //End of Ethan's edit
+        String entrantId = getCurrentEntrantId();
+        if (TextUtils.isEmpty(entrantId)) {
+            Toast.makeText(requireContext(), R.string.waiting_list_profile_required, Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
                 @Override
@@ -217,7 +228,7 @@ public class EventDetailsFragment extends Fragment {
                         isJoined = true;
                         button.setText(R.string.opt_out_button);
                     }
-                    Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), getJoinResultMessage(result), Toast.LENGTH_SHORT).show();
                 }
                 @Override public void onError(Exception e) {}
             });
@@ -236,7 +247,11 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void checkIfJoined() {
-        new WaitingListRepository().isUserInWaitingList(eventId, "testEntrant001", new WaitingListRepository.CheckCallback() {
+        String entrantId = getCurrentEntrantId();
+        if (TextUtils.isEmpty(entrantId)) {
+            return;
+        }
+        new WaitingListRepository().isUserInWaitingList(eventId, entrantId, new WaitingListRepository.CheckCallback() {
             @Override
             public void onResult(boolean exists) {
                 isJoined = exists;
@@ -247,6 +262,53 @@ public class EventDetailsFragment extends Fragment {
             }
             @Override public void onError(Exception e) {}
         });
+    }
+
+    private String getCurrentEntrantId() {
+        Profile profile = new ProfileRepository(requireContext()).getProfile();
+        if (profile != null && !TextUtils.isEmpty(profile.getUserId())) {
+            return profile.getUserId();
+        }
+        return "";
+    }
+
+    private int getJoinResultMessage(WaitingListService.JoinResult result) {
+        switch (result) {
+            case SUCCESS:
+                return R.string.waiting_list_join_success;
+            case REGISTRATION_CLOSED:
+                return R.string.waiting_list_registration_closed;
+            case DUPLICATE_ENTRY:
+                return R.string.waiting_list_duplicate_entry;
+            case WAITING_LIST_FULL:
+                return R.string.waiting_list_full;
+            case INVALID_INPUT:
+            default:
+                return R.string.waiting_list_invalid_input;
+        }
+    }
+
+    private void loadPosterIntoView(String posterUrl) {
+        if (TextUtils.isEmpty(posterUrl)) {
+            posterImageView.setImageResource(R.drawable.krakenlogov1);
+            return;
+        }
+
+        FirebaseStorage.getInstance()
+                .getReferenceFromUrl(posterUrl)
+                .getBytes(MAX_POSTER_BYTES)
+                .addOnSuccessListener(bytes -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    posterImageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    posterImageView.setImageResource(R.drawable.krakenlogov1);
+                });
     }
 
     /**

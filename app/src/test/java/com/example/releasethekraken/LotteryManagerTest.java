@@ -1,20 +1,29 @@
 package com.example.releasethekraken;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.LotteryManager;
+import com.example.releasethekraken.model.LotteryResult;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class LotteryManagerTest {
-    //public ArrayList<String> drawEntrants(Event event, ArrayList<String> allEntrants, int capacity)
-    //public Event(String eventId, String title, String description, long registrationStartMillis, long registrationEndMillis)
     @Test
     public void selects_to_capacity() {
-        //setup
         LotteryManager lotteryManager = new LotteryManager();
         Event event = new Event("0", "event title", "event desc", 0, 1);
+        List<String> entrants = Arrays.asList("a", "b", "c", "d");
 
+        LotteryResult result = lotteryManager.drawEntrants(event, entrants, 2);
+
+        assertEquals(2, result.accepted.size());
+        assertEquals(2, result.rejected.size());
+        assertTrue(entrants.containsAll(result.accepted));
+        assertTrue(entrants.containsAll(result.rejected));
     }
 }

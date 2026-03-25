@@ -96,6 +96,14 @@ public class WaitingListRepository {
     }
 
     /**
+     * Callback interface used to return waiting list counts.
+     */
+    public interface CountCallback {
+        void onResult(int count);
+        void onError(Exception e);
+    }
+
+    /**
      * Checks if an entrant is already on the waiting list for a given event.
      *
      * @param eventId   the ID of the event
@@ -129,6 +137,21 @@ public class WaitingListRepository {
                 .addOnSuccessListener(documentSnapshot -> {
                     callback.onResult(documentSnapshot.exists());
                 })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Counts the current number of entrants in an event waiting list.
+     *
+     * @param eventId the event to count entrants for
+     * @param callback callback returning the current waiting list size
+     */
+    public void getWaitingListCount(String eventId, CountCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .get()
+                .addOnSuccessListener(querySnapshot -> callback.onResult(querySnapshot.size()))
                 .addOnFailureListener(callback::onError);
     }
 

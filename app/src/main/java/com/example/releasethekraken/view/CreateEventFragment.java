@@ -1,5 +1,8 @@
 package com.example.releasethekraken.view;
 
+import android.content.res.ColorStateList;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -9,6 +12,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
@@ -22,7 +27,11 @@ import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,10 +47,23 @@ import java.util.concurrent.TimeUnit;
  *  edited so that it can properly prefill the relevant fields to be edited.
  */
 public class CreateEventFragment extends Fragment {
+    private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
+    private static final long MAX_POSTER_PREVIEW_BYTES = 5L * 1024L * 1024L;
 
     private FragmentCreateEventBinding binding;
     private boolean editEvent, cameFromYourEvents;
     private String eventID;
+    private Uri selectedPosterUri;
+    private String existingPosterUrl = "";
+
+    private final ActivityResultLauncher<String> posterPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri == null || binding == null) {
+                    return;
+                }
+                selectedPosterUri = uri;
+                applyLocalPosterPreview(uri);
+            });
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,7 +94,11 @@ public class CreateEventFragment extends Fragment {
         if (editEvent) {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
+            loadEventForEditing();
         }
+
+        binding.imageButton.setOnClickListener(v -> posterPickerLauncher.launch("image/*"));
+        binding.uploadPosterText.setOnClickListener(v -> posterPickerLauncher.launch("image/*"));
 
         // Navigate back to main menu
         binding.cancelEventCreation.setOnClickListener(v -> {
@@ -119,7 +145,7 @@ public class CreateEventFragment extends Fragment {
         try {
             // Keep create-event input and browse-event filter input on the same date format so
             // the user only has to learn one timestamp convention in the app.
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
             sdf.setLenient(false);
             registrationStartMillis = sdf.parse(startText).getTime();
             registrationEndMillis = sdf.parse(endText).getTime();
@@ -154,23 +180,84 @@ public class CreateEventFragment extends Fragment {
             }
         }
 
-        // Current app flow still derives an id from the title. Not ideal long-term, but kept
-        // unchanged here so the new filtering work does not alter navigation semantics.
-        String eventId = title.replaceAll("\\s+", "_").toLowerCase();
+        // Disable the button while Firestore writes so duplicate taps do not create duplicate
+        // events or enqueue multiple draw workers.
+        binding.loading.setVisibility(View.VISIBLE);
+        binding.createEvent.setEnabled(false);
 
+        String eventId = editEvent && !TextUtils.isEmpty(eventID)
+                ? eventID
+                : buildUniqueEventId(title);
+
+        if (selectedPosterUri != null) {
+            uploadPosterAndSaveEvent(
+                    eventId,
+                    title,
+                    description,
+                    registrationStartMillis,
+                    registrationEndMillis,
+                    capacity
+            );
+            return;
+        }
+
+        persistEvent(
+                eventId,
+                title,
+                description,
+                registrationStartMillis,
+                registrationEndMillis,
+                capacity,
+                existingPosterUrl
+        );
+    }
+
+    private void uploadPosterAndSaveEvent(
+            String eventId,
+            String title,
+            String description,
+            long registrationStartMillis,
+            long registrationEndMillis,
+            int capacity
+    ) {
+        StorageReference posterRef = FirebaseStorage.getInstance()
+                .getReference()
+                .child("event_posters")
+                .child(eventId + ".jpg");
+
+        posterRef.putFile(selectedPosterUri)
+                .addOnSuccessListener(taskSnapshot -> posterRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUri -> persistEvent(
+                                eventId,
+                                title,
+                                description,
+                                registrationStartMillis,
+                                registrationEndMillis,
+                                capacity,
+                                downloadUri.toString()
+                        ))
+                        .addOnFailureListener(this::handleSaveError))
+                .addOnFailureListener(this::handleSaveError);
+    }
+
+    private void persistEvent(
+            String eventId,
+            String title,
+            String description,
+            long registrationStartMillis,
+            long registrationEndMillis,
+            int capacity,
+            String posterUrl
+    ) {
         Event event = new Event(
                 eventId,
                 title,
                 description,
                 registrationStartMillis,
                 registrationEndMillis,
-                capacity
+                capacity,
+                posterUrl
         );
-
-        // Disable the button while Firestore writes so duplicate taps do not create duplicate
-        // events or enqueue multiple draw workers.
-        binding.loading.setVisibility(View.VISIBLE);
-        binding.createEvent.setEnabled(false);
 
         new EventRepository().createEvent(event, new EventRepository.CompletionCallback() {
             @Override
@@ -206,16 +293,93 @@ public class CreateEventFragment extends Fragment {
                 Bundle args = new Bundle();
                 args.putString("eventId", eventId);
                 args.putSerializable("UserType", UserRole.ORGANIZER);
+                args.putBoolean("showQrOnLoad", true);
                 Navigation.findNavController(requireView()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             }
 
             @Override
             public void onError(Exception e) {
-                if (!isAdded()) return;
-                binding.loading.setVisibility(View.GONE);
-                binding.createEvent.setEnabled(true);
-                Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                handleSaveError(e);
             }
         });
+    }
+
+    private void handleSaveError(Exception e) {
+        if (!isAdded()) return;
+        binding.loading.setVisibility(View.GONE);
+        binding.createEvent.setEnabled(true);
+        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    private void loadEventForEditing() {
+        if (TextUtils.isEmpty(eventID)) {
+            return;
+        }
+        new EventRepository().getEventById(eventID, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                if (!isAdded()) {
+                    return;
+                }
+                existingPosterUrl = event.getPosterUrl();
+                binding.nameEventCreate.setText(event.getTitle());
+                binding.eventDescriptionText.setText(event.getDescription());
+                binding.registrationStartDate.setText(formatMillisForInput(event.getRegistrationStartMillis()));
+                binding.registrationEndDate.setText(formatMillisForInput(event.getRegistrationEndMillis()));
+                binding.maxEntrantsEditText.setText(String.valueOf(event.getCapacity()));
+                loadPosterPreview(existingPosterUrl);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) {
+                    return;
+                }
+                Toast.makeText(requireContext(), "Failed to load event for editing", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private String buildUniqueEventId(String title) {
+        String normalizedTitle = title.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        if (normalizedTitle.isEmpty()) {
+            normalizedTitle = "event";
+        }
+        return normalizedTitle + "_" + System.currentTimeMillis();
+    }
+
+    private String formatMillisForInput(long millis) {
+        return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH).format(millis);
+    }
+
+    private void applyLocalPosterPreview(Uri uri) {
+        binding.imageButton.setImageTintList((ColorStateList) null);
+        binding.imageButton.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        binding.imageButton.setImageURI(uri);
+    }
+
+    private void loadPosterPreview(String posterUrl) {
+        if (TextUtils.isEmpty(posterUrl)) {
+            return;
+        }
+
+        FirebaseStorage.getInstance()
+                .getReferenceFromUrl(posterUrl)
+                .getBytes(MAX_POSTER_PREVIEW_BYTES)
+                .addOnSuccessListener(bytes -> {
+                    if (binding == null) {
+                        return;
+                    }
+                    binding.imageButton.setImageTintList((ColorStateList) null);
+                    binding.imageButton.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                    binding.imageButton.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "Unable to load poster preview", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }

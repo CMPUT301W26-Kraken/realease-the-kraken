@@ -22,6 +22,7 @@ public class Event {
     private final long registrationStartMillis; //time in milliseconds when registration starts for the event
     private final long registrationEndMillis; //time in milliseconds when registration ends for the event
     private final int capacity;
+    private final String posterUrl;
 
     /**
      *  creating a new Event object
@@ -36,7 +37,7 @@ public class Event {
                  long registrationStartMillis, long registrationEndMillis) {
         // This overload keeps older call sites valid while routing everything through the
         // full constructor so capacity normalization only exists in one place.
-        this(eventId, title, description, registrationStartMillis, registrationEndMillis, DEFAULT_CAPACITY);
+        this(eventId, title, description, registrationStartMillis, registrationEndMillis, DEFAULT_CAPACITY, "");
     }
 
     /**
@@ -51,6 +52,22 @@ public class Event {
      */
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity) {
+        this(eventId, title, description, registrationStartMillis, registrationEndMillis, capacity, "");
+    }
+
+    /**
+     * creating a new Event object with explicit capacity and poster metadata.
+     *
+     * @param eventId unique ID for the event
+     * @param title title of the event
+     * @param description description of the event
+     * @param registrationStartMillis Time when registration starts
+     * @param registrationEndMillis Time when registration ends
+     * @param capacity maximum number of entrants the event supports
+     * @param posterUrl remote URL for the event poster image, if one exists
+     */
+    public Event(String eventId, String title, String description,
+                 long registrationStartMillis, long registrationEndMillis, int capacity, String posterUrl) {
         // Store the raw event metadata exactly as provided by the caller.
         this.eventId = eventId;
         this.title = title;
@@ -60,6 +77,7 @@ public class Event {
         // Capacity is normalized here instead of in every caller so that older documents,
         // blank create-event input, and invalid values all converge to the same behavior.
         this.capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
+        this.posterUrl = posterUrl == null ? "" : posterUrl;
     }
 
     //returns a unique ID for the event
@@ -90,5 +108,9 @@ public class Event {
     //returns capacity
     public int getCapacity() {
         return capacity;
+    }
+
+    public String getPosterUrl() {
+        return posterUrl;
     }
 }

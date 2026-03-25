@@ -104,6 +104,12 @@
     <string name="redraw_button">Redraw Participants</string>
     <string name="view_waiting_list_button">View Current Waiting List</string>
     <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
+    <string name="waiting_list_join_success">Joined waiting list</string>
+    <string name="waiting_list_registration_closed">Registration is closed for this event</string>
+    <string name="waiting_list_duplicate_entry">You are already on the waiting list</string>
+    <string name="waiting_list_full">The waiting list is full</string>
+    <string name="waiting_list_invalid_input">Complete your profile before joining the waiting list</string>
+    <string name="waiting_list_profile_required">Create your profile before joining the waiting list</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>

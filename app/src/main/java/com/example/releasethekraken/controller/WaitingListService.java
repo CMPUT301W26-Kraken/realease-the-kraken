@@ -35,6 +35,7 @@ public class WaitingListService {
         SUCCESS,
         REGISTRATION_CLOSED,
         DUPLICATE_ENTRY,
+        WAITING_LIST_FULL,
         INVALID_INPUT,
     }
 
@@ -167,19 +168,40 @@ public class WaitingListService {
                             if (callback != null) callback.onResult(JoinResult.DUPLICATE_ENTRY);
                             return;
                         }
-                        // 3. create the waiting list entry with exact join time
-                        WaitingListEntry entry = new WaitingListEntry(
+                        // 3. enforce the organizer-configured maximum waiting list size before
+                        // writing a new entrant to Firestore.
+                        waitingListRepository.getWaitingListCount(
                                 event.getEventId(),
-                                entrantId,
-                                nowMillis
-                        );
-                        // 4. store it repository will later store in Firestore
-                        waitingListRepository.addToWaitingList(
-                                entry,
-                                new WaitingListRepository.CompletionCallback() {
+                                new WaitingListRepository.CountCallback() {
                                     @Override
-                                    public void onSuccess() {
-                                        if (callback != null) callback.onResult(JoinResult.SUCCESS);
+                                    public void onResult(int count) {
+                                        if (event.getCapacity() > 0 && count >= event.getCapacity()) {
+                                            if (callback != null) callback.onResult(JoinResult.WAITING_LIST_FULL);
+                                            return;
+                                        }
+
+                                        // 4. create the waiting list entry with exact join time
+                                        WaitingListEntry entry = new WaitingListEntry(
+                                                event.getEventId(),
+                                                entrantId,
+                                                nowMillis
+                                        );
+
+                                        // 5. store it; the repository later persists it in Firestore
+                                        waitingListRepository.addToWaitingList(
+                                                entry,
+                                                new WaitingListRepository.CompletionCallback() {
+                                                    @Override
+                                                    public void onSuccess() {
+                                                        if (callback != null) callback.onResult(JoinResult.SUCCESS);
+                                                    }
+
+                                                    @Override
+                                                    public void onError(Exception e) {
+                                                        if (callback != null) callback.onError(e);
+                                                    }
+                                                }
+                                        );
                                     }
 
                                     @Override

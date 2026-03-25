@@ -17,6 +17,7 @@ public class WaitingListServiceTest {
     static class FakeWaitingListRepository extends WaitingListRepository {
         boolean alreadyWaiting = false;
         boolean removed = false;
+        int waitingListCount = 0;
         WaitingListEntry savedEntry = null;
 
         public FakeWaitingListRepository() {
@@ -32,6 +33,11 @@ public class WaitingListServiceTest {
         public void addToWaitingList(WaitingListEntry entry, CompletionCallback callback) {
             savedEntry = entry;
             callback.onSuccess();
+        }
+
+        @Override
+        public void getWaitingListCount(String eventId, CountCallback callback) {
+            callback.onResult(waitingListCount);
         }
 
         @Override
@@ -134,6 +140,7 @@ public class WaitingListServiceTest {
     public void joinWaitingList_success_savesEntryAndReturnsSuccess() {
         FakeWaitingListRepository repo = new FakeWaitingListRepository();
         repo.alreadyWaiting = false;
+        repo.waitingListCount = 0;
 
         WaitingListService service = new WaitingListService(repo);
 
@@ -161,6 +168,36 @@ public class WaitingListServiceTest {
         assertEquals(event.getEventId(), repo.savedEntry.getEventId());
         assertEquals(entrantId, repo.savedEntry.getEntrantId());
         assertTrue(repo.savedEntry.getJoinedAtMillis() > 0);
+    }
+
+    @Test
+    public void joinWaitingList_fullWaitingList_returnsWaitingListFull() {
+        FakeWaitingListRepository repo = new FakeWaitingListRepository();
+        repo.alreadyWaiting = false;
+        repo.waitingListCount = 2;
+
+        WaitingListService service = new WaitingListService(repo);
+        Event event = new Event("event123", "Open Event", "Description",
+                System.currentTimeMillis() - 1000000,
+                System.currentTimeMillis() + 1000000,
+                2);
+
+        final WaitingListService.JoinResult[] result = new WaitingListService.JoinResult[1];
+
+        service.joinWaitingList(event, "device123", new WaitingListService.JoinCallback() {
+            @Override
+            public void onResult(WaitingListService.JoinResult joinResult) {
+                result[0] = joinResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(WaitingListService.JoinResult.WAITING_LIST_FULL, result[0]);
+        assertNull(repo.savedEntry);
     }
 
     @Test

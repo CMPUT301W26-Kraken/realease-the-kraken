@@ -26,10 +26,10 @@ import java.util.Random;
 public class LotteryManager {
 
     //Takes in all entrants from an event and capacity, and chooses random people up to its capacity, returns accepted entrants
-
-
-    NotificationRepository notifRepo = new NotificationRepository();
-    NotificationService notifService = new NotificationService(new NotificationRepository());
+    // Notification wiring is intentionally lazy. The current draw methods only compute winners
+    // and do not need Firebase-backed notification dependencies during local unit tests.
+    NotificationRepository notifRepo;
+    NotificationService notifService;
 
     /**
      * Performs the initial lottery draw for an event.
