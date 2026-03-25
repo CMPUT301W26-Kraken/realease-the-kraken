@@ -2,10 +2,13 @@ package com.example.releasethekraken.repository;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.util.Log;
 
 import com.example.releasethekraken.model.Profile;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,19 +24,23 @@ import java.util.Map;
  */
 public class ProfileRepository {
     private static final String PREFS_NAME = "profile_prefs";
-    private static final String KEY_DEVICE_ID = "profile_device_id"; // ANDROID_ID: this is stored locally, used as Firestore doc ID
+    private static final String KEY_UID = "profile_uid"; // Firebase Auth UID: used as Firestore doc ID
     private static final String KEY_NAME = "profile_name";
     private static final String KEY_EMAIL = "profile_email";
     private static final String KEY_PHONE = "profile_phone";
+    private static final String KEY_IMAGE_URL = "profile_image_url"; // Firebase Storage download URL
 
     private static final String COLLECTION_PROFILES = "profiles";
+    private static final String STORAGE_PROFILE_IMAGES = "profile_images";
 
     private final SharedPreferences sharedPreferences;
     private final FirebaseFirestore firestore;
+    private final FirebaseStorage storage;
 
     public ProfileRepository(Context context) {
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         firestore = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
     }
 
     /**
@@ -51,30 +58,31 @@ public class ProfileRepository {
      */
     public void saveProfileLocally(Profile profile) {
         sharedPreferences.edit()
-                .putString(KEY_DEVICE_ID, profile.getDeviceId())
+                .putString(KEY_UID, profile.getUid())
                 .putString(KEY_NAME, profile.getName())
                 .putString(KEY_EMAIL, profile.getEmail())
                 .putString(KEY_PHONE, profile.getPhone())
+                .putString(KEY_IMAGE_URL, profile.getProfileImageUrl())
                 .apply();
     }
 
     /**
      * Saves the profile only to Firestore.
      *
-     * Firestore document ID is the device ID (ANDROID_ID).
-     * To add login: swap profile.getDeviceId() with FirebaseAuth.getInstance().getCurrentUser().getUid()
+     * Firestore document ID is the Firebase Auth UID.
      *
      * @param profile   The profile to save
      * @param callback  Callback for Firestore success/failure
      */
     public void saveProfileToFirestore(Profile profile, ProfileRepositoryCallback<Void> callback) {
-        String documentId = profile.getDeviceId(); // doc ID = ANDROID_ID, swap to UID when login is added
+        String documentId = profile.getUid();
 
         Map<String, Object> profileData = new HashMap<>();
-        profileData.put("deviceId", profile.getDeviceId());
+        profileData.put("uid", profile.getUid());
         profileData.put("name", profile.getName());
         profileData.put("email", profile.getEmail());
         profileData.put("phone", profile.getPhone());
+        profileData.put("profileImageUrl", profile.getProfileImageUrl());
 
         Log.d("ProfileRepository", "Saving profile to Firestore with doc id: " + documentId);
 
@@ -108,11 +116,14 @@ public class ProfileRepository {
      * @return locally stored Profile object
      */
     public Profile getLocalProfile() {
-        String deviceId = sharedPreferences.getString(KEY_DEVICE_ID, "");
-        String name = sharedPreferences.getString(KEY_NAME, "");
-        String email = sharedPreferences.getString(KEY_EMAIL, "");
-        String phone = sharedPreferences.getString(KEY_PHONE, "");
-        return new Profile(deviceId, name, email, phone);
+        String uid      = sharedPreferences.getString(KEY_UID, "");
+        String name     = sharedPreferences.getString(KEY_NAME, "");
+        String email    = sharedPreferences.getString(KEY_EMAIL, "");
+        String phone    = sharedPreferences.getString(KEY_PHONE, "");
+        String imageUrl = sharedPreferences.getString(KEY_IMAGE_URL, null);
+        Profile profile = new Profile(name, email, phone, imageUrl);
+        profile.setUid(uid);
+        return profile;
     }
 
     /**
@@ -125,14 +136,14 @@ public class ProfileRepository {
     }
 
     /**
-     * Retrieves a profile from Firestore using device ID as the document ID.
+     * Retrieves a profile from Firestore using Firebase Auth UID as the document ID.
      *
-     * @param deviceId  Device ID used to identify the Firestore document
+     * @param uid       Firebase Auth UID used to identify the Firestore document
      * @param callback  Callback for success/failure
      */
-    public void getProfileFromFirestore(String deviceId, ProfileRepositoryCallback<Profile> callback) {
+    public void getProfileFromFirestore(String uid, ProfileRepositoryCallback<Profile> callback) {
         firestore.collection(COLLECTION_PROFILES)
-                .document(deviceId)
+                .document(uid)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -150,18 +161,25 @@ public class ProfileRepository {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    /**
+     * Updates an existing profile both locally and in Firestore.
+     *
+     * @param profile   The updated profile
+     * @param callback  Callback for Firestore success/failure
+     */
     public void updateProfile(Profile profile, ProfileRepositoryCallback<Void> callback) {
 
         // Save locally first
         saveProfileLocally(profile);
 
-        String documentId = profile.getDeviceId(); // doc ID = ANDROID_ID, swap to UID when login is added
+        String documentId = profile.getUid();
 
         Map<String, Object> profileData = new HashMap<>();
-        profileData.put("deviceId", profile.getDeviceId());
+        profileData.put("uid", profile.getUid());
         profileData.put("name", profile.getName());
         profileData.put("email", profile.getEmail());
         profileData.put("phone", profile.getPhone());
+        profileData.put("profileImageUrl", profile.getProfileImageUrl());
 
         firestore.collection(COLLECTION_PROFILES)
                 .document(documentId)
@@ -201,22 +219,23 @@ public class ProfileRepository {
      */
     public void deleteLocalProfile() {
         sharedPreferences.edit()
-                .remove(KEY_DEVICE_ID)
+                .remove(KEY_UID)
                 .remove(KEY_NAME)
                 .remove(KEY_EMAIL)
                 .remove(KEY_PHONE)
+                .remove(KEY_IMAGE_URL)
                 .apply();
     }
 
     /**
-     * Deletes the profile from Firestore using device ID as the document ID.
+     * Deletes the profile from Firestore using Firebase Auth UID as the document ID.
      *
-     * @param deviceId  device ID used to identify the Firestore document
+     * @param uid       Firebase Auth UID used to identify the Firestore document
      * @param callback  callback for success/failure
      */
-    public void deleteProfileFromFirestore(String deviceId, ProfileRepositoryCallback<Void> callback) {
+    public void deleteProfileFromFirestore(String uid, ProfileRepositoryCallback<Void> callback) {
         firestore.collection(COLLECTION_PROFILES)
-                .document(deviceId)
+                .document(uid)
                 .delete()
                 .addOnSuccessListener(unused -> {
                     Log.d("ProfileRepository", "Profile deleted from Firestore");
@@ -226,5 +245,40 @@ public class ProfileRepository {
                     Log.e("ProfileRepository", "Profile delete failed", e);
                     callback.onFailure(e);
                 });
+    }
+
+    /**
+     * Uploads a profile image to Firebase Storage, then saves the download URL
+     * to both Firestore and local SharedPreferences.
+     *
+     * Storage path: profile_images/{uid}.jpg
+     *
+     * @param imageUri  Uri of the image selected from the gallery
+     * @param uid       Firebase Auth UID of the current user
+     * @param callback  Returns the download URL on success
+     */
+    public void uploadProfileImage(Uri imageUri, String uid, ProfileRepositoryCallback<String> callback) {
+        StorageReference ref = storage.getReference()
+                .child(STORAGE_PROFILE_IMAGES)
+                .child(uid + ".jpg");
+
+        ref.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot ->
+                        ref.getDownloadUrl()
+                                .addOnSuccessListener(uri -> {
+                                    String downloadUrl = uri.toString();
+                                    // Cache URL locally so ViewProfileFragment doesn't need a Firestore round-trip
+                                    sharedPreferences.edit()
+                                            .putString(KEY_IMAGE_URL, downloadUrl)
+                                            .apply();
+                                    // Update the Firestore doc so other devices see the new image
+                                    firestore.collection(COLLECTION_PROFILES)
+                                            .document(uid)
+                                            .update("profileImageUrl", downloadUrl)
+                                            .addOnSuccessListener(u -> callback.onSuccess(downloadUrl))
+                                            .addOnFailureListener(callback::onFailure);
+                                })
+                                .addOnFailureListener(callback::onFailure))
+                .addOnFailureListener(callback::onFailure);
     }
 }

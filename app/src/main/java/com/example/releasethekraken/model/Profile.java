@@ -8,9 +8,8 @@ package com.example.releasethekraken.model;
  */
 public class Profile {
 
-    // Unique device identifier — Firestore document ID (profiles/{deviceId}).
-    // When login is added, stays as a field but the doc ID switches to Firebase Auth UID.
-    private String deviceId;
+    // Firebase Auth UID — used as the Firestore document ID (profiles/{uid}).
+    private String uid;
 
     // User's full name (required field)
     private String name;
@@ -21,6 +20,10 @@ public class Profile {
     // User's phone number (optional field)
     private String phone;
 
+    // Firebase Storage download URL for the user's profile picture.
+    // Null/empty means no custom picture has been set yet — UI falls back to default drawable.
+    private String profileImageUrl;
+
     /**
      * Required empty constructor for Firestore deserialization.
      */
@@ -28,7 +31,7 @@ public class Profile {
     }
 
     /**
-     * Constructs a new Profile object.
+     * Constructs a new Profile object. UID is set separately via Firebase Auth.
      *
      * @param name  the user's full name
      * @param email the user's email address
@@ -41,27 +44,36 @@ public class Profile {
     }
 
     /**
-     * Constructs a new Profile object with device identity.
+     * Constructs a new Profile object with profile image. UID is set separately via Firebase Auth.
      *
-     * @param deviceId the device's ANDROID_ID, used as the Firestore document ID
-     * @param name  the user's full name
-     * @param email the user's email address
-     * @param phone the user's phone number (can be empty)
+     * @param name            the user's full name
+     * @param email           the user's email address
+     * @param phone           the user's phone number (can be empty)
+     * @param profileImageUrl Firebase Storage download URL for the profile picture
      */
-    public Profile(String deviceId, String name, String email, String phone) {
-        this.deviceId = deviceId;
+    public Profile(String name, String email, String phone, String profileImageUrl) {
         this.name = name;
         this.email = email;
         this.phone = phone;
+        this.profileImageUrl = profileImageUrl;
     }
 
     /**
-     * Returns the device ID used as the Firestore document ID.
+     * Returns the Firebase Auth UID used as the Firestore document ID.
      *
-     * @return deviceId (ANDROID_ID)
+     * @return Firebase Auth UID
      */
-    public String getDeviceId() {
-        return deviceId;
+    public String getUid() {
+        return uid;
+    }
+
+    /**
+     * Sets the Firebase Auth UID. Called after Firebase Auth sign-in resolves.
+     *
+     * @param uid Firebase Auth UID
+     */
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     /**
@@ -89,5 +101,23 @@ public class Profile {
      */
     public String getPhone() {
         return phone;
+    }
+
+    /**
+     * Returns the Firebase Storage download URL for the profile picture.
+     *
+     * @return profileImageUrl, or null if no picture has been uploaded
+     */
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    /**
+     * Sets the Firebase Storage download URL for the profile picture.
+     *
+     * @param profileImageUrl download URL from Firebase Storage
+     */
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

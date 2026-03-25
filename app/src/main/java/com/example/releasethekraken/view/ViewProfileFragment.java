@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 import com.example.releasethekraken.model.Profile;
@@ -63,6 +64,16 @@ public class ViewProfileFragment extends Fragment {
                 getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided))
         );
 
+        // Load profile picture — falls back to default drawable if no image has been uploaded yet
+        String imageUrl = profile.getProfileImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(imageUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .into(binding.profilePicture);
+        }
+
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
                         .navigate(R.id.action_viewProfileFragment_to_mainMenuFragment)
@@ -105,7 +116,7 @@ public class ViewProfileFragment extends Fragment {
                 .setTitle("Delete Profile")
                 .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
                 .setPositiveButton("Yes, Delete", (dialog, which) -> {
-                    String email = profile.getEmail();
+                    String uid = profile.getUid();
 
                     // Delete local profile first so UI updates immediately
                     profileRepository.deleteLocalProfile();
@@ -115,7 +126,7 @@ public class ViewProfileFragment extends Fragment {
                             Toast.LENGTH_SHORT).show();
 
                     // Delete from Firestore in the background
-                    profileRepository.deleteProfileFromFirestore(email,
+                    profileRepository.deleteProfileFromFirestore(uid,
                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
