@@ -204,6 +204,17 @@
         android:id="@+id/commentsFragment"
         android:name="com.example.releasethekraken.view.CommentsFragment"
         android:label="fragment_comments"
-        tools:layout="@layout/fragment_comments" />
+        tools:layout="@layout/fragment_comments">
+
+        <argument
+            android:name="eventId"
+            app:argType="string"
+            app:nullable="true" />
+
+        <argument
+            android:name="userRole"
+            app:argType="com.example.releasethekraken.model.UserRole" />
+
+    </fragment>
 
 </navigation>

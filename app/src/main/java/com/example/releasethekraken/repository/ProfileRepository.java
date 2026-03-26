@@ -143,6 +143,30 @@ public class ProfileRepository {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    public void getProfileById(String userId, ProfileRepositoryCallback<Profile> callback) {
+        if (userId == null || userId.isEmpty()) {
+            callback.onFailure(new Exception("Invalid user ID."));
+            return;
+        }
+
+        firestore.collection(COLLECTION_PROFILES)
+                .document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Profile profile = documentSnapshot.toObject(Profile.class);
+                        if (profile != null) {
+                            callback.onSuccess(profile);
+                        } else {
+                            callback.onFailure(new Exception("Profile data was empty."));
+                        }
+                    } else {
+                        callback.onFailure(new Exception("Profile does not exist."));
+                    }
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     /**
      * Updates an existing profile both locally and in Firestore.
      *

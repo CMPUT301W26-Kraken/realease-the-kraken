@@ -41,24 +41,26 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull CommentAdapter.ViewHolder holder, int position) {
-        
+
         Comment comment = comments.get(position);
-        
+
         // TODO: CHANGE THE COMMENTUSER TEXT FIELD TO BE THE NAME, NOT THE ID
         // TODO: SET THE textCommentUser FIELD TO BOLD IF THE USER IS AN ORGANIZER OF THIS EVENT
-        holder.binding.textCommentUser.setText(comment.getUserId());
+        holder.binding.textCommentUser.setText(comment.getAuthorName());
         holder.binding.textCommentContent.setText(comment.getContent());
         holder.binding.textCommentDate.setText(
-          DateFormat.format("yyyy-MM-dd HH:mm", comment.getPostDateMillis()).toString()     
+                DateFormat.format("yyyy-MM-dd HH:mm", comment.getPostDateMillis()).toString()
         );
+
+        holder.itemView.setOnClickListener(v -> listener.onCommentClick(comment));
     }
 
     @Override
     public int getItemCount() { return comments.size(); }
-    
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         final ItemCommentBinding binding;
-        
+
         ViewHolder(ItemCommentBinding binding) {
             super(binding.getRoot());
             this.binding = binding;

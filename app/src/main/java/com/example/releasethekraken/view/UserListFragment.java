@@ -2,20 +2,28 @@ package com.example.releasethekraken.view;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.model.WaitingListRepository;
+import com.example.releasethekraken.repository.ProfileRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * UserListFragment is a fragment that displays a list of users. This fragment can either be used
@@ -36,8 +44,11 @@ public class UserListFragment extends Fragment {
     private boolean adminView;
     private String eventId;
     private UserRole userRole;
-    // private final List<Profile> userList = new ArrayList<>();
-    // Will need an adapter to view items at some point
+    private RecyclerView recyclerView;
+    private WaitingListRepository waitingListRepository;
+    private ProfileRepository profileRepository;
+    private final List<String> userList = new ArrayList<>();
+    private UserListAdapter adapter;
 
     public UserListFragment() {}
 
@@ -52,6 +63,9 @@ public class UserListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        waitingListRepository = new WaitingListRepository();
+        profileRepository = new ProfileRepository(requireContext());
+
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
             adminView = getArguments().getBoolean("adminView", false);
@@ -67,6 +81,16 @@ public class UserListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_user_list, container, false);
 
         ImageButton returnButton = view.findViewById(R.id.return_to_details_button);
+        recyclerView = view.findViewById(R.id.users_recycler_view);
+
+        if (mColumnCount <= 1) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        } else {
+            recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
+        }
+
+        adapter = new UserListAdapter(userList);
+        recyclerView.setAdapter(adapter);
 
         // Set the welcome text based on admin view or event waiting list view
         TextView welcomeText = view.findViewById(R.id.welcome_text);
@@ -76,9 +100,8 @@ public class UserListFragment extends Fragment {
         } else {
             welcomeText.setText(getString(R.string.waiting_list_welcome));
             returnButton.setVisibility(View.VISIBLE);
+            loadWaitingList();
         }
-
-        // TODO: IMPLEMENT RECYCLER VIEW (OF ALL USERS FOR ADMIN AND ONLY REGISTERED ONES FOR EVENT) AND ASSOCIATED CLICK ACTIONS
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
@@ -107,5 +130,86 @@ public class UserListFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void loadWaitingList() {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        waitingListRepository.getAllEntrants(eventId, new WaitingListRepository.EntrantsCallback() {
+            @Override
+            public void onResult(List<String> entrants) {
+                userList.clear();
+                adapter.notifyDataSetChanged();
+
+                for (String entrantId : entrants) {
+                    profileRepository.getProfileById(entrantId, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                        @Override
+                        public void onSuccess(Profile result) {
+                            if (result.getName() != null && !result.getName().isEmpty()) {
+                                userList.add(result.getName());
+                            } else {
+                                userList.add(entrantId);
+                            }
+                            adapter.notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void onFailure(Exception exception) {
+                            userList.add(entrantId);
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(requireContext(), "Failed to load waiting list", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private static class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserViewHolder> {
+
+        private final List<String> users;
+
+        UserListAdapter(List<String> users) {
+            this.users = users;
+        }
+
+        @NonNull
+        @Override
+        public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            TextView textView = new TextView(parent.getContext());
+            textView.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            textView.setPadding(32, 24, 32, 24);
+            textView.setTextSize(16);
+            return new UserViewHolder(textView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
+            holder.textView.setText(users.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return users.size();
+        }
+
+        static class UserViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+
+            UserViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textView = (TextView) itemView;
+            }
+        }
     }
 }

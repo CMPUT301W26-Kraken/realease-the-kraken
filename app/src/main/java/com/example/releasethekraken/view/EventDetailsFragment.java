@@ -141,7 +141,7 @@ public class EventDetailsFragment extends Fragment {
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
 
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
         });
 
         viewCommentsButton.setOnClickListener(v -> {
@@ -149,7 +149,7 @@ public class EventDetailsFragment extends Fragment {
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
 
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
     }
 
