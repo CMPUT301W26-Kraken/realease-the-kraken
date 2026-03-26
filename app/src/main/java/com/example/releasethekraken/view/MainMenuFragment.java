@@ -81,6 +81,11 @@ public class MainMenuFragment extends Fragment {
                     .navigate(R.id.action_mainMenuFragment_to_userListFragment, bundle);
         });
 
+        binding.adminBrowseImagesButton.setOnClickListener(v -> {
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_mainMenuFragment_to_imageListFragment);
+        });
+
         // Navigate to Ticket Test (role access, filtering, history)
         binding.ticketTestButton.setOnClickListener(v ->
                 Navigation.findNavController(v)

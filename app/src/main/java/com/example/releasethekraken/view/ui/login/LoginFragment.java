@@ -3,6 +3,7 @@ package com.example.releasethekraken.view.ui.login;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import android.os.Bundle;
@@ -119,7 +120,7 @@ public class LoginFragment extends Fragment {
                                         Toast.LENGTH_SHORT).show();
 
                                 Navigation.findNavController(view)
-                                        .navigate(R.id.action_loginFragment_to_mainMenuFragment);
+                                        .navigate(R.id.action_global_mainMenuFragment);
                             }
 
                             @Override

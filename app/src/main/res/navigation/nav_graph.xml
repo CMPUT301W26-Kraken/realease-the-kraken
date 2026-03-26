@@ -60,6 +60,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_userListFragment"
             app:destination="@id/userListFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_imageListFragment"
+            app:destination="@id/imageListFragment" />
     </fragment>
 
     <fragment
@@ -205,5 +208,23 @@
         android:name="com.example.releasethekraken.view.CommentsFragment"
         android:label="fragment_comments"
         tools:layout="@layout/fragment_comments" />
+    <fragment
+        android:id="@+id/imageListFragment"
+        android:name="com.example.releasethekraken.view.ImageListFragment"
+        android:label="fragment_image_list"
+        tools:layout="@layout/fragment_image_list" >
+        <action
+            android:id="@+id/action_imageListFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+        <action
+            android:id="@+id/action_imageListFragment_to_viewProfileFragment"
+            app:destination="@id/viewProfileFragment" />
+        <action
+            android:id="@+id/action_imageListFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
+    </fragment>
+    <action
+        android:id="@+id/action_global_mainMenuFragment"
+        app:destination="@id/mainMenuFragment" />
 
 </navigation>
