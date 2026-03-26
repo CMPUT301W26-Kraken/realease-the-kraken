@@ -116,7 +116,7 @@ public class CommentsFragment extends Fragment {
                         ProfileRepository profileRepository = new ProfileRepository(requireContext());
                         Profile profile = profileRepository.getProfile();
 
-                        String userId = profile.getUserId();
+                        String userId = profile.getUid();
                         String authorName = profile.getName();
 
                         commentService.submitComment(eventId, userId, authorName, commentText, result -> {
