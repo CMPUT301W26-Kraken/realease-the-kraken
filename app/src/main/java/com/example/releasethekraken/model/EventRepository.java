@@ -45,7 +45,7 @@ public class EventRepository {
         void onError(Exception e);
     }
     /**
-     * callback interface for operations that report completion status
+     * callback interface for operations that  report completion status
      */
     public interface CompletionCallback {
         void onSuccess();
@@ -53,23 +53,12 @@ public class EventRepository {
     }
 
     /**
-     * creates a new event in Firestore without a poster image.
+     * creates a new event in Firestore
      *
-     * @param event    the event to save
+     * @param event the event to save
      * @param callback callback used to report success or failure
      */
     public void createEvent(Event event, CompletionCallback callback) {
-        createEvent(event, null, callback);
-    }
-
-    /**
-     * creates a new event in Firestore, optionally including a poster image URL.
-     *
-     * @param event          the event to save
-     * @param posterImageUrl Firebase Storage download URL for the event poster, or null if none
-     * @param callback       callback used to report success or failure
-     */
-    public void createEvent(Event event, String posterImageUrl, CompletionCallback callback) {
         // Write the full event shape to Firestore. Capacity is now persisted so browse-time
         // filtering can use real event data instead of a hardcoded value.
         Map<String, Object> data = new HashMap<>();
@@ -80,7 +69,6 @@ public class EventRepository {
         data.put("registrationEndMillis", event.getRegistrationEndMillis());
         data.put("capacity", event.getCapacity());
         data.put("createdAt", System.currentTimeMillis()); // Added for sorting
-        data.put("posterImageUrl", posterImageUrl);        // null if no poster uploaded
 
         db.collection("events")
                 .document(event.getEventId())
@@ -92,7 +80,7 @@ public class EventRepository {
     /**
      * gets a single event from Firestore by its document ID
      *
-     * @param eventId  the ID of the event document to retrieve
+     * @param eventId the ID of the event document to retrieve
      * @param callback callback used to return the event or an error
      */
     public void getEventById(String eventId, EventCallback callback) {

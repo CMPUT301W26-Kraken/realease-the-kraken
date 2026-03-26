@@ -29,7 +29,6 @@ import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
-import com.google.firebase.auth.FirebaseAuth;
 
 /**
  * A fragment that shows the details of an event that can be accessed when an event is clicked from
@@ -208,10 +207,7 @@ public class EventDetailsFragment extends Fragment {
         //Ethan adding real entrant to sign up
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
         Profile profile = profileRepository.getProfile();
-        String entrantId = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                : profile.getUid(); // fallback to locally cached UID
-
+        String entrantId = profile.getUserId(); //TO BE CHANGED IF CHANGING DEVICE ID TO USERID
         //End of Ethan's edit
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
