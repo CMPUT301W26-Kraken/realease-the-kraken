@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.example.releasethekraken.model.UserRole;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SessionManager {
     private static final String PREFS_NAME = "kraken_session";
     private static final String KEY_ROLE = "active_role";
-    private static final String KEY_DEVICE_ID = "device_id"; // Unique device ID to track user ANDROID_ID across app restarts
+    private static final String KEY_UID = "firebase_uid"; // Firebase Auth UID cached locally
 
     private final SharedPreferences preferences;
 
@@ -16,15 +18,23 @@ public class SessionManager {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    // Returns the active user ID used as the Firestore document ID in profiles/{id}.
-    // Currently: returns ANDROID_ID set on launch. To add login: replace with FirebaseAuth.getInstance().getCurrentUser().getUid()
+    // Returns the Firebase Auth UID for the current user.
+    // Falls back to the locally cached UID if Firebase is temporarily unavailable.
     public String getCurrentUserId() {
-        return preferences.getString(KEY_DEVICE_ID, null);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            // Always prefer the live UID and keep the cache in sync
+            preferences.edit().putString(KEY_UID, user.getUid()).apply();
+            return user.getUid();
+        }
+        // Fallback to cached UID (e.g. offline startup before auth resolves)
+        return preferences.getString(KEY_UID, null);
     }
 
-    // Called once in MainActivity.onCreate() to store ANDROID_ID into SharedPreferences
-    public void setDeviceId(String deviceId) {
-        preferences.edit().putString(KEY_DEVICE_ID, deviceId).apply();
+    // Called from MainActivity after anonymous sign-in succeeds.
+    // Caches the UID locally so getCurrentUserId() works even before Firebase resolves.
+    public void setUid(String uid) {
+        preferences.edit().putString(KEY_UID, uid).apply();
     }
 
     // Reads role from SharedPreferences, defaults to ENTRANT if missing or corrupted

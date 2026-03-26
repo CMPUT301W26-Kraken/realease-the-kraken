@@ -1,8 +1,6 @@
 package com.example.releasethekraken;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,7 +9,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.releasethekraken.controller.SessionManager;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends AppCompatActivity {
@@ -21,16 +20,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Grab the hardware-level device ID (unique per device+app install) and store it in SessionManager.
-        // All identity lookups go through SessionManager.getCurrentUserId(), not directly here.
-        @SuppressLint("HardwareIds") String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        new SessionManager(this).setDeviceId(deviceId);
+        // Sign in anonymously so every install gets a stable Firebase Auth UID.
+        // If already signed in (app restart), this is a no-op and the existing UID is reused.
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser existing = auth.getCurrentUser();
 
-        // TEST logs stored in LOGCAT to confirm SessionManager is working - COMMENT OUT IF NEEDED
-        String storedId = new SessionManager(this).getCurrentUserId();
-        Log.d("AUTH_TEST", "Device ID set: " + deviceId);
-        Log.d("AUTH_TEST", "SessionManager reads back: " + storedId);
-        Log.d("AUTH_TEST", "Match: " + deviceId.equals(storedId));
+        if (existing != null) {
+            // Already signed in — cache UID and continue
+            new SessionManager(this).setUid(existing.getUid());
+            Log.d("AUTH", "Already signed in, UID: " + existing.getUid());
+        } else {
+            auth.signInAnonymously().addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    String uid = auth.getCurrentUser().getUid();
+                    new SessionManager(this).setUid(uid);
+                    Log.d("AUTH", "Anonymous sign-in success, UID: " + uid);
+                } else {
+                    Log.e("AUTH", "Anonymous sign-in failed", task.getException());
+                }
+            });
+        }
 
         // Fetches the FCM push notification token and logs it to verify Firebase Messaging is working
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
