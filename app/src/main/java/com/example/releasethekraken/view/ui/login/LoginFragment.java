@@ -107,7 +107,7 @@ public class LoginFragment extends Fragment {
 
                         ProfileRepository profileRepository = new ProfileRepository(requireContext());
 
-                        profileRepository.getProfileFromFirestore(new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                        profileRepository.getProfileFromFirestore(user.getUid(), new ProfileRepository.ProfileRepositoryCallback<Profile>() {
                             @Override
                             public void onSuccess(Profile profile) {
                                 if (!isAdded()) {
