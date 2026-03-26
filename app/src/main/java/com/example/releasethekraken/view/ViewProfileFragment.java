@@ -16,6 +16,7 @@ import androidx.navigation.Navigation;
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -90,11 +91,11 @@ public class ViewProfileFragment extends Fragment {
         });
 
         binding.profileAccountDeleteButton.setOnClickListener(v ->
-                showDeleteConfirmationDialog(profileRepository, v)
+                showDeleteConfirmationDialog(profile, profileRepository, v)
         );
     }
 
-    private void showDeleteConfirmationDialog(ProfileRepository profileRepository, View view) {
+    private void showDeleteConfirmationDialog(Profile profile, ProfileRepository profileRepository, View view) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Profile")
                 .setMessage("Are you sure you want to delete your profile? This action cannot be undone.")
