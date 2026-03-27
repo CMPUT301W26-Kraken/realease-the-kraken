@@ -193,6 +193,27 @@ public class WaitingListRepository {
     }
 
     /**
+     * Retrieves all entrant IDs that have already been selected for the event.
+     *
+     * @param eventId the ID of the event
+     * @param callback callback returning a list of accepted entrant IDs
+     */
+    public void getAcceptedEntrants(String eventId, EntrantsCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection("accepted")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<String> entrants = new ArrayList<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        entrants.add(doc.getId());
+                    }
+                    callback.onResult(entrants);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
      * Callback interface used to return a list of entrant IDs.
      */
     public interface EntrantsCallback {
