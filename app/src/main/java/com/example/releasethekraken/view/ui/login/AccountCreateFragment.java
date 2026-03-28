@@ -1,16 +1,11 @@
 package com.example.releasethekraken.view.ui.login;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +13,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
@@ -27,24 +29,23 @@ import com.example.releasethekraken.repository.ProfileRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+/**
+ * Fragment where users provide their details (name, email, password, etc.) 
+ * to create a new account or edit an existing profile.
+ */
 public class AccountCreateFragment extends Fragment {
 
+    private static final String TAG = "AccountCreateFragment";
     private FragmentAccountCreateBinding binding;
+    private FirebaseAuth mAuth;
     private boolean isEditMode = false;
-
-    // Uri of the image the user picked from the gallery (null = no new image chosen)
     private Uri selectedImageUri = null;
 
-    // Launcher for the gallery image picker
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     selectedImageUri = uri;
-                    // Preview the chosen image immediately in the button
-                    Glide.with(this)
-                            .load(uri)
-                            .circleCrop()
-                            .into(binding.imageButton);
+                    Glide.with(this).load(uri).circleCrop().into(binding.imageButton);
                 }
             });
 
@@ -60,238 +61,131 @@ public class AccountCreateFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        final EditText nameEditText = binding.nameCreate;
-        final EditText emailEditText = binding.emailCreate;
-        final EditText phoneEditText = binding.phoneCreate;
-        final Button saveProfileButton = binding.createAccount;
-        final Button cancelAccountButton = binding.cancelAccountCreation;
-
+        mAuth = FirebaseAuth.getInstance();
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
 
         if (getArguments() != null) {
             isEditMode = getArguments().getBoolean("isEditMode", false);
         }
 
-        if (isEditMode) {
-            Profile existingProfile = profileRepository.getProfile();
-            nameEditText.setText(existingProfile.getName());
-            emailEditText.setText(existingProfile.getEmail());
-            phoneEditText.setText(existingProfile.getPhone());
+        setupUI(isEditMode, profileRepository);
 
-            // Load existing profile picture if one has already been set
-            String existingImageUrl = existingProfile.getProfileImageUrl();
-            if (existingImageUrl != null && !existingImageUrl.isEmpty()) {
-                Glide.with(this)
-                        .load(existingImageUrl)
-                        .circleCrop()
-                        .placeholder(android.R.drawable.stat_sys_upload_done)
-                        .into(binding.imageButton);
+        binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+
+        binding.createAccount.setOnClickListener(v -> handleAccountAction(profileRepository));
+
+        binding.cancelAccountCreation.setOnClickListener(v -> {
+            if (isEditMode) {
+                Navigation.findNavController(v).popBackStack();
+            } else {
+                Navigation.findNavController(v).navigate(R.id.action_accountCreateFragment_to_loginFragment);
             }
+        });
+    }
 
+    private void setupUI(boolean isEditMode, ProfileRepository repo) {
+        if (isEditMode) {
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
-            saveProfileButton.setText(R.string.action_update_profile);
-            cancelAccountButton.setText(R.string.action_cancel_account_edits);
+            binding.createAccount.setText(R.string.action_update_profile);
+            
+            // In edit mode, password field is usually hidden or handled differently
+            if (binding.passwordCreate != null) binding.passwordCreate.setVisibility(View.GONE);
+
+            Profile p = repo.getProfile();
+            binding.nameCreate.setText(p.getName());
+            binding.emailCreate.setText(p.getEmail());
+            binding.phoneCreate.setText(p.getPhone());
+            if (p.getProfileImageUrl() != null) {
+                Glide.with(this).load(p.getProfileImageUrl()).circleCrop().into(binding.imageButton);
+            }
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
-            saveProfileButton.setText(R.string.action_create_profile);
-            cancelAccountButton.setText(R.string.action_cancel_account_creation);
-
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null && currentUser.getEmail() != null) {
-                emailEditText.setText(currentUser.getEmail());
-            } else {
-                emailEditText.setText("");
-            }
-
-            nameEditText.setText("");
-            phoneEditText.setText("");
-        }
-
-        // Open gallery when image button is tapped
-        binding.imageButton.setOnClickListener(v ->
-                imagePickerLauncher.launch("image/*")
-        );
-
-        TextWatcher validationWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                clearFieldErrors();
-                saveProfileButton.setEnabled(isFormValid(false));
-            }
-        };
-
-        nameEditText.addTextChangedListener(validationWatcher);
-        emailEditText.addTextChangedListener(validationWatcher);
-        phoneEditText.addTextChangedListener(validationWatcher);
-
-        saveProfileButton.setEnabled(isFormValid(false));
-
-        saveProfileButton.setOnClickListener(v -> {
-            if (!isFormValid(true)) {
-                return;
-            }
-
-            // Get Firebase Auth UID — replaces the old Device_ID approach
-            String uid = FirebaseAuth.getInstance().getCurrentUser() != null
-                    ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                    : "";
-
-            Profile profile = new Profile(
-                    nameEditText.getText().toString().trim(),
-                    emailEditText.getText().toString().trim(),
-                    phoneEditText.getText().toString().trim()
-            );
-            profile.setUid(uid);
-
-            // Keep existing image URL when editing and no new image was picked
-            if (isEditMode) {
-                String existingUrl = profileRepository.getProfile().getProfileImageUrl();
-                profile.setProfileImageUrl(existingUrl);
-            }
-
-            if (selectedImageUri != null) {
-                // Upload image first, then save profile with the returned URL
-                binding.loading.setVisibility(View.VISIBLE);
-                saveProfileButton.setEnabled(false);
-
-                profileRepository.uploadProfileImage(selectedImageUri, uid,
-                        new ProfileRepository.ProfileRepositoryCallback<String>() {
-                            @Override
-                            public void onSuccess(String downloadUrl) {
-                                profile.setProfileImageUrl(downloadUrl);
-                                persistProfile(profile, profileRepository, v, saveProfileButton);
-                            }
-
-                            @Override
-                            public void onFailure(Exception exception) {
-                                if (!isAdded()) return;
-                                binding.loading.setVisibility(View.GONE);
-                                saveProfileButton.setEnabled(true);
-                                Toast.makeText(requireContext(),
-                                        "Image upload failed, saving profile without image: " + exception.getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                                // Still save the profile even if image upload failed
-                                persistProfile(profile, profileRepository, v, saveProfileButton);
-                            }
-                        });
-            } else {
-                persistProfile(profile, profileRepository, v, saveProfileButton);
-            }
-        });
-
-        cancelAccountButton.setOnClickListener(v -> {
-            if (isEditMode) {
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
-            } else {
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_accountCreateFragment_to_loginFragment);
-            }
-        });
-    }
-
-    /**
-     * Saves the profile locally and syncs to Firestore, then navigates away.
-     *
-     * @param profile            the profile to persist
-     * @param profileRepository  repository handling local and Firestore storage
-     * @param navView            view used for navigation
-     * @param saveProfileButton  button to re-enable on failure
-     */
-    private void persistProfile(Profile profile, ProfileRepository profileRepository,
-                                View navView, Button saveProfileButton) {
-        profileRepository.saveProfileLocally(profile);
-
-        if (isEditMode) {
-            Toast.makeText(requireContext(),
-                    R.string.profile_updated_message,
-                    Toast.LENGTH_SHORT).show();
-
-            profileRepository.updateProfile(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    if (!isAdded()) return;
-                    binding.loading.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onFailure(Exception exception) {
-                    if (!isAdded()) return;
-                    binding.loading.setVisibility(View.GONE);
-                    saveProfileButton.setEnabled(true);
-                    Toast.makeText(requireContext(),
-                            "Profile updated locally, but Firestore sync failed: " + exception.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-
-            Navigation.findNavController(navView)
-                    .navigate(R.id.action_accountCreateFragment_to_viewProfileFragment);
-
-        } else {
-            Toast.makeText(requireContext(),
-                    R.string.profile_created_message,
-                    Toast.LENGTH_SHORT).show();
-
-            profileRepository.saveProfileToFirestore(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    if (!isAdded()) return;
-                    binding.loading.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onFailure(Exception exception) {
-                    if (!isAdded()) return;
-                    binding.loading.setVisibility(View.GONE);
-                    saveProfileButton.setEnabled(true);
-                    Toast.makeText(requireContext(),
-                            "Profile was saved locally, but Firestore sync failed: " + exception.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-
-            Navigation.findNavController(navView)
-                    .navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+            binding.createAccount.setText("Register Account");
+            if (binding.passwordCreate != null) binding.passwordCreate.setVisibility(View.VISIBLE);
         }
     }
 
-    private boolean isFormValid(boolean showErrors) {
+    private void handleAccountAction(ProfileRepository repo) {
         String name = binding.nameCreate.getText().toString().trim();
         String email = binding.emailCreate.getText().toString().trim();
         String phone = binding.phoneCreate.getText().toString().trim();
 
-        boolean isValid = true;
-
-        if (name.isEmpty()) {
-            if (showErrors) binding.nameCreate.setError(getString(R.string.error_name_required));
-            isValid = false;
+        if (TextUtils.isEmpty(name)) {
+            binding.nameCreate.setError("Name is required");
+            return;
         }
 
-        if (email.isEmpty()) {
-            if (showErrors) binding.emailCreate.setError(getString(R.string.error_email_required));
-            isValid = false;
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            if (showErrors) binding.emailCreate.setError(getString(R.string.error_email_invalid));
-            isValid = false;
+        if (isEditMode) {
+            updateExistingProfile(name, email, phone, repo);
+        } else {
+            String password = binding.passwordCreate.getText().toString().trim();
+            if (password.length() < 6) {
+                binding.passwordCreate.setError("Password must be at least 6 characters");
+                return;
+            }
+            createNewAccount(name, email, password, phone, repo);
         }
-
-        if (!phone.isEmpty() && phone.length() < 7) {
-            if (showErrors) binding.phoneCreate.setError(getString(R.string.error_phone_invalid));
-            isValid = false;
-        }
-
-        return isValid;
     }
 
-    private void clearFieldErrors() {
-        binding.nameCreate.setError(null);
-        binding.emailCreate.setError(null);
-        binding.phoneCreate.setError(null);
+    private void createNewAccount(String name, String email, String password, String phone, ProfileRepository repo) {
+        binding.loading.setVisibility(View.VISIBLE);
+        binding.createAccount.setEnabled(false);
+
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        Profile newProfile = new Profile(name, email, phone);
+                        newProfile.setUid(user.getUid());
+
+                        if (selectedImageUri != null) {
+                            repo.uploadProfileImage(selectedImageUri, user.getUid(), new ProfileRepository.ProfileRepositoryCallback<String>() {
+                                @Override
+                                public void onSuccess(String url) {
+                                    newProfile.setProfileImageUrl(url);
+                                    saveProfileAndFinish(newProfile, repo);
+                                }
+                                @Override
+                                public void onFailure(Exception e) {
+                                    saveProfileAndFinish(newProfile, repo);
+                                }
+                            });
+                        } else {
+                            saveProfileAndFinish(newProfile, repo);
+                        }
+                    } else {
+                        binding.loading.setVisibility(View.GONE);
+                        binding.createAccount.setEnabled(true);
+                        Toast.makeText(getContext(), "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void updateExistingProfile(String name, String email, String phone, ProfileRepository repo) {
+        Profile p = repo.getProfile();
+        p.setName(name);
+        p.setEmail(email);
+        p.setPhone(phone);
+        saveProfileAndFinish(p, repo);
+    }
+
+    private void saveProfileAndFinish(Profile profile, ProfileRepository repo) {
+        repo.saveProfileToFirestore(profile, new ProfileRepository.ProfileRepositoryCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (!isAdded()) return;
+                repo.saveProfileLocally(profile);
+                Toast.makeText(getContext(), "Profile Saved!", Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(requireView()).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+            }
+            @Override
+            public void onFailure(Exception e) {
+                if (!isAdded()) return;
+                binding.loading.setVisibility(View.GONE);
+                binding.createAccount.setEnabled(true);
+                Toast.makeText(getContext(), "Error saving profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

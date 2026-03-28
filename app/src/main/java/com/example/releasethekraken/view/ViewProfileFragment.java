@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
@@ -46,13 +47,13 @@ public class ViewProfileFragment extends Fragment {
         }
 
         ProfileRepository profileRepository = new ProfileRepository(requireContext());
-        com.example.releasethekraken.model.Profile profile = profileRepository.getProfile();
+        Profile profile = profileRepository.getProfile();
 
         binding.profileName.setText(getDisplayValue(profile.getName(), getString(R.string.profile_not_set)));
         binding.profileEmail.setText(getDisplayValue(profile.getEmail(), getString(R.string.profile_not_set)));
         binding.profilePhone.setText(getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided)));
 
-        // Load profile picture — falls back to default drawable if no image has been uploaded yet
+        // Load profile picture
         String imageUrl = profile.getProfileImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this)
@@ -81,11 +82,17 @@ public class ViewProfileFragment extends Fragment {
         });
 
         binding.profileSignoutButton.setOnClickListener(v -> {
+            // 1. Clear profile cache
             ProfileRepository repo = new ProfileRepository(requireContext());
             repo.deleteLocalProfile();
 
+            // 2. Clear session manager
+            new SessionManager(requireContext()).clearSession();
+
+            // 3. Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
 
+            // 4. Return to Login
             Navigation.findNavController(v)
                     .navigate(R.id.action_viewProfileFragment_to_loginFragment);
         });
@@ -102,27 +109,24 @@ public class ViewProfileFragment extends Fragment {
                 .setPositiveButton("Yes, Delete", (dialog, which) -> {
                     String uid = profile.getUid();
 
-                    // Delete local profile first so UI updates immediately
                     profileRepository.deleteLocalProfile();
+                    new SessionManager(requireContext()).clearSession();
 
                     Toast.makeText(requireContext(),
                             R.string.profile_deleted_message,
                             Toast.LENGTH_SHORT).show();
 
-                    // Delete from Firestore in the background
                     profileRepository.deleteProfileFromFirestore(uid,
                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
-                                    // No extra UI action needed
+                                    FirebaseAuth.getInstance().signOut();
                                 }
 
                                 @Override
                                 public void onFailure(Exception exception) {
-                                    if (!isAdded()) {
-                                        return;
-                                    }
-
+                                    if (!isAdded()) return;
+                                    FirebaseAuth.getInstance().signOut();
                                     Toast.makeText(requireContext(),
                                             "Profile deleted locally, but Firestore delete failed: " + exception.getMessage(),
                                             Toast.LENGTH_LONG).show();

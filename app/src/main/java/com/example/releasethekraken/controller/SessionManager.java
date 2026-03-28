@@ -19,25 +19,24 @@ public class SessionManager {
     }
 
     // Returns the Firebase Auth UID for the current user.
-    // Falls back to the locally cached UID if Firebase is temporarily unavailable.
     public String getCurrentUserId() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            // Always prefer the live UID and keep the cache in sync
-            preferences.edit().putString(KEY_UID, user.getUid()).apply();
+            // Sync cache
+            setUid(user.getUid());
             return user.getUid();
         }
-        // Fallback to cached UID (e.g. offline startup before auth resolves)
         return preferences.getString(KEY_UID, null);
     }
 
-    // Called from MainActivity after anonymous sign-in succeeds.
-    // Caches the UID locally so getCurrentUserId() works even before Firebase resolves.
     public void setUid(String uid) {
         preferences.edit().putString(KEY_UID, uid).apply();
     }
 
-    // Reads role from SharedPreferences, defaults to ENTRANT if missing or corrupted
+    public void clearSession() {
+        preferences.edit().remove(KEY_UID).remove(KEY_ROLE).apply();
+    }
+
     public UserRole getRole() {
         String storedRole = preferences.getString(KEY_ROLE, UserRole.ENTRANT.name());
         try {
@@ -47,7 +46,6 @@ public class SessionManager {
         }
     }
 
-    // Persists role selection across app restarts via SharedPreferences
     public void setRole(UserRole role) {
         preferences.edit().putString(KEY_ROLE, role.name()).apply();
     }
