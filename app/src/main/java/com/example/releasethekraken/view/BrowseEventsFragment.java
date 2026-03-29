@@ -22,6 +22,8 @@ import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -111,6 +113,30 @@ public class BrowseEventsFragment extends Fragment {
         // Event taps still navigate using the existing event-details flow. Search/filtering only
         // changes which events are visible, not how selection/navigation works.
         adapter = new MyItemRecyclerViewAdapter(visibleEvents, event -> {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+            // Private events remain visible in the list, but only invited users or the organizer
+            // are allowed to open them.
+            if (event.isPrivate()) {
+                if (currentUser == null) {
+                    Toast.makeText(getContext(),
+                            "You must be logged in to access a private event",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String currentUserId = currentUser.getUid();
+                boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
+
+                if (!isOrganizer && !isInvited) {
+                    Toast.makeText(getContext(),
+                            "You are not invited to this private event",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
 
@@ -249,7 +275,7 @@ public class BrowseEventsFragment extends Fragment {
     }
 
     private void updateVisibleEvents(List<Event> filteredEvents) {
-        // Update the adapter backing list in place so the existing adapter instance can be reused.
+        // Private events stay visible in the browse list. Access is enforced on click instead.
         visibleEvents.clear();
         visibleEvents.addAll(filteredEvents);
         adapter.notifyDataSetChanged();

@@ -3,6 +3,7 @@ package com.example.releasethekraken.view;
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -16,7 +17,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.Group;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -30,6 +30,7 @@ import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * A fragment that shows the details of an event that can be accessed when an event is clicked from
@@ -59,6 +60,7 @@ public class EventDetailsFragment extends Fragment {
     private Event currentEvent;
     private UserRole userType;
     private boolean cameFromYourEvents;
+    private Button viewQrButton;
 
     private boolean isJoined = false;
 
@@ -101,7 +103,7 @@ public class EventDetailsFragment extends Fragment {
         Button createNotificationButton = view.findViewById(R.id.create_notification_button);
         Button editEventButton = view.findViewById(R.id.edit_event_button);
         Button viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
-        Button viewQrButton = view.findViewById(R.id.view_qr_button);
+        viewQrButton = view.findViewById(R.id.view_qr_button);
         Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
         Button exportToCsvButton = view.findViewById(R.id.export_csv_button);
@@ -131,9 +133,9 @@ public class EventDetailsFragment extends Fragment {
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_browseEventsFragment, args);
         });
 
-        deleteEventButton.setOnClickListener(v -> showDeleteConfirmationDialog(v));
+        deleteEventButton.setOnClickListener(this::showDeleteConfirmationDialog);
         createNotificationButton.setOnClickListener(v -> showCreateNotificationDialog());
-        editEventButton.setOnClickListener(v -> navigateToEditEvent(v));
+        editEventButton.setOnClickListener(this::navigateToEditEvent);
 
         viewWaitingListButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
@@ -181,9 +183,44 @@ public class EventDetailsFragment extends Fragment {
         eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
             @Override
             public void onSuccess(Event event) {
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                String currentUserId = currentUser != null ? currentUser.getUid() : new ProfileRepository(requireContext()).getProfile().getUid();
+
+                // Private events can only be opened by the organizer or an invited entrant.
+                if (event.isPrivate()) {
+                    if (TextUtils.isEmpty(currentUserId)) {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(),
+                                    "You must be logged in to access this event",
+                                    Toast.LENGTH_SHORT).show();
+                            Navigation.findNavController(requireView()).popBackStack();
+                        }
+                        return;
+                    }
+
+                    boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                    boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
+
+                    if (!isOrganizer && !isInvited) {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(),
+                                    "You are not invited to this private event",
+                                    Toast.LENGTH_SHORT).show();
+                            Navigation.findNavController(requireView()).popBackStack();
+                        }
+                        return;
+                    }
+                }
+
                 currentEvent = event;
+
+                // Private events do not have a QR code for joining
+                if (currentEvent.isPrivate()) {
+                    viewQrButton.setVisibility(View.GONE);
+                }
+
                 bindEventToViews();
-                checkIfJoined();
+                checkIfJoined(currentUserId);
             }
             @Override
             public void onError(Exception e) {
@@ -239,14 +276,15 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    private void checkIfJoined() {
-        new WaitingListRepository().isUserInWaitingList(eventId, "testEntrant001", new WaitingListRepository.CheckCallback() {
+    private void checkIfJoined(String currentUserId) {
+        if (currentUserId == null || currentUserId.isEmpty()) return;
+        new WaitingListRepository().isUserInWaitingList(eventId, currentUserId, new WaitingListRepository.CheckCallback() {
             @Override
             public void onResult(boolean exists) {
                 isJoined = exists;
                 if (getView() != null) {
                     Button btn = getView().findViewById(R.id.signup_optout_button);
-                    btn.setText(isJoined ? "Leave Waiting List" : "Join Waiting List");
+                    btn.setText(isJoined ? R.string.opt_out_button : R.string.signup_button);
                 }
             }
             @Override public void onError(Exception e) {}

@@ -168,6 +168,50 @@ public class ProfileRepository {
     }
 
     /**
+     * Searches for a profile by name, email, or phone.
+     * This is a simple implementation that matches exactly.
+     *
+     * @param query    The search string
+     * @param callback Callback for success/failure
+     */
+    public void searchProfiles(String query, ProfileRepositoryCallback<Profile> callback) {
+        // Try searching by name first
+        firestore.collection(COLLECTION_PROFILES)
+                .whereEqualTo("name", query)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        callback.onSuccess(queryDocumentSnapshots.getDocuments().get(0).toObject(Profile.class));
+                    } else {
+                        // Try email
+                        firestore.collection(COLLECTION_PROFILES)
+                                .whereEqualTo("email", query)
+                                .get()
+                                .addOnSuccessListener(snapshots -> {
+                                    if (!snapshots.isEmpty()) {
+                                        callback.onSuccess(snapshots.getDocuments().get(0).toObject(Profile.class));
+                                    } else {
+                                        // Try phone
+                                        firestore.collection(COLLECTION_PROFILES)
+                                                .whereEqualTo("phone", query)
+                                                .get()
+                                                .addOnSuccessListener(phoneSnapshots -> {
+                                                    if (!phoneSnapshots.isEmpty()) {
+                                                        callback.onSuccess(phoneSnapshots.getDocuments().get(0).toObject(Profile.class));
+                                                    } else {
+                                                        callback.onFailure(new Exception("User not found"));
+                                                    }
+                                                })
+                                                .addOnFailureListener(callback::onFailure);
+                                    }
+                                })
+                                .addOnFailureListener(callback::onFailure);
+                    }
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Updates an existing profile both locally and in Firestore.
      *
      * @param profile   The updated profile
