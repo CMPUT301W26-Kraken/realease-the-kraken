@@ -79,6 +79,12 @@ public class EventRepository {
         data.put("registrationStartMillis", event.getRegistrationStartMillis());
         data.put("registrationEndMillis", event.getRegistrationEndMillis());
         data.put("capacity", event.getCapacity());
+
+        // new for private
+        data.put("isPrivate", event.isPrivate());
+        data.put("invitedUserIds", event.getInvitedUserIds());
+        data.put("organizerId", event.getOrganizerId());
+
         data.put("createdAt", System.currentTimeMillis()); // Added for sorting
         data.put("posterImageUrl", posterImageUrl);        // null if no poster uploaded
 
@@ -105,52 +111,43 @@ public class EventRepository {
                 .document(eventId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
-                    // Treat a missing document as a repository error instead of returning a
-                    // partially constructed Event to the UI layer.
                     if (!documentSnapshot.exists()) {
                         callback.onError(new Exception("Event not found"));
                         return;
                     }
 
-                    // Read each field defensively because older documents may predate newer
-                    // fields like capacity, and Firestore values may be null.
                     String title = documentSnapshot.getString("title");
                     String description = documentSnapshot.getString("description");
                     Long registrationStartMillis = documentSnapshot.getLong("registrationStartMillis");
                     Long registrationEndMillis = documentSnapshot.getLong("registrationEndMillis");
                     Long capacity = documentSnapshot.getLong("capacity");
 
-                    // Normalize missing strings so adapter and search code can treat event data
-                    // as non-null without adding repeated null checks.
-                    if (title == null) {
-                        title = "";
-                    }
-                    if (description == null) {
-                        description = "";
-                    }
-                    // Normalize timestamps to zero when absent. This preserves backward
-                    // compatibility and avoids crashing on incomplete seed data.
-                    if (registrationStartMillis == null) {
-                        registrationStartMillis = 0L;
-                    }
-                    if (registrationEndMillis == null) {
-                        registrationEndMillis = 0L;
-                    }
-                    // Events created before capacity support should still load and remain
-                    // filterable, so repository fallback matches Event.DEFAULT_CAPACITY.
-                    if (capacity == null || capacity <= 0) {
-                        capacity = (long) Event.DEFAULT_CAPACITY;
-                    }
+                    // NEW FIELDS
+                    Boolean isPrivate = documentSnapshot.getBoolean("isPrivate");
+                    List<String> invitedUserIds = (List<String>) documentSnapshot.get("invitedUserIds");
+                    String organizerId = documentSnapshot.getString("organizerId");
 
-                    // Use the Firestore document id as the canonical id, since that is what the
-                    // rest of the app navigates with when opening event details.
+                    if (title == null) title = "";
+                    if (description == null) description = "";
+                    if (registrationStartMillis == null) registrationStartMillis = 0L;
+                    if (registrationEndMillis == null) registrationEndMillis = 0L;
+                    if (capacity == null || capacity <= 0) capacity = (long) Event.DEFAULT_CAPACITY;
+
+                    // Defaults for backward compatibility
+                    if (isPrivate == null) isPrivate = false;
+                    if (invitedUserIds == null) invitedUserIds = new ArrayList<>();
+                    if (organizerId == null) organizerId = "";
+
                     Event event = new Event(
                             documentSnapshot.getId(),
                             title,
                             description,
                             registrationStartMillis,
                             registrationEndMillis,
-                            capacity.intValue()
+                            capacity.intValue(),
+                            isPrivate,
+                            invitedUserIds,
+                            organizerId
                     );
 
                     callback.onSuccess(event);
@@ -170,39 +167,37 @@ public class EventRepository {
                     List<Event> events = new ArrayList<>();
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        // Apply the same defensive normalization for collection reads so browse
-                        // and detail screens see consistent Event objects.
                         String title = document.getString("title");
                         String description = document.getString("description");
                         Long registrationStartMillis = document.getLong("registrationStartMillis");
                         Long registrationEndMillis = document.getLong("registrationEndMillis");
                         Long capacity = document.getLong("capacity");
 
-                        if (title == null) {
-                            title = "";
-                        }
-                        if (description == null) {
-                            description = "";
-                        }
-                        if (registrationStartMillis == null) {
-                            registrationStartMillis = 0L;
-                        }
-                        if (registrationEndMillis == null) {
-                            registrationEndMillis = 0L;
-                        }
-                        if (capacity == null || capacity <= 0) {
-                            capacity = (long) Event.DEFAULT_CAPACITY;
-                        }
+                        // NEW FIELDS
+                        Boolean isPrivate = document.getBoolean("isPrivate");
+                        List<String> invitedUserIds = (List<String>) document.get("invitedUserIds");
+                        String organizerId = document.getString("organizerId");
 
-                        // Convert each Firestore document into a model object immediately so the
-                        // view/controller code only works with Event instances from this point on.
+                        if (title == null) title = "";
+                        if (description == null) description = "";
+                        if (registrationStartMillis == null) registrationStartMillis = 0L;
+                        if (registrationEndMillis == null) registrationEndMillis = 0L;
+                        if (capacity == null || capacity <= 0) capacity = (long) Event.DEFAULT_CAPACITY;
+
+                        if (isPrivate == null) isPrivate = false;
+                        if (invitedUserIds == null) invitedUserIds = new ArrayList<>();
+                        if (organizerId == null) organizerId = "";
+
                         Event event = new Event(
                                 document.getId(),
                                 title,
                                 description,
                                 registrationStartMillis,
                                 registrationEndMillis,
-                                capacity.intValue()
+                                capacity.intValue(),
+                                isPrivate,
+                                invitedUserIds,
+                                organizerId
                         );
 
                         events.add(event);
@@ -230,15 +225,21 @@ public class EventRepository {
                     }
 
                     QueryDocumentSnapshot document = (QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
+
                     String title = document.getString("title");
                     String description = document.getString("description");
                     Long registrationStartMillis = document.getLong("registrationStartMillis");
                     Long registrationEndMillis = document.getLong("registrationEndMillis");
                     Long capacity = document.getLong("capacity");
 
-                    if (capacity == null || capacity <= 0) {
-                        capacity = (long) Event.DEFAULT_CAPACITY;
-                    }
+                    Boolean isPrivate = document.getBoolean("isPrivate");
+                    List<String> invitedUserIds = (List<String>) document.get("invitedUserIds");
+                    String organizerId = document.getString("organizerId");
+
+                    if (capacity == null || capacity <= 0) capacity = (long) Event.DEFAULT_CAPACITY;
+                    if (isPrivate == null) isPrivate = false;
+                    if (invitedUserIds == null) invitedUserIds = new ArrayList<>();
+                    if (organizerId == null) organizerId = "";
 
                     Event event = new Event(
                             document.getId(),
@@ -246,8 +247,12 @@ public class EventRepository {
                             description != null ? description : "",
                             registrationStartMillis != null ? registrationStartMillis : 0L,
                             registrationEndMillis != null ? registrationEndMillis : 0L,
-                            capacity.intValue()
+                            capacity.intValue(),
+                            isPrivate,
+                            invitedUserIds,
+                            organizerId
                     );
+
                     callback.onSuccess(event);
                 })
                 .addOnFailureListener(callback::onError);
