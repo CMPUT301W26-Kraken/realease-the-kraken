@@ -125,6 +125,51 @@ public class NotificationService {
         sendAndLogNotification(notification, callback);
     }
 
+    /**
+     * sends an invitation notification to a selected entrant.
+     *
+     * @param event the event the entrant was selected for
+     * @param entrantId the entrant receiving the notification
+     * @param organizerMessage optional organizer-authored note with next steps
+     * @param callback callback returning notification outcome
+     */
+    public void sendSelectedEntrantNotification(
+            Event event,
+            String entrantId,
+            String organizerMessage,
+            NotificationCallback callback
+    ) {
+        if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
+            callback.onResult(NotificationResult.INVALID_INPUT);
+            return;
+        }
+
+        long nowMillis = System.currentTimeMillis();
+        String trimmedMessage = organizerMessage == null ? "" : organizerMessage.trim();
+        String eventName = event.getTitle() == null || event.getTitle().trim().isEmpty()
+                ? event.getEventId()
+                : event.getTitle();
+
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append("You have been invited to sign up for ")
+                .append(eventName)
+                .append(". Please check the app and complete your registration.");
+
+        if (!trimmedMessage.isEmpty()) {
+            messageBuilder.append(" Organizer note: ").append(trimmedMessage);
+        }
+
+        Notification notification = new Notification(
+                entrantId,
+                event.getEventId(),
+                messageBuilder.toString(),
+                "SELECTED",
+                nowMillis
+        );
+
+        sendAndLogNotification(notification, callback);
+    }
+
     private void sendAndLogNotification(Notification notification, NotificationCallback callback) {
         notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
             @Override

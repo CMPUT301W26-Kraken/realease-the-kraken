@@ -289,6 +289,36 @@ public class NotificationServiceTest {
         assertEquals(repo.sentNotification.getSentAtMillis(), repo.loggedNotification.getSentAtMillis());
     }
 
+    @Test
+    public void sendSelectedEntrantNotification_success_sendsAndLogsNotification() {
+        FakeNotificationRepository repo = new FakeNotificationRepository();
+        NotificationService service = new NotificationService(repo);
+
+        Event event = makeSampleEvent();
+        String entrantId = "entrant123";
+        final NotificationService.NotificationResult[] result = new NotificationService.NotificationResult[1];
+
+        service.sendSelectedEntrantNotification(event, entrantId, "Bring your ID", new NotificationService.NotificationCallback() {
+            @Override
+            public void onResult(NotificationService.NotificationResult notificationResult) {
+                result[0] = notificationResult;
+            }
+
+            @Override
+            public void onError(Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        });
+
+        assertEquals(NotificationService.NotificationResult.SUCCESS, result[0]);
+        assertNotNull(repo.sentNotification);
+        assertNotNull(repo.loggedNotification);
+        assertEquals("SELECTED", repo.sentNotification.getType());
+        assertTrue(repo.sentNotification.getMessage().contains("complete your registration"));
+        assertTrue(repo.sentNotification.getMessage().contains("Bring your ID"));
+        assertEquals(repo.sentNotification.getMessage(), repo.loggedNotification.getMessage());
+    }
+
     // helper method to create a sample event
     private Event makeSampleEvent() {
         long now = System.currentTimeMillis();

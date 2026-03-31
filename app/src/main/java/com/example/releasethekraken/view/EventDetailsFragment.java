@@ -2,6 +2,7 @@ package com.example.releasethekraken.view;
 
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -21,9 +22,11 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.NotificationRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
@@ -31,37 +34,31 @@ import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.QRCodeGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.storage.FirebaseStorage;
 
-/**
- * A fragment that shows the details of an event that can be accessed when an event is clicked from
- * the your events or browse events pages. It displays all of the relevant information for an event
- * as well as displays control buttons at the bottom that are dependent upon the user's role.
- *
- * When this event is navigated to it takes three arguments
- * String eventId that is the id of the event that is being viewed and is used to fill in fields with
- *  the relevant event information.
- * UserRole userType that informs the fragment of what type of user is accessing the fragment so it can
- *  display the proper control buttons.
- * Boolean cameFromYourEvents that determines if the details page was accessed through the your events
- *  page or the browse all events page and is used for backwards navigability.
- */
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
+    private static final long MAX_POSTER_BYTES = 5L * 1024L * 1024L;
 
     private String eventId;
     private TextView titleTextView;
     private TextView descriptionTextView;
     private TextView registrationStartTextView;
     private TextView registrationEndTextView;
+    private ImageView posterImageView;
+    private Button viewQrButton;
 
+    private WaitingListRepository waitingListRepository;
     private WaitingListService waitingListService;
     private EventRepository eventRepository;
+    private NotificationService notificationService;
     private Event currentEvent;
     private UserRole userType;
     private boolean cameFromYourEvents;
-    private Button viewQrButton;
-
     private boolean isJoined = false;
 
     public EventDetailsFragment() {}
@@ -79,8 +76,10 @@ public class EventDetailsFragment extends Fragment {
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
         }
 
-        waitingListService = new WaitingListService(new WaitingListRepository());
+        waitingListRepository = new WaitingListRepository();
+        waitingListService = new WaitingListService(waitingListRepository);
         eventRepository = new EventRepository();
+        notificationService = new NotificationService(new NotificationRepository());
     }
 
     @Override
@@ -96,6 +95,7 @@ public class EventDetailsFragment extends Fragment {
         descriptionTextView = view.findViewById(R.id.event_description_display);
         registrationStartTextView = view.findViewById(R.id.registration_start_display);
         registrationEndTextView = view.findViewById(R.id.registration_end_display);
+        posterImageView = view.findViewById(R.id.event_poster);
 
         Button signupOptOutButton = view.findViewById(R.id.signup_optout_button);
         Button returnToBrowseButton = view.findViewById(R.id.return_button);
@@ -109,7 +109,6 @@ public class EventDetailsFragment extends Fragment {
         Button exportToCsvButton = view.findViewById(R.id.export_csv_button);
         Button redrawButton = view.findViewById(R.id.redraw_button);
 
-        // Toggle visibilities of buttons based on the user's role
         if (userType == UserRole.ENTRANT) {
             viewEntrantMapButton.setVisibility(View.GONE);
             createNotificationButton.setVisibility(View.GONE);
@@ -142,23 +141,22 @@ public class EventDetailsFragment extends Fragment {
             args.putBoolean("adminView", false);
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
         });
 
         viewCommentsButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment);
         });
     }
 
     private void showQrCodeDialog() {
-        if (eventId == null) return;
+        if (eventId == null) {
+            return;
+        }
 
-        // Content matches what the scanner expects: "event:ID"
         String qrContent = "event:" + eventId;
         Bitmap qrBitmap = QRCodeGenerator.generateQRCode(qrContent, 500, 500);
 
@@ -177,22 +175,20 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    //load real event details from Firestore
     private void loadEventDetails() {
-        if (eventId == null) return;
+        if (eventId == null) {
+            return;
+        }
+
         eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
             @Override
             public void onSuccess(Event event) {
-                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-                String currentUserId = currentUser != null ? currentUser.getUid() : new ProfileRepository(requireContext()).getProfile().getUid();
+                String currentUserId = getCurrentEntrantId();
 
-                // Private events can only be opened by the organizer or an invited entrant.
                 if (event.isPrivate()) {
                     if (TextUtils.isEmpty(currentUserId)) {
                         if (isAdded()) {
-                            Toast.makeText(requireContext(),
-                                    "You must be logged in to access this event",
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "You must be logged in to access this event", Toast.LENGTH_SHORT).show();
                             Navigation.findNavController(requireView()).popBackStack();
                         }
                         return;
@@ -200,12 +196,9 @@ public class EventDetailsFragment extends Fragment {
 
                     boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
                     boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
-
                     if (!isOrganizer && !isInvited) {
                         if (isAdded()) {
-                            Toast.makeText(requireContext(),
-                                    "You are not invited to this private event",
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "You are not invited to this private event", Toast.LENGTH_SHORT).show();
                             Navigation.findNavController(requireView()).popBackStack();
                         }
                         return;
@@ -213,43 +206,37 @@ public class EventDetailsFragment extends Fragment {
                 }
 
                 currentEvent = event;
-
-                // Private events do not have a QR code for joining
                 if (currentEvent.isPrivate()) {
                     viewQrButton.setVisibility(View.GONE);
                 }
-
                 bindEventToViews();
                 checkIfJoined(currentUserId);
             }
+
             @Override
             public void onError(Exception e) {
-                if (isAdded()) Toast.makeText(requireContext(), "Error loading event", Toast.LENGTH_SHORT).show();
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Error loading event", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    /**
-     * This is a method that is used to set all of the display fields to contain the information stored
-     * by the event object being accessed
-     */
     private void bindEventToViews() {
         titleTextView.setText(currentEvent.getTitle());
         descriptionTextView.setText(currentEvent.getDescription());
         registrationStartTextView.setText(formatMillis(currentEvent.getRegistrationStartMillis()));
         registrationEndTextView.setText(formatMillis(currentEvent.getRegistrationEndMillis()));
+        loadPosterIntoView(currentEvent.getPosterUrl());
     }
 
     private void handleSignupToggle(Button button) {
+        String entrantId = getCurrentEntrantId();
+        if (TextUtils.isEmpty(entrantId)) {
+            Toast.makeText(requireContext(), "Create a profile before joining the waiting list", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        //Ethan adding real entrant to sign up
-        ProfileRepository profileRepository = new ProfileRepository(requireContext());
-        Profile profile = profileRepository.getProfile();
-        String entrantId = FirebaseAuth.getInstance().getCurrentUser() != null
-                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
-                : profile.getUid(); // fallback to locally cached UID
-
-        //End of Ethan's edit
         if (!isJoined) {
             waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
                 @Override
@@ -260,7 +247,9 @@ public class EventDetailsFragment extends Fragment {
                     }
                     Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
                 }
-                @Override public void onError(Exception e) {}
+
+                @Override
+                public void onError(Exception e) {}
             });
         } else {
             waitingListService.leaveWaitingList(currentEvent, entrantId, new WaitingListService.LeaveCallback() {
@@ -271,14 +260,19 @@ public class EventDetailsFragment extends Fragment {
                         button.setText(R.string.signup_button);
                     }
                 }
-                @Override public void onError(Exception e) {}
+
+                @Override
+                public void onError(Exception e) {}
             });
         }
     }
 
     private void checkIfJoined(String currentUserId) {
-        if (currentUserId == null || currentUserId.isEmpty()) return;
-        new WaitingListRepository().isUserInWaitingList(eventId, currentUserId, new WaitingListRepository.CheckCallback() {
+        if (TextUtils.isEmpty(currentUserId)) {
+            return;
+        }
+
+        waitingListRepository.isUserInWaitingList(eventId, currentUserId, new WaitingListRepository.CheckCallback() {
             @Override
             public void onResult(boolean exists) {
                 isJoined = exists;
@@ -287,16 +281,46 @@ public class EventDetailsFragment extends Fragment {
                     btn.setText(isJoined ? R.string.opt_out_button : R.string.signup_button);
                 }
             }
-            @Override public void onError(Exception e) {}
+
+            @Override
+            public void onError(Exception e) {}
         });
     }
 
-    /**
-     * Converts a time given in milliseconds into a time displayed in YYYY-MM-DD so that it can be displayed.
-     *
-     * @param millis the time that is stored in milliseconds
-     * @return a String version of the date converted into YYYY-MM-DD format
-     */
+    private String getCurrentEntrantId() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            return firebaseUser.getUid();
+        }
+
+        Profile profile = new ProfileRepository(requireContext()).getProfile();
+        if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+            return profile.getUid();
+        }
+        return "";
+    }
+
+    private void loadPosterIntoView(String posterUrl) {
+        if (TextUtils.isEmpty(posterUrl)) {
+            posterImageView.setImageResource(R.drawable.krakenlogov1);
+            return;
+        }
+
+        FirebaseStorage.getInstance()
+                .getReferenceFromUrl(posterUrl)
+                .getBytes(MAX_POSTER_BYTES)
+                .addOnSuccessListener(bytes -> {
+                    if (isAdded()) {
+                        posterImageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        posterImageView.setImageResource(R.drawable.krakenlogov1);
+                    }
+                });
+    }
+
     private String formatMillis(long millis) {
         return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
     }
@@ -314,45 +338,83 @@ public class EventDetailsFragment extends Fragment {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-    /**
-     * Creates a text box where an organizer can create a notification and allow them to post it.
-     *
-     * //@param notificationRespository repository where the notification will be sent to after it is created
-     */
-    // TODO: ADD ARGUMENTS (NotificationRepository notificationRespository) (if necessary, I'm not entirely sure how creating notifications works)
-    /*
-    The below code was created by ChatGPT after showing it the function above and asking if there was a way to add an edit text field for notifications instead
-     */
-    private void showCreateNotificationDialog() {
 
+    private void showCreateNotificationDialog() {
         EditText input = new EditText(requireContext());
-        input.setHint("Enter notification message");
+        input.setHint(getString(R.string.notify_selected_entrants_hint));
         input.setMinLines(7);
         input.setGravity(Gravity.TOP);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Create Notification")
+                .setTitle(R.string.create_notification_button)
                 .setView(input)
-                .setPositiveButton("Post Notification", (dialog, which) -> {
-
-                    String notificationText = input.getText().toString().trim();
-
-                    if (!notificationText.isEmpty()) {
-
-                        // TODO: Send notification to Firebase
-
-                        Toast.makeText(requireContext(),
-                                "Notification created: " + notificationText,
-                                Toast.LENGTH_SHORT).show();
-
-                    } else {
-                        Toast.makeText(requireContext(),
-                                "Notification cannot be empty",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton(R.string.post_notification_button, (dialog, which) ->
+                        notifySelectedEntrants(input.getText().toString().trim()))
+                .setNegativeButton(R.string.cancel_button, (dialog, which) -> dialog.dismiss())
                 .show();
+    }
+
+    private void notifySelectedEntrants(String organizerMessage) {
+        if (currentEvent == null || TextUtils.isEmpty(eventId)) {
+            Toast.makeText(requireContext(), R.string.notification_send_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        waitingListRepository.getAcceptedEntrants(eventId, new WaitingListRepository.EntrantsCallback() {
+            @Override
+            public void onResult(List<String> entrants) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (entrants.isEmpty()) {
+                    Toast.makeText(requireContext(), R.string.notify_selected_entrants_none_selected, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                AtomicInteger completedCount = new AtomicInteger(0);
+                AtomicInteger successCount = new AtomicInteger(0);
+                int total = entrants.size();
+
+                for (String entrantId : entrants) {
+                    notificationService.sendSelectedEntrantNotification(
+                            currentEvent,
+                            entrantId,
+                            organizerMessage,
+                            new NotificationService.NotificationCallback() {
+                                @Override
+                                public void onResult(NotificationService.NotificationResult result) {
+                                    if (result == NotificationService.NotificationResult.SUCCESS) {
+                                        successCount.incrementAndGet();
+                                    }
+                                    maybeFinish();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    maybeFinish();
+                                }
+
+                                private void maybeFinish() {
+                                    if (completedCount.incrementAndGet() == total && isAdded()) {
+                                        Toast.makeText(
+                                                requireContext(),
+                                                getString(R.string.notify_selected_entrants_success, successCount.get(), total),
+                                                Toast.LENGTH_SHORT
+                                        ).show();
+                                    }
+                                }
+                            }
+                    );
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), R.string.notification_send_failed, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void navigateToEditEvent(View view) {
