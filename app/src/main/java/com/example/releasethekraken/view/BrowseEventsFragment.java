@@ -6,7 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +19,8 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.SnapHelper;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.EventFilterService;
@@ -43,7 +48,6 @@ public class BrowseEventsFragment extends Fragment {
     private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
     private static final String ARG_COLUMN_COUNT = "column-count";
-    private int mColumnCount = 2;
     private boolean yourEvents;
     private UserRole userRole = UserRole.ENTRANT;
 
@@ -57,6 +61,12 @@ public class BrowseEventsFragment extends Fragment {
     private EditText filterAvailableAtText;
     private EditText filterCapacityText;
     private TextView emptyResultsText;
+
+    private LinearLayout searchBar;
+    private LinearLayout filterBar;
+    private LinearLayout filterButtons;
+
+    private LinearSnapHelper snapHelper;
 
     public BrowseEventsFragment() { }
 
@@ -72,7 +82,6 @@ public class BrowseEventsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
             yourEvents = getArguments().getBoolean(ARG_YOUR_EVENTS, false);
         }
     }
@@ -97,16 +106,36 @@ public class BrowseEventsFragment extends Fragment {
         // already-filtered data set.
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
 
-        if (mColumnCount <= 1) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        } else {
-            recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
-        }
-
         searchEventsText = view.findViewById(R.id.search_events_text);
         filterAvailableAtText = view.findViewById(R.id.filter_available_at_text);
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
         emptyResultsText = view.findViewById(R.id.empty_results_text);
+
+        searchBar = view.findViewById(R.id.browse_search_layout);
+        filterBar = view.findViewById(R.id.browse_filter_layout);
+        filterButtons = view.findViewById(R.id.browse_filter_button_layout);
+
+        Button createEventButton = view.findViewById(R.id.create_event_button);
+        Switch toggleDetailedView = view.findViewById(R.id.toggle_detailed_switch);
+        // Hide create button during normal event browsing, and vice versa with the detailed mode switch
+        if (!yourEvents) {
+            createEventButton.setVisibility(View.GONE);
+            toggleDetailedView.setVisibility(View.VISIBLE);
+        } else {
+            createEventButton.setVisibility(View.VISIBLE);
+            toggleDetailedView.setVisibility(View.GONE);
+        }
+
+        // Navigate to Create Events
+        createEventButton
+                .setOnClickListener(v -> {
+                    Bundle args = new Bundle();
+                    args.putBoolean("editEvent", false);
+                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
+
+                    Navigation.findNavController(v)
+                            .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
+                });
 
         // Event taps still navigate using the existing event-details flow. Search/filtering only
         // changes which events are visible, not how selection/navigation works.
@@ -125,26 +154,43 @@ public class BrowseEventsFragment extends Fragment {
 
         recyclerView.setAdapter(adapter);
 
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+
+        // Following lines set the default behavior of the fragment to the default browsing mode
+        searchBar.setVisibility(View.VISIBLE);
+        filterBar.setVisibility(View.VISIBLE);
+        filterButtons.setVisibility(View.VISIBLE);
+        adapter.setDetailed(false);
+
         // Load the source data first, then allow UI controls to refine the in-memory list.
         loadEvents();
         wireSearchAndFilters(view);
 
-        Button createEventButton = view.findViewById(R.id.create_event_button);
-        // Hide button visibility to people browsing from the Browse Events button option
-        if (!yourEvents) {
-            createEventButton.setVisibility(View.GONE);
-        }
-
-        // Navigate to Create Events
-        createEventButton
-                .setOnClickListener(v -> {
-                    Bundle args = new Bundle();
-                    args.putBoolean("editEvent", false);
-                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
-
-                    Navigation.findNavController(v)
-                            .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
-                });
+        toggleDetailedView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    searchBar.setVisibility(View.GONE);
+                    filterBar.setVisibility(View.GONE);
+                    filterButtons.setVisibility(View.GONE);
+                    recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+                    snapHelper = new LinearSnapHelper();
+                    snapHelper.attachToRecyclerView(recyclerView);
+                    adapter.setDetailed(true);
+                } else {
+                    searchBar.setVisibility(View.VISIBLE);
+                    filterBar.setVisibility(View.VISIBLE);
+                    filterButtons.setVisibility(View.VISIBLE);
+                    recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+                    // Detach the snaphelper if it we are coming back from a detailed view.
+                    if (snapHelper != null) {
+                        snapHelper.attachToRecyclerView(null);
+                        snapHelper = null;
+                    }
+                    adapter.setDetailed(false);
+                }
+            }
+        });
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)

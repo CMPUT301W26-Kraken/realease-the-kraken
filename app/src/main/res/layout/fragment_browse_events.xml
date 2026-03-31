@@ -8,6 +8,7 @@
 
     <!-- Search entry point for keyword-based event lookup (#97). -->
     <LinearLayout
+        android:id="@+id/browse_search_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -38,6 +39,7 @@
 
     <!-- Structured filters for timestamp availability and minimum capacity (#83). -->
     <LinearLayout
+        android:id="@+id/browse_filter_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -65,6 +67,7 @@
 
     <!-- Search and filter submission controls. Clear restores the unfiltered event list. -->
     <LinearLayout
+        android:id="@+id/browse_filter_button_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -121,6 +124,15 @@
             android:text="@string/create_event_button"
             android:textColor="@color/dark_blue_text"
             android:textStyle="bold" />
+
+        <Switch
+            android:id="@+id/toggle_detailed_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="@string/toggle_detailed_switch" />
 
     </LinearLayout>
 

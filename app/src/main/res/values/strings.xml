@@ -71,6 +71,7 @@
     <string name="apply_filters_button">Apply Filters</string>
     <string name="clear_filters_button">Clear Filters</string>
     <string name="no_matching_events">No events match the current search and filters.</string>
+    <string name="toggle_detailed_switch">Detailed Event View</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>

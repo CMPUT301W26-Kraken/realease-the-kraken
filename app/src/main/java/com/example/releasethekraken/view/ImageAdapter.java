@@ -53,7 +53,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     .setTitle(R.string.delete_image_title)
                     .setMessage(R.string.delete_image_message)
                     .setPositiveButton("Yes", (dialog, which) -> {
-                        Toast.makeText(context, "Image would be deleted", Toast.LENGTH_SHORT).show();
+                        int adapterPosition = holder.getAdapterPosition();
+                        if (adapterPosition != RecyclerView.NO_POSITION) {
+                            imageUrls.remove(adapterPosition);
+                            notifyItemRemoved(adapterPosition);
+                            notifyItemRangeChanged(adapterPosition, imageUrls.size());
+
+                            // TODO: ADD IMAGE DELETION ON DATABASE
+
+                            Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
+                        }
                         dialog.dismiss();
                     })
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
