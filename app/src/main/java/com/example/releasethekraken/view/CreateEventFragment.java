@@ -25,18 +25,19 @@ import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Creates new events and edits existing ones.
- * Poster upload/update is handled here so organizers can attach or replace event images.
- */
 public class CreateEventFragment extends Fragment {
     private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
@@ -46,6 +47,7 @@ public class CreateEventFragment extends Fragment {
     private String eventID;
     private Uri selectedPosterUri;
     private String existingPosterUrl = "";
+    private final ArrayList<String> invitedUserIds = new ArrayList<>();
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -96,6 +98,49 @@ public class CreateEventFragment extends Fragment {
         binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
         binding.uploadPosterText.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
+        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleInviteSection(isChecked));
+
+        binding.addInviteButton.setOnClickListener(v -> {
+            String input = binding.inviteSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) {
+                Toast.makeText(getContext(), "Enter a name, email, or phone to invite", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            binding.addInviteButton.setEnabled(false);
+            new ProfileRepository(requireContext())
+                    .searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                        @Override
+                        public void onSuccess(Profile profile) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            binding.addInviteButton.setEnabled(true);
+                            if (profile == null || TextUtils.isEmpty(profile.getUid())) {
+                                Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            if (invitedUserIds.contains(profile.getUid())) {
+                                Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            invitedUserIds.add(profile.getUid());
+                            binding.inviteSearchInput.setText("");
+                            updateInvitedUsersPreview(profile.getName());
+                            Toast.makeText(getContext(), "Added " + profile.getName(), Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFailure(Exception exception) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            binding.addInviteButton.setEnabled(true);
+                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
                 Bundle args = new Bundle();
@@ -111,6 +156,66 @@ public class CreateEventFragment extends Fragment {
         });
 
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
+    }
+
+    private void toggleInviteSection(boolean visible) {
+        int state = visible ? View.VISIBLE : View.GONE;
+        binding.inviteSectionTitle.setVisibility(state);
+        binding.inviteSearchInput.setVisibility(state);
+        binding.addInviteButton.setVisibility(state);
+        binding.invitedUsersPreview.setVisibility(state);
+        if (visible) {
+            updateInvitedUsersPreview(null);
+        }
+    }
+
+    private void updateInvitedUsersPreview(@Nullable String lastAddedName) {
+        String text = "Invited: " + invitedUserIds.size();
+        if (lastAddedName != null && !lastAddedName.trim().isEmpty()) {
+            text += " (" + lastAddedName + ")";
+        }
+        binding.invitedUsersPreview.setText(text);
+    }
+
+    private void loadEventForEditing() {
+        if (TextUtils.isEmpty(eventID)) {
+            return;
+        }
+
+        new EventRepository().getEventById(eventID, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                if (!isAdded()) {
+                    return;
+                }
+                existingPosterUrl = event.getPosterUrl();
+                binding.nameEventCreate.setText(event.getTitle());
+                binding.eventDescriptionText.setText(event.getDescription());
+                binding.registrationStartDate.setText(formatMillisForInput(event.getRegistrationStartMillis()));
+                binding.registrationEndDate.setText(formatMillisForInput(event.getRegistrationEndMillis()));
+                binding.maxEntrantsEditText.setText(String.valueOf(event.getCapacity()));
+
+                invitedUserIds.clear();
+                invitedUserIds.addAll(event.getInvitedUserIds());
+                binding.privateEventSwitch.setChecked(event.isPrivate());
+                toggleInviteSection(event.isPrivate());
+                updateInvitedUsersPreview(null);
+
+                if (!existingPosterUrl.isEmpty()) {
+                    Glide.with(CreateEventFragment.this)
+                            .load(existingPosterUrl)
+                            .centerCrop()
+                            .into(binding.imageButton);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Failed to load event for editing", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void createEventAndSave() {
@@ -151,7 +256,6 @@ public class CreateEventFragment extends Fragment {
                 Toast.makeText(getContext(), "Maximum entrants must be a whole number", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             if (capacity <= 0) {
                 Toast.makeText(getContext(), "Maximum entrants must be greater than zero", Toast.LENGTH_SHORT).show();
                 return;
@@ -162,6 +266,24 @@ public class CreateEventFragment extends Fragment {
                 ? eventID
                 : buildEventId(title);
 
+        boolean isPrivate = binding.privateEventSwitch.isChecked();
+
+        String organizerId = "";
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            organizerId = firebaseUser.getUid();
+        } else {
+            Profile profile = new ProfileRepository(requireContext()).getProfile();
+            if (profile != null) {
+                organizerId = profile.getUid();
+            }
+        }
+
+        if (TextUtils.isEmpty(organizerId)) {
+            Toast.makeText(getContext(), "Error: Could not identify organizer. Please ensure you are logged in.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Event event = new Event(
                 eventId,
                 title,
@@ -169,7 +291,10 @@ public class CreateEventFragment extends Fragment {
                 registrationStartMillis,
                 registrationEndMillis,
                 capacity,
-                existingPosterUrl
+                existingPosterUrl,
+                isPrivate,
+                invitedUserIds,
+                organizerId
         );
 
         binding.loading.setVisibility(View.VISIBLE);
@@ -242,42 +367,6 @@ public class CreateEventFragment extends Fragment {
         binding.loading.setVisibility(View.GONE);
         binding.createEvent.setEnabled(true);
         Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-    }
-
-    private void loadEventForEditing() {
-        if (TextUtils.isEmpty(eventID)) {
-            return;
-        }
-
-        new EventRepository().getEventById(eventID, new EventRepository.EventCallback() {
-            @Override
-            public void onSuccess(Event event) {
-                if (!isAdded()) {
-                    return;
-                }
-
-                existingPosterUrl = event.getPosterUrl();
-                binding.nameEventCreate.setText(event.getTitle());
-                binding.eventDescriptionText.setText(event.getDescription());
-                binding.registrationStartDate.setText(formatMillisForInput(event.getRegistrationStartMillis()));
-                binding.registrationEndDate.setText(formatMillisForInput(event.getRegistrationEndMillis()));
-                binding.maxEntrantsEditText.setText(String.valueOf(event.getCapacity()));
-
-                if (!existingPosterUrl.isEmpty()) {
-                    Glide.with(CreateEventFragment.this)
-                            .load(existingPosterUrl)
-                            .centerCrop()
-                            .into(binding.imageButton);
-                }
-            }
-
-            @Override
-            public void onError(Exception e) {
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), "Failed to load event for editing", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
     }
 
     private String buildEventId(String title) {

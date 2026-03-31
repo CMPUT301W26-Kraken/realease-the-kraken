@@ -142,7 +142,6 @@
         android:padding="25dp"
         android:scaleType="fitCenter"
         android:src="@android:drawable/stat_sys_upload_done"
-        app:layout_constraintBottom_toTopOf="@+id/create_account"
         app:layout_constraintEnd_toStartOf="@+id/max_entrants_editText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView3"
@@ -160,39 +159,6 @@
         app:layout_constraintStart_toStartOf="@+id/imageButton"
         app:layout_constraintTop_toBottomOf="@+id/imageButton" />
 
-    <Button
-        android:id="@+id/create_event"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:layout_marginTop="50dp"
-        android:backgroundTint="@color/light_grey_button"
-        android:enabled="true"
-        android:text="@string/create_event_button"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cancel_event_creation"
-        app:layout_constraintTop_toBottomOf="@+id/imageButton"
-        app:layout_constraintVertical_bias="0.501" />
-
-    <Button
-        android:id="@+id/cancel_event_creation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="7dp"
-        android:backgroundTint="@color/light_grey_button"
-        android:text="@string/cancel_button"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/create_event"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageButton"
-        app:layout_constraintVertical_bias="0.501" />
-
     <ProgressBar
         android:id="@+id/loading"
         android:layout_width="wrap_content"
@@ -204,8 +170,8 @@
         android:layout_marginBottom="64dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/password"
-        app:layout_constraintStart_toStartOf="@+id/password"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.3" />
 
@@ -217,9 +183,101 @@
         android:textAlignment="center"
         android:textColor="@color/dark_blue_text"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/create_event"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/imageButton"
         app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <Switch
+        android:id="@+id/private_event_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Private Event"
+        android:textAlignment="center"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/imageButton"
+        app:layout_constraintTop_toBottomOf="@+id/enable_geolocation_switch" />
+
+    <TextView
+        android:id="@+id/invite_section_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Invite Users"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@+id/private_event_switch"
+        app:layout_constraintTop_toBottomOf="@+id/private_event_switch" />
+
+    <EditText
+        android:id="@+id/invite_search_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:ems="10"
+        android:hint="Search by name, email, or phone"
+        android:inputType="text"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@+id/add_invite_button"
+        app:layout_constraintStart_toStartOf="@+id/invite_section_title"
+        app:layout_constraintTop_toBottomOf="@+id/invite_section_title" />
+
+    <Button
+        android:id="@+id/add_invite_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/light_grey_button"
+        android:text="Add"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBaseline_toBaselineOf="@+id/invite_search_input"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/invite_search_input" />
+
+    <TextView
+        android:id="@+id/invited_users_preview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="No users invited"
+        android:textColor="@color/dark_blue_text"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/add_invite_button"
+        app:layout_constraintStart_toStartOf="@+id/invite_search_input"
+        app:layout_constraintTop_toBottomOf="@+id/invite_search_input" />
+
+    <Button
+        android:id="@+id/create_event"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:backgroundTint="@color/light_grey_button"
+        android:enabled="true"
+        android:text="@string/create_event_button"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/cancel_event_creation"
+        app:layout_constraintTop_toBottomOf="@+id/invited_users_preview" />
+
+    <Button
+        android:id="@+id/cancel_event_creation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="7dp"
+        android:backgroundTint="@color/light_grey_button"
+        android:text="@string/cancel_button"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/create_event"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/invited_users_preview" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
