@@ -133,7 +133,7 @@ public class WaitingListRepository {
     }
 
     /**
-     * Adds a waiting list entry to Firestore.
+     * Adds a waiting list entry to Firestore, including location coordinates if captured.
      *
      * @param entry    the waiting list entry to add
      * @param callback callback to indicate success or failure
@@ -148,6 +148,8 @@ public class WaitingListRepository {
         data.put("eventId", entry.getEventId());
         data.put("entrantId", entry.getEntrantId());
         data.put("joinedAtMillis", entry.getJoinedAtMillis());
+        data.put("latitude", entry.getLatitude());
+        data.put("longitude", entry.getLongitude());
 
         docRef.set(data)
                 .addOnSuccessListener(unused -> callback.onSuccess())
@@ -255,7 +257,7 @@ public class WaitingListRepository {
     ) {
         int total = accepted.size() + rejected.size();
 
-        // If there’s nothing to save, return immediately
+        // If there's nothing to save, return immediately
         if (total == 0) {
             callback.onSuccess();
             return;

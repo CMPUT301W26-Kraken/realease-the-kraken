@@ -1,6 +1,8 @@
 package com.example.releasethekraken.view;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -16,8 +18,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -31,6 +36,7 @@ import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.example.releasethekraken.util.LocationHelper;
 import com.example.releasethekraken.util.QRCodeGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -61,6 +67,10 @@ public class EventDetailsFragment extends Fragment {
     private boolean cameFromYourEvents;
     private boolean isJoined = false;
 
+    // Step 9: launcher for requesting location permission at runtime
+    private ActivityResultLauncher<String> locationPermissionLauncher;
+    private Button pendingSignupButton;
+
     public EventDetailsFragment() {}
 
     @Override
@@ -80,6 +90,20 @@ public class EventDetailsFragment extends Fragment {
         waitingListService = new WaitingListService(waitingListRepository);
         eventRepository = new EventRepository();
         notificationService = new NotificationService(new NotificationRepository());
+
+        // Step 9: register permission launcher — must be done in onCreate
+        locationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                granted -> {
+                    if (pendingSignupButton != null) {
+                        if (granted) {
+                            joinWithLocation(pendingSignupButton);
+                        } else {
+                            joinWaitingListWithCoords(pendingSignupButton, 0.0, 0.0);
+                        }
+                        pendingSignupButton = null;
+                    }
+                });
     }
 
     @Override
@@ -135,6 +159,13 @@ public class EventDetailsFragment extends Fragment {
         deleteEventButton.setOnClickListener(this::showDeleteConfirmationDialog);
         createNotificationButton.setOnClickListener(v -> showCreateNotificationDialog());
         editEventButton.setOnClickListener(this::navigateToEditEvent);
+
+        // Step 10: navigate to entrant map (organizer only)
+        viewEntrantMapButton.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putString(ARG_EVENT_ID, eventId);
+            Navigation.findNavController(v).navigate(R.id.action_eventDetailsFragment_to_entrantMapFragment, args);
+        });
 
         viewWaitingListButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
@@ -238,19 +269,19 @@ public class EventDetailsFragment extends Fragment {
         }
 
         if (!isJoined) {
-            waitingListService.joinWaitingList(currentEvent, entrantId, new WaitingListService.JoinCallback() {
-                @Override
-                public void onResult(WaitingListService.JoinResult result) {
-                    if (result == WaitingListService.JoinResult.SUCCESS) {
-                        isJoined = true;
-                        button.setText(R.string.opt_out_button);
-                    }
-                    Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
+            // Step 9: if geolocation required, request permission then capture location
+            if (currentEvent.isGeolocationRequired()) {
+                if (ContextCompat.checkSelfPermission(requireContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    joinWithLocation(button);
+                } else {
+                    pendingSignupButton = button;
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                 }
-
-                @Override
-                public void onError(Exception e) {}
-            });
+            } else {
+                // geolocation not required — join directly with no coordinates
+                joinWaitingListWithCoords(button, 0.0, 0.0);
+            }
         } else {
             waitingListService.leaveWaitingList(currentEvent, entrantId, new WaitingListService.LeaveCallback() {
                 @Override
@@ -265,6 +296,45 @@ public class EventDetailsFragment extends Fragment {
                 public void onError(Exception e) {}
             });
         }
+    }
+
+    /**
+     * Step 9: captures device location then joins the waiting list with coordinates.
+     */
+    private void joinWithLocation(Button button) {
+        LocationHelper.getLastLocation(requireContext(), new LocationHelper.LocationCallback() {
+            @Override
+            public void onLocation(double latitude, double longitude) {
+                joinWaitingListWithCoords(button, latitude, longitude);
+            }
+
+            @Override
+            public void onError(String reason) {
+                // location unavailable — join without coordinates
+                joinWaitingListWithCoords(button, 0.0, 0.0);
+            }
+        });
+    }
+
+    /**
+     * Step 9: joins the waiting list with the given coordinates.
+     */
+    private void joinWaitingListWithCoords(Button button, double latitude, double longitude) {
+        String entrantId = getCurrentEntrantId();
+        waitingListService.joinWaitingList(currentEvent, entrantId, latitude, longitude,
+                new WaitingListService.JoinCallback() {
+                    @Override
+                    public void onResult(WaitingListService.JoinResult result) {
+                        if (result == WaitingListService.JoinResult.SUCCESS) {
+                            isJoined = true;
+                            button.setText(R.string.opt_out_button);
+                        }
+                        Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {}
+                });
     }
 
     private void checkIfJoined(String currentUserId) {

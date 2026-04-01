@@ -21,36 +21,49 @@ public class Event {
     private final boolean isPrivate;
     private final ArrayList<String> invitedUserIds;
     private final String organizerId;
+    private final boolean geolocationRequired;
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                DEFAULT_CAPACITY, "", false, new ArrayList<>(), "");
+                DEFAULT_CAPACITY, "", false, new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, "", false, new ArrayList<>(), "");
+                capacity, "", false, new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
                  String posterUrl) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, posterUrl, false, new ArrayList<>(), "");
+                capacity, posterUrl, false, new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
                  boolean isPrivate, List<String> invitedUserIds, String organizerId) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, "", isPrivate, invitedUserIds, organizerId);
+                capacity, "", isPrivate, invitedUserIds, organizerId, false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
-                 String posterUrl, boolean isPrivate, List<String> invitedUserIds, String organizerId) {
+                 String posterUrl, boolean isPrivate, List<String> invitedUserIds,
+                 String organizerId) {
+        this(eventId, title, description, registrationStartMillis, registrationEndMillis,
+                capacity, posterUrl, isPrivate, invitedUserIds, organizerId, false);
+    }
+
+    /**
+     * Full constructor — all other constructors delegate here.
+     */
+    public Event(String eventId, String title, String description,
+                 long registrationStartMillis, long registrationEndMillis, int capacity,
+                 String posterUrl, boolean isPrivate, List<String> invitedUserIds,
+                 String organizerId, boolean geolocationRequired) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -61,6 +74,11 @@ public class Event {
         this.isPrivate = isPrivate;
         this.invitedUserIds = invitedUserIds == null ? new ArrayList<>() : new ArrayList<>(invitedUserIds);
         this.organizerId = organizerId == null ? "" : organizerId;
+        this.geolocationRequired = geolocationRequired;
+    }
+
+    public boolean isGeolocationRequired() {
+        return geolocationRequired;
     }
 
     public String getEventId() {
