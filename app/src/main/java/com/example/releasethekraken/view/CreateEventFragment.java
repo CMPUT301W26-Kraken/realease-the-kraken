@@ -288,7 +288,7 @@ public class CreateEventFragment extends Fragment {
             registrationStartMillis = sdf.parse(startText).getTime();
             registrationEndMillis = sdf.parse(endText).getTime();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Enter dates as dd/MM/yyyy h:mm AM/PM", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Please enter a valid date and time", Toast.LENGTH_SHORT).show();
             return;
         }
 

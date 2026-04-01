@@ -388,7 +388,7 @@ public class BrowseEventsFragment extends Fragment {
             if (showValidationErrors && getContext() != null) {
                 Toast.makeText(
                         getContext(),
-                        "Enter availability as dd/MM/yyyy h:mm AM/PM",
+                        "Please enter a valid date and time",
                         Toast.LENGTH_SHORT
                 ).show();
             }
