@@ -1,5 +1,11 @@
 package com.example.releasethekraken.view.ui.login;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -9,11 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
-
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentLoginBinding;
 import com.example.releasethekraken.model.Profile;
@@ -22,7 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 /**
- * Simplified Login Fragment. 
+ * Simplified Login Fragment.
  * Provides login for existing users and navigation to registration for new users.
  */
 public class LoginFragment extends Fragment {
@@ -96,7 +97,7 @@ public class LoginFragment extends Fragment {
             public void onSuccess(Profile profile) {
                 if (!isAdded()) return;
                 Navigation.findNavController(requireView())
-                        .navigate(R.id.action_loginFragment_to_mainMenuFragment);
+                        .navigate(R.id.action_global_mainMenuFragment);
             }
 
             @Override

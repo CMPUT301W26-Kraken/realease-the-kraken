@@ -71,6 +71,7 @@
     <string name="apply_filters_button">Apply Filters</string>
     <string name="clear_filters_button">Clear Filters</string>
     <string name="no_matching_events">No events match the current search and filters.</string>
+    <string name="toggle_detailed_switch">Detailed Event View</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
@@ -122,6 +123,11 @@
     <!-- Strings related to the Comments -->
     <string name="comments_welcome">Comments For This Event</string>
     <string name="create_comment_button">Leave A Comment</string>
+
+    <!-- Strings related to the Image List -->
+    <string name="image_list_welcome">All Images on the Platform</string>
+    <string name="delete_image_title">Delete Image</string>
+    <string name="delete_image_message">Are you sure you want to delete this image?</string>
 
     <!-- Misc strings -->
     <string name="dummy_button">Dummy Button</string>
