@@ -61,6 +61,7 @@ public class EventRepository {
         data.put("createdAt", System.currentTimeMillis());
         data.put("posterImageUrl", finalPosterUrl);
         data.put("posterUrl", finalPosterUrl);
+        data.put("geolocationRequired", event.isGeolocationRequired());
 
         db.collection("events")
                 .document(event.getEventId())
@@ -142,6 +143,10 @@ public class EventRepository {
         if (invitedUserIds == null) invitedUserIds = new ArrayList<>();
         if (organizerId == null) organizerId = "";
 
+        // Step 2: read geolocationRequired from Firestore
+        Boolean geolocationRequired = document.getBoolean("geolocationRequired");
+        if (geolocationRequired == null) geolocationRequired = false;
+
         return new Event(
                 document.getId(),
                 title,
@@ -152,7 +157,8 @@ public class EventRepository {
                 posterUrl,
                 isPrivate,
                 invitedUserIds,
-                organizerId
+                organizerId,
+                geolocationRequired
         );
     }
 }
