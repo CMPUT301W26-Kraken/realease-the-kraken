@@ -25,44 +25,40 @@ import com.example.releasethekraken.controller.DrawEntrantsWorker;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-/**
- * This is the fragment that is used to create events and add them to the repository. It is also
- * used in editing information about events and updating that information in the repository.
- *
- * It takes three arguments from the navigator when this event is navigated to;
- * Boolean editEvent that is true when editing the events and false when not editing the events and
- *  is used to adjust UI elements and update the event instead of creating a new one.
- * Boolean cameFromYourEvents that determines if the user entered the event creator via your events
- *  or browse events. It is true when you have come from your events and is used in backwards navigability.
- * String eventID contains the string version of the event ID and is used when the event is chosen to be
- *  edited so that it can properly prefill the relevant fields to be edited.
- */
 public class CreateEventFragment extends Fragment {
+    private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
     private FragmentCreateEventBinding binding;
-    private boolean editEvent, cameFromYourEvents;
+    private boolean editEvent;
+    private boolean cameFromYourEvents;
     private String eventID;
+    private Uri selectedPosterUri;
+    private String existingPosterUrl = "";
+    private final ArrayList<String> invitedUserIds = new ArrayList<>();
 
-    // Uri of the poster image the user picked from the gallery (null = no image chosen)
-    private Uri selectedPosterUri = null;
-
-    // Launcher for the gallery image picker
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-                if (uri != null) {
-                    selectedPosterUri = uri;
-                    // Preview the chosen poster immediately in the button
-                    Glide.with(this)
-                            .load(uri)
-                            .centerCrop()
-                            .into(binding.imageButton);
+                if (uri == null || binding == null) {
+                    return;
                 }
+                selectedPosterUri = uri;
+                Glide.with(this)
+                        .load(uri)
+                        .centerCrop()
+                        .into(binding.imageButton);
             });
 
     @Override
@@ -88,65 +84,157 @@ public class CreateEventFragment extends Fragment {
 
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
-            if (activity.getSupportActionBar() != null) activity.getSupportActionBar().show();
+            if (activity.getSupportActionBar() != null) {
+                activity.getSupportActionBar().show();
+            }
         }
 
         if (editEvent) {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
+            loadEventForEditing();
         }
 
-        // Open gallery when poster image button is tapped
-        binding.imageButton.setOnClickListener(v ->
-                imagePickerLauncher.launch("image/*")
-        );
+        binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        binding.uploadPosterText.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
-        // Navigate back to main menu
+        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleInviteSection(isChecked));
+
+        binding.addInviteButton.setOnClickListener(v -> {
+            String input = binding.inviteSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) {
+                Toast.makeText(getContext(), "Enter a name, email, or phone to invite", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            binding.addInviteButton.setEnabled(false);
+            new ProfileRepository(requireContext())
+                    .searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                        @Override
+                        public void onSuccess(Profile profile) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            binding.addInviteButton.setEnabled(true);
+                            if (profile == null || TextUtils.isEmpty(profile.getUid())) {
+                                Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            if (invitedUserIds.contains(profile.getUid())) {
+                                Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            invitedUserIds.add(profile.getUid());
+                            binding.inviteSearchInput.setText("");
+                            updateInvitedUsersPreview(profile.getName());
+                            Toast.makeText(getContext(), "Added " + profile.getName(), Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFailure(Exception exception) {
+                            if (!isAdded()) {
+                                return;
+                            }
+                            binding.addInviteButton.setEnabled(true);
+                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
-                // An existing event had its edits cancelled so we return to its details page
                 Bundle args = new Bundle();
                 args.putSerializable("UserType", UserRole.ORGANIZER);
                 args.putString("eventId", eventID);
                 args.putBoolean("cameFromYourEvents", cameFromYourEvents);
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             } else {
-                // A new event being created was canceled, so the user had to have come from your events
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
 
-        // Create event and save to Firestore
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
 
-    /**
-     * The method that is called to handle event creations based on the information in the fields
-     * and writes the event into the repository and the database. Sets up a worker to trigger on
-     * registration closing
-     */
+    private void toggleInviteSection(boolean visible) {
+        int state = visible ? View.VISIBLE : View.GONE;
+        binding.inviteSectionTitle.setVisibility(state);
+        binding.inviteSearchInput.setVisibility(state);
+        binding.addInviteButton.setVisibility(state);
+        binding.invitedUsersPreview.setVisibility(state);
+        if (visible) {
+            updateInvitedUsersPreview(null);
+        }
+    }
+
+    private void updateInvitedUsersPreview(@Nullable String lastAddedName) {
+        String text = "Invited: " + invitedUserIds.size();
+        if (lastAddedName != null && !lastAddedName.trim().isEmpty()) {
+            text += " (" + lastAddedName + ")";
+        }
+        binding.invitedUsersPreview.setText(text);
+    }
+
+    private void loadEventForEditing() {
+        if (TextUtils.isEmpty(eventID)) {
+            return;
+        }
+
+        new EventRepository().getEventById(eventID, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                if (!isAdded()) {
+                    return;
+                }
+                existingPosterUrl = event.getPosterUrl();
+                binding.nameEventCreate.setText(event.getTitle());
+                binding.eventDescriptionText.setText(event.getDescription());
+                binding.registrationStartDate.setText(formatMillisForInput(event.getRegistrationStartMillis()));
+                binding.registrationEndDate.setText(formatMillisForInput(event.getRegistrationEndMillis()));
+                binding.maxEntrantsEditText.setText(String.valueOf(event.getCapacity()));
+
+                invitedUserIds.clear();
+                invitedUserIds.addAll(event.getInvitedUserIds());
+                binding.privateEventSwitch.setChecked(event.isPrivate());
+                toggleInviteSection(event.isPrivate());
+                updateInvitedUsersPreview(null);
+
+                if (!existingPosterUrl.isEmpty()) {
+                    Glide.with(CreateEventFragment.this)
+                            .load(existingPosterUrl)
+                            .centerCrop()
+                            .into(binding.imageButton);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Failed to load event for editing", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
     private void createEventAndSave() {
-        // Pull the raw user input first so validation can happen before any repository work.
         String title = binding.nameEventCreate.getText().toString().trim();
         String description = binding.eventDescriptionText.getText().toString().trim();
         String startText = binding.registrationStartDate.getText().toString().trim();
         String endText = binding.registrationEndDate.getText().toString().trim();
         String capacityText = binding.maxEntrantsEditText.getText().toString().trim();
 
-        // Capacity is optional, but the rest of the event data is required to create a usable
-        // browseable event in Firestore.
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description) || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
+        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(description)
+                || TextUtils.isEmpty(startText) || TextUtils.isEmpty(endText)) {
             Toast.makeText(getContext(), "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        long registrationStartMillis, registrationEndMillis;
+        long registrationStartMillis;
+        long registrationEndMillis;
         try {
-            // Keep create-event input and browse-event filter input on the same date format so
-            // the user only has to learn one timestamp convention in the app.
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy h:mm a", java.util.Locale.ENGLISH);
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
             sdf.setLenient(false);
             registrationStartMillis = sdf.parse(startText).getTime();
             registrationEndMillis = sdf.parse(endText).getTime();
@@ -155,35 +243,46 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
-        // Registration end drives worker scheduling, so reject inverted windows before saving.
         if (registrationEndMillis <= registrationStartMillis) {
             Toast.makeText(getContext(), "Registration end must be after registration start", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Blank capacity means "use the app default". Any provided value must be a positive whole
-        // number because browse-time filtering compares numeric capacities.
         int capacity = Event.DEFAULT_CAPACITY;
         if (!capacityText.isEmpty()) {
             try {
                 capacity = Integer.parseInt(capacityText);
             } catch (NumberFormatException e) {
-                Toast.makeText(getContext(),
-                        "Maximum entrants must be a whole number",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Maximum entrants must be a whole number", Toast.LENGTH_SHORT).show();
                 return;
             }
             if (capacity <= 0) {
-                Toast.makeText(getContext(),
-                        "Maximum entrants must be greater than zero",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Maximum entrants must be greater than zero", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
 
-        // Current app flow still derives an id from the title. Not ideal long-term, but kept
-        // unchanged here so the new filtering work does not alter navigation semantics.
-        String eventId = title.replaceAll("\\s+", "_").toLowerCase();
+        String eventId = editEvent && !TextUtils.isEmpty(eventID)
+                ? eventID
+                : buildEventId(title);
+
+        boolean isPrivate = binding.privateEventSwitch.isChecked();
+
+        String organizerId = "";
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser != null) {
+            organizerId = firebaseUser.getUid();
+        } else {
+            Profile profile = new ProfileRepository(requireContext()).getProfile();
+            if (profile != null) {
+                organizerId = profile.getUid();
+            }
+        }
+
+        if (TextUtils.isEmpty(organizerId)) {
+            Toast.makeText(getContext(), "Error: Could not identify organizer. Please ensure you are logged in.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         Event event = new Event(
                 eventId,
@@ -191,92 +290,53 @@ public class CreateEventFragment extends Fragment {
                 description,
                 registrationStartMillis,
                 registrationEndMillis,
-                capacity
+                capacity,
+                existingPosterUrl,
+                isPrivate,
+                invitedUserIds,
+                organizerId
         );
 
-        // Disable the button while Firestore writes so duplicate taps do not create duplicate
-        // events or enqueue multiple draw workers.
         binding.loading.setVisibility(View.VISIBLE);
         binding.createEvent.setEnabled(false);
 
         if (selectedPosterUri != null) {
-            // Upload poster first, then save event with the returned URL
-            uploadPosterAndSave(event, eventId, registrationEndMillis);
+            uploadPosterAndSave(event, registrationEndMillis);
         } else {
-            saveEventToFirestore(event, eventId, registrationEndMillis, null);
+            saveEventToFirestore(event, registrationEndMillis, existingPosterUrl);
         }
     }
 
-    /**
-     * Uploads the selected poster image to Firebase Storage, then saves the event
-     * with the returned download URL stored in Firestore.
-     *
-     * Storage path: event_posters/{eventId}.jpg
-     *
-     * @param event                the event to save
-     * @param eventId              the event document ID
-     * @param registrationEndMillis used to schedule the draw worker
-     */
-    private void uploadPosterAndSave(Event event, String eventId, long registrationEndMillis) {
-        StorageReference ref = FirebaseStorage.getInstance().getReference()
+    private void uploadPosterAndSave(Event event, long registrationEndMillis) {
+        StorageReference ref = FirebaseStorage.getInstance()
+                .getReference()
                 .child("event_posters")
-                .child(eventId + ".jpg");
+                .child(event.getEventId() + ".jpg");
 
         ref.putFile(selectedPosterUri)
                 .addOnSuccessListener(taskSnapshot ->
                         ref.getDownloadUrl()
-                                .addOnSuccessListener(uri ->
-                                        saveEventToFirestore(event, eventId, registrationEndMillis, uri.toString())
-                                )
-                                .addOnFailureListener(e -> {
-                                    if (!isAdded()) return;
-                                    Toast.makeText(getContext(),
-                                            "Poster upload failed, saving event without image: " + e.getMessage(),
-                                            Toast.LENGTH_LONG).show();
-                                    // Still save the event even if poster upload failed
-                                    saveEventToFirestore(event, eventId, registrationEndMillis, null);
-                                }))
-                .addOnFailureListener(e -> {
-                    if (!isAdded()) return;
-                    Toast.makeText(getContext(),
-                            "Poster upload failed, saving event without image: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                    // Still save the event even if poster upload failed
-                    saveEventToFirestore(event, eventId, registrationEndMillis, null);
-                });
+                                .addOnSuccessListener(uri -> saveEventToFirestore(event, registrationEndMillis, uri.toString()))
+                                .addOnFailureListener(this::handleSaveError))
+                .addOnFailureListener(this::handleSaveError);
     }
 
-    /**
-     * Saves the event to Firestore, optionally including a poster image URL.
-     *
-     * @param event                the event to save
-     * @param eventId              the event document ID
-     * @param registrationEndMillis used to schedule the draw worker
-     * @param posterImageUrl       Firebase Storage download URL, or null if no poster was uploaded
-     */
-    private void saveEventToFirestore(Event event, String eventId,
-                                      long registrationEndMillis, @Nullable String posterImageUrl) {
-        new EventRepository().createEvent(event, posterImageUrl, new EventRepository.CompletionCallback() {
+    private void saveEventToFirestore(Event event, long registrationEndMillis, @Nullable String posterUrl) {
+        new EventRepository().createEvent(event, posterUrl, new EventRepository.CompletionCallback() {
             @Override
             public void onSuccess() {
-                if (!isAdded()) return;
+                if (!isAdded()) {
+                    return;
+                }
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
 
-                // Worker delay is based on the registration close time. This keeps entrant drawing
-                // aligned with the same registration window used by browse-event availability
-                // filtering.
                 long delay = registrationEndMillis - System.currentTimeMillis();
-
-                // Pass the event id into the worker so the background draw job knows which event
-                // should be processed once registration closes.
                 Data inputData = new Data.Builder()
-                        .putString("eventId", eventId)
+                        .putString("eventId", event.getEventId())
                         .build();
 
-                // Queue a one-time worker instead of blocking the UI thread or relying on the
-                // fragment still being alive when registration closes.
                 OneTimeWorkRequest drawRequest =
                         new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
                                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
@@ -284,22 +344,42 @@ public class CreateEventFragment extends Fragment {
                                 .build();
                 WorkManager.getInstance(requireContext()).enqueue(drawRequest);
 
-                Toast.makeText(getContext(), "Event created successfully", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), editEvent ? "Event updated successfully" : "Event created successfully", Toast.LENGTH_SHORT).show();
 
-                // Navigate to details instead of browse
                 Bundle args = new Bundle();
-                args.putString("eventId", eventId);
+                args.putString("eventId", event.getEventId());
                 args.putSerializable("UserType", UserRole.ORGANIZER);
+                args.putBoolean("cameFromYourEvents", true);
                 Navigation.findNavController(requireView()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             }
 
             @Override
             public void onError(Exception e) {
-                if (!isAdded()) return;
-                binding.loading.setVisibility(View.GONE);
-                binding.createEvent.setEnabled(true);
-                Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                handleSaveError(e);
             }
         });
+    }
+
+    private void handleSaveError(Exception e) {
+        if (!isAdded()) {
+            return;
+        }
+        binding.loading.setVisibility(View.GONE);
+        binding.createEvent.setEnabled(true);
+        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    private String buildEventId(String title) {
+        String normalizedTitle = title.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        if (normalizedTitle.isEmpty()) {
+            normalizedTitle = "event";
+        }
+        return normalizedTitle + "_" + System.currentTimeMillis();
+    }
+
+    private String formatMillisForInput(long millis) {
+        return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH).format(millis);
     }
 }

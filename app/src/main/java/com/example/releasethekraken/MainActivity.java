@@ -20,25 +20,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Sign in anonymously so every install gets a stable Firebase Auth UID.
-        // If already signed in (app restart), this is a no-op and the existing UID is reused.
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser existing = auth.getCurrentUser();
 
         if (existing != null) {
-            // Already signed in — cache UID and continue
+            // Already signed in — cache UID
             new SessionManager(this).setUid(existing.getUid());
-            Log.d("AUTH", "Already signed in, UID: " + existing.getUid());
+            Log.d("AUTH", "User already signed in, UID: " + existing.getUid());
         } else {
-            auth.signInAnonymously().addOnCompleteListener(this, task -> {
-                if (task.isSuccessful()) {
-                    String uid = auth.getCurrentUser().getUid();
-                    new SessionManager(this).setUid(uid);
-                    Log.d("AUTH", "Anonymous sign-in success, UID: " + uid);
-                } else {
-                    Log.e("AUTH", "Anonymous sign-in failed", task.getException());
-                }
-            });
+            // Optional: If you want to support guest mode, you can sign in anonymously here.
+            // However, for a proper login flow, we can let LoginFragment handle authentication.
+            Log.d("AUTH", "No user signed in yet.");
         }
 
         // Fetches the FCM push notification token and logs it to verify Firebase Messaging is working

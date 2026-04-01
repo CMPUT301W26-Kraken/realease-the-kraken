@@ -93,7 +93,8 @@
 
     <!-- Strings related to Event Details -->
     <string name="view_entrant_map_button">View Entrant Map</string>
-    <string name="create_notification_button">Create Notification</string>
+    <string name="create_notification_button">Notify Selected Entrants</string>
+    <string name="post_notification_button">Send Notifications</string>
     <string name="view_qr_button">View QR Code</string>
     <string name="edit_event_button">Edit Event</string>
     <string name="delete_event_button">Delete Event</string>
@@ -105,6 +106,10 @@
     <string name="redraw_button">Redraw Participants</string>
     <string name="view_waiting_list_button">View Current Waiting List</string>
     <string name="event_deleted_message">Event Successfully&#10;Deleted!</string>
+    <string name="notify_selected_entrants_hint">Optional note for selected entrants</string>
+    <string name="notify_selected_entrants_none_selected">There are no selected entrants to notify.</string>
+    <string name="notify_selected_entrants_success">Sent notifications to %1$d of %2$d selected entrants.</string>
+    <string name="notification_send_failed">Failed to send notifications.</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
