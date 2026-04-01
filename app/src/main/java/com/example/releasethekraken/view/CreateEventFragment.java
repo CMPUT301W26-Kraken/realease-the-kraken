@@ -247,6 +247,9 @@ public class CreateEventFragment extends Fragment {
                 toggleInviteSection(event.isPrivate());
                 updateInvitedUsersPreview(null);
 
+                // Step 3: restore geolocation switch when editing
+                binding.enableGeolocationSwitch.setChecked(event.isGeolocationRequired());
+
                 if (!existingPosterUrl.isEmpty()) {
                     Glide.with(CreateEventFragment.this)
                             .load(existingPosterUrl)
@@ -314,6 +317,9 @@ public class CreateEventFragment extends Fragment {
 
         boolean isPrivate = binding.privateEventSwitch.isChecked();
 
+        // Step 3: read geolocation toggle
+        boolean geolocationRequired = binding.enableGeolocationSwitch.isChecked();
+
         String organizerId = "";
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser != null) {
@@ -340,7 +346,8 @@ public class CreateEventFragment extends Fragment {
                 existingPosterUrl,
                 isPrivate,
                 invitedUserIds,
-                organizerId
+                organizerId,
+                geolocationRequired  // Step 3: pass geolocation flag
         );
 
         binding.loading.setVisibility(View.VISIBLE);

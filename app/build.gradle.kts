@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("androidx.navigation:navigation-fragment:2.7.7")
     implementation("androidx.navigation:navigation-ui:2.7.7")
     implementation(libs.lifecycle.runtime.ktx)
@@ -71,6 +72,7 @@ dependencies {
     implementation(libs.legacy.support.v4)
     implementation(libs.recyclerview)
     implementation(libs.navigation.runtime)
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("androidx.work:work-runtime:2.9.0")
     implementation("androidx.concurrent:concurrent-futures:1.1.0")
 
