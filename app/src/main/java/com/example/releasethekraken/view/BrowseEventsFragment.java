@@ -173,7 +173,8 @@ public class BrowseEventsFragment extends Fragment {
             }
 
             Bundle args = new Bundle();
-            args.putString("eventId", event.getEventId());
+            args.putString(EventDetailsFragment.ARG_EVENT_ID, event.getEventId());
+            args.putBoolean(EventDetailsFragment.ARG_IS_PRIVATE, event.isPrivate());
 
             // TODO: Implement logic that can determine user type before navigation
             args.putSerializable("UserType", userRole);

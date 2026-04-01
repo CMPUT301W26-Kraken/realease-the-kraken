@@ -126,7 +126,8 @@
                 <Button
                     android:id="@+id/view_qr_button"
                     style="@style/ButtonStyle"
-                    android:text="@string/view_qr_button" />
+                    android:text="@string/view_qr_button"
+                    android:visibility="gone" />
 
                 <Button
                     android:id="@+id/view_comments_button"
