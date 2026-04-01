@@ -66,6 +66,8 @@
         android:hint="@string/prompt_date"
         android:inputType="text"
         android:textSize="11sp"
+        android:focusable="false"
+        android:clickable="true"
         app:layout_constraintEnd_toStartOf="@+id/registration_end_date"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/event_description_text" />
@@ -92,6 +94,8 @@
         android:hint="@string/prompt_date"
         android:inputType="text"
         android:textSize="11sp"
+        android:focusable="false"
+        android:clickable="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/registration_start_date"

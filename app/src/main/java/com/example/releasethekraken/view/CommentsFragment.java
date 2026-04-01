@@ -8,6 +8,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +25,8 @@ import com.example.releasethekraken.model.CommentRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +39,9 @@ public class CommentsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
     private final List<Comment> comments = new ArrayList<>();
-    //private FragmentCommentsBinding binding;
     private CommentAdapter adapter;
     private String eventId;
-    private UserRole userRole; // Will be needed for determining if comments can be deleted
+    private UserRole userRole;
     private CommentService commentService;
 
     @Override
@@ -67,91 +69,109 @@ public class CommentsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
         RecyclerView recyclerView = view.findViewById(R.id.comments_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new CommentAdapter(comments, comment -> {
-            // TODO: ADD LOGIC TO CHECK IF USER IS AN ORGANIZER/ADMIN WHO HAS THE ABILITY TO DELETE COMMENTS
-            //showDeleteConfirmationDialog
-        });
-
-        recyclerView.setAdapter(adapter);
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new CommentAdapter(comments, comment -> {
+                // TODO: Implement delete logic for organizers/admins
+            });
+            recyclerView.setAdapter(adapter);
+        }
 
         loadComments();
 
         Button createCommentButton = view.findViewById(R.id.create_comment_button);
-        createCommentButton.setOnClickListener(v -> showCommentCreateDialog(eventId, v));
+        if (createCommentButton != null) {
+            createCommentButton.setOnClickListener(v -> showCommentCreateDialog(eventId));
+        }
 
-        view.findViewById(R.id.return_to_details_button).setOnClickListener(v -> {
-            Navigation.findNavController(v).popBackStack();
-        });
+        View returnButton = view.findViewById(R.id.return_to_details_button);
+        if (returnButton != null) {
+            returnButton.setOnClickListener(v -> {
+                Navigation.findNavController(v).popBackStack();
+            });
+        }
 
         return view;
     }
 
-    /**
-     * Shows a confirmation dialog before permanently deleting the profile.
-     *
-     * @param eventId current event having a comment added to it
-     * //@param userId current user ID of the user writing the comment
-     * @param view current fragment view used for navigation
-     */
-    private void showCommentCreateDialog(String eventId,
-                                         //String userId,
-                                         View view) {
+    private void showCommentCreateDialog(String eventId) {
+        if (TextUtils.isEmpty(eventId)) {
+            Toast.makeText(requireContext(), "Error: Missing Event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         EditText input = new EditText(requireContext());
         input.setHint("Enter Comment Message");
-        input.setMinLines(7);
+        input.setMinLines(5);
         input.setGravity(Gravity.TOP);
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Write a Comment")
                 .setView(input)
                 .setPositiveButton("Post Comment", (dialog, which) -> {
-
                     String commentText = input.getText().toString().trim();
 
-                    if (!commentText.isEmpty()) {
-
-                        ProfileRepository profileRepository = new ProfileRepository(requireContext());
-                        Profile profile = profileRepository.getProfile();
-
-                        String userId = profile.getUid();
-                        String authorName = profile.getName();
-
-                        commentService.submitComment(eventId, userId, authorName, commentText, result -> {
-                            if (result == CommentService.AddCommentResult.SUCCESS) {
-                                Toast.makeText(requireContext(),
-                                        "Comment posted",
-                                        Toast.LENGTH_SHORT).show();
-                                loadComments();
-                            } else if (result == CommentService.AddCommentResult.EMPTY_COMMENT) {
-                                Toast.makeText(requireContext(),
-                                        "Comment cannot be empty",
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(requireContext(),
-                                        "Failed to post comment",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    } else {
-                        Toast.makeText(requireContext(),
-                                "Comment cannot be empty",
-                                Toast.LENGTH_SHORT).show();
+                    if (commentText.isEmpty()) {
+                        Toast.makeText(requireContext(), "Comment cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+
+                    ProfileRepository profileRepository = new ProfileRepository(requireContext());
+                    Profile profile = profileRepository.getProfile();
+                    
+                    String userId = (profile != null) ? profile.getUid() : "";
+                    String authorName = (profile != null) ? profile.getName() : "";
+
+                    // Fallback to FirebaseAuth if local profile UID is empty
+                    if (TextUtils.isEmpty(userId)) {
+                        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                        if (firebaseUser != null) {
+                            userId = firebaseUser.getUid();
+                        }
+                    }
+
+                    if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(authorName)) {
+                        Toast.makeText(requireContext(), "Please set up your name in profile first", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    commentService.submitComment(eventId, userId, authorName, commentText, result -> {
+                        if (!isAdded()) return;
+                        
+                        switch (result) {
+                            case SUCCESS:
+                                Toast.makeText(requireContext(), "Comment posted", Toast.LENGTH_SHORT).show();
+                                loadComments();
+                                break;
+                            case EMPTY_COMMENT:
+                                Toast.makeText(requireContext(), "Comment cannot be empty", Toast.LENGTH_SHORT).show();
+                                break;
+                            case INVALID_INPUT:
+                                Toast.makeText(requireContext(), "Error: Invalid data", Toast.LENGTH_SHORT).show();
+                                break;
+                            case ERROR:
+                                Toast.makeText(requireContext(), "Server error: Failed to post comment", Toast.LENGTH_SHORT).show();
+                                break;
+                        }
+                    });
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     private void loadComments() {
+        if (TextUtils.isEmpty(eventId)) {
+            return;
+        }
         commentService.fetchComments(eventId, new CommentService.FetchCommentsCallback() {
             @Override
             public void onSuccess(List<Comment> fetchedComments) {
+                if (!isAdded()) return;
                 comments.clear();
                 comments.addAll(fetchedComments);
-                adapter.notifyDataSetChanged();
+                if (adapter != null) {
+                    adapter.notifyDataSetChanged();
+                }
 
                 View currentView = getView();
                 if (currentView != null) {
@@ -159,20 +179,19 @@ public class CommentsFragment extends Fragment {
                     RecyclerView recyclerView = currentView.findViewById(R.id.comments_recycler_view);
 
                     if (comments.isEmpty()) {
-                        noCommentsText.setVisibility(View.VISIBLE);
-                        recyclerView.setVisibility(View.GONE);
+                        if (noCommentsText != null) noCommentsText.setVisibility(View.VISIBLE);
+                        if (recyclerView != null) recyclerView.setVisibility(View.GONE);
                     } else {
-                        noCommentsText.setVisibility(View.GONE);
-                        recyclerView.setVisibility(View.VISIBLE);
+                        if (noCommentsText != null) noCommentsText.setVisibility(View.GONE);
+                        if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
                     }
                 }
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(requireContext(),
-                        "Failed to load comments",
-                        Toast.LENGTH_SHORT).show();
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Failed to load comments", Toast.LENGTH_SHORT).show();
             }
         });
     }

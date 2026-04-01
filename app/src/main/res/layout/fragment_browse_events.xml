@@ -53,7 +53,9 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="2"
             android:hint="@string/filter_available_at_hint"
-            android:inputType="text" />
+            android:inputType="text"
+            android:focusable="false"
+            android:clickable="true" />
 
         <EditText
             android:id="@+id/filter_capacity_text"
