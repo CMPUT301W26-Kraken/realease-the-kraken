@@ -17,6 +17,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ReleaseTheKraken">
+
+        <!-- Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAbxo8vBbcErk5sPSDzOdSjjtNftgjRyO0"/>
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
