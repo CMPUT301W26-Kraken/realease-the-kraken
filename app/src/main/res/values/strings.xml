@@ -113,6 +113,9 @@
     <string name="waiting_list_count_text">Waiting list size: %1$d</string>
     <string name="waiting_list_count_placeholder">Waiting list size: --</string>
     <string name="waiting_list_count_unavailable">Waiting list size unavailable</string>
+    <string name="event_image">Event poster</string>
+    <string name="lottery_criteria_title">How the lottery works</string>
+    <string name="lottery_criteria_body">• You can join the waiting list while registration is open.\n\n• If the number of entrants is greater than the available spots, the app runs a random draw.\n\n• Selected entrants receive an invitation in the app.\n\n• If a selected entrant declines, another person may be chosen from the waiting list.\n\n• Waiting list size can change as people join, leave, accept, or decline.</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
