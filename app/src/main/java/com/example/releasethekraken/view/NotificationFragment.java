@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shows the logged-in entrant's notifications and allows invitation acceptance.
+ * Shows the logged-in entrant's notifications and allows invitation responses.
  */
 public class NotificationFragment extends Fragment {
 
@@ -65,7 +65,18 @@ public class NotificationFragment extends Fragment {
                         .navigate(R.id.action_notificationFragment_to_viewProfileFragment)
         );
 
-        adapter = new NotificationAdapter(notifications, this::acceptInvitation);
+        adapter = new NotificationAdapter(notifications, new NotificationAdapter.NotificationActionListener() {
+            @Override
+            public void onAcceptInvitation(Notification notification) {
+                acceptInvitation(notification);
+            }
+
+            @Override
+            public void onDeclineInvitation(Notification notification) {
+                declineInvitation(notification);
+            }
+        });
+
         binding.notificationsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.notificationsRecyclerView.setAdapter(adapter);
 
@@ -127,6 +138,33 @@ public class NotificationFragment extends Fragment {
                             return;
                         }
                         Toast.makeText(requireContext(), "Could not accept invitation.", Toast.LENGTH_SHORT).show();
+                        loadNotifications();
+                    }
+                }
+        );
+    }
+
+    private void declineInvitation(Notification notification) {
+        notificationRepository.declineInvitation(
+                notification.getEntrantId(),
+                notification.getEventId(),
+                notification.getNotificationId(),
+                new NotificationRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        Toast.makeText(requireContext(), "Invitation declined. Replacement draw triggered.", Toast.LENGTH_SHORT).show();
+                        loadNotifications();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        Toast.makeText(requireContext(), "Could not decline invitation.", Toast.LENGTH_SHORT).show();
                         loadNotifications();
                     }
                 }

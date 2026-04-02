@@ -17,6 +17,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     public interface NotificationActionListener {
         void onAcceptInvitation(Notification notification);
+        void onDeclineInvitation(Notification notification);
     }
 
     private final List<Notification> notifications;
@@ -59,16 +60,31 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         if (notification.canAcceptInvitation()) {
             holder.binding.buttonAcceptInvitation.setVisibility(View.VISIBLE);
+            holder.binding.buttonDeclineInvitation.setVisibility(View.VISIBLE);
+
             holder.binding.buttonAcceptInvitation.setEnabled(true);
+            holder.binding.buttonDeclineInvitation.setEnabled(true);
+
             holder.binding.buttonAcceptInvitation.setOnClickListener(v -> {
                 holder.binding.buttonAcceptInvitation.setEnabled(false);
+                holder.binding.buttonDeclineInvitation.setEnabled(false);
                 if (actionListener != null) {
                     actionListener.onAcceptInvitation(notification);
                 }
             });
+
+            holder.binding.buttonDeclineInvitation.setOnClickListener(v -> {
+                holder.binding.buttonAcceptInvitation.setEnabled(false);
+                holder.binding.buttonDeclineInvitation.setEnabled(false);
+                if (actionListener != null) {
+                    actionListener.onDeclineInvitation(notification);
+                }
+            });
         } else {
             holder.binding.buttonAcceptInvitation.setVisibility(View.GONE);
+            holder.binding.buttonDeclineInvitation.setVisibility(View.GONE);
             holder.binding.buttonAcceptInvitation.setOnClickListener(null);
+            holder.binding.buttonDeclineInvitation.setOnClickListener(null);
         }
     }
 

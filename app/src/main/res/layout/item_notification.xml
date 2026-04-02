@@ -44,16 +44,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Status: accepted"
+        android:text="Status: pending"
         android:textSize="12sp"
         android:visibility="gone" />
 
-    <Button
-        android:id="@+id/button_accept_invitation"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Accept invitation"
-        android:visibility="gone" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_accept_invitation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accept invitation"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/button_decline_invitation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Decline invitation"
+            android:visibility="gone" />
+    </LinearLayout>
 
 </LinearLayout>

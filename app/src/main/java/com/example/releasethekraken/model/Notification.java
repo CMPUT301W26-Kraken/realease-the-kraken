@@ -76,13 +76,26 @@ public class Notification {
     }
 
     public boolean isInvitation() {
-        return type != null && (type.equalsIgnoreCase("win") || type.equalsIgnoreCase("invitation"));
+        return type != null && (
+                type.equalsIgnoreCase("win")
+                        || type.equalsIgnoreCase("invitation")
+                        || type.equalsIgnoreCase("selected")
+        );
     }
 
     public boolean canAcceptInvitation() {
         return isInvitation()
                 && (responseStatus == null
                 || responseStatus.trim().isEmpty()
-                || !responseStatus.equalsIgnoreCase("accepted"));
+                || (!responseStatus.equalsIgnoreCase("accepted")
+                && !responseStatus.equalsIgnoreCase("declined")));
+    }
+
+    public boolean canDeclineInvitation() {
+        return isInvitation()
+                && (responseStatus == null
+                || responseStatus.trim().isEmpty()
+                || (!responseStatus.equalsIgnoreCase("accepted")
+                && !responseStatus.equalsIgnoreCase("declined")));
     }
 }

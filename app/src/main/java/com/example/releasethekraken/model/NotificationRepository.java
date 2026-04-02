@@ -1,8 +1,9 @@
 package com.example.releasethekraken.model;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * repository responsible for sending, logging, and retrieving notifications
@@ -19,39 +21,25 @@ import java.util.Map;
 public class NotificationRepository {
 
     private final FirebaseFirestore db;
-    /**
-     * creates a NotificationRepository using the default Firestore instance
-     */
+
     public NotificationRepository() {
         this(FirebaseFirestore.getInstance());
     }
-    /**
-     * creates a NotificationRepository with a specific Firestore instance
-     * @param db the Firestore database instance to use
-     */
+
     public NotificationRepository(FirebaseFirestore db) {
         this.db = db;
     }
-    /**
-     * callback interface for operations that report completion status
-     */
+
     public interface CompletionCallback {
         void onSuccess();
         void onError(Exception e);
     }
-    /**
-     * callback interface for retrieving a list of notifications
-     */
+
     public interface NotificationsCallback {
         void onSuccess(List<Notification> notifications);
         void onError(Exception e);
     }
-    /**
-     * sends a notification to an entrant by storing it in that entrants
-     * notifications collection in Firestore
-     * @param notification the notification to send
-     * @param callback callback used to report success or failure
-     */
+
     public void sendNotification(Notification notification, CompletionCallback callback) {
         Map<String, Object> data = new HashMap<>();
         data.put("entrantId", notification.getEntrantId());
@@ -69,12 +57,7 @@ public class NotificationRepository {
                 .addOnSuccessListener(documentReference -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
-    /**
-     * logs a notification event in the global notificationLogs collection
-     *
-     * @param notification the notification to log
-     * @param callback callback used to report success or failure
-     */
+
     public void logNotification(Notification notification, CompletionCallback callback) {
         Map<String, Object> data = new HashMap<>();
         data.put("entrantId", notification.getEntrantId());
@@ -89,12 +72,7 @@ public class NotificationRepository {
                 .addOnSuccessListener(documentReference -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
-    /**
-     * retrieves all notifications for a specific entrant from Firestore,
-     * ordered by sent time from newest to oldest
-     * @param entrantId the ID of the entrant whose notifications are being retrieved
-     * @param callback callback used to return the notifications or an error
-     */
+
     public void getNotificationsForEntrant(String entrantId, NotificationsCallback callback) {
         db.collection("profiles")
                 .document(entrantId)
@@ -147,10 +125,6 @@ public class NotificationRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    /**
-     * Marks an invitation notification as accepted and updates the entrant's
-     * accepted record for the event.
-     */
     public void acceptInvitation(String entrantId,
                                  String eventId,
                                  String notificationId,
@@ -191,6 +165,145 @@ public class NotificationRepository {
 
         batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void declineInvitation(String entrantId,
+                                  String eventId,
+                                  String notificationId,
+                                  CompletionCallback callback) {
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid invitation data."));
+            return;
+        }
+
+        long respondedAtMillis = System.currentTimeMillis();
+
+        WriteBatch declineBatch = db.batch();
+
+        declineBatch.update(
+                db.collection("profiles")
+                        .document(entrantId)
+                        .collection("notifications")
+                        .document(notificationId),
+                "read", true,
+                "responseStatus", "declined",
+                "respondedAtMillis", respondedAtMillis
+        );
+
+        declineBatch.delete(
+                db.collection("events")
+                        .document(eventId)
+                        .collection("accepted")
+                        .document(entrantId)
+        );
+
+        declineBatch.commit()
+                .addOnSuccessListener(unused -> triggerReplacementSelection(eventId, entrantId, callback))
+                .addOnFailureListener(callback::onError);
+    }
+
+    private void triggerReplacementSelection(String eventId,
+                                             String declinedEntrantId,
+                                             CompletionCallback callback) {
+
+        db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .get()
+                .addOnSuccessListener(waitingListSnapshot -> {
+                    List<String> waitingListIds = new ArrayList<>();
+                    for (DocumentSnapshot doc : waitingListSnapshot.getDocuments()) {
+                        waitingListIds.add(doc.getId());
+                    }
+
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("accepted")
+                            .get()
+                            .addOnSuccessListener(acceptedSnapshot -> {
+                                List<String> acceptedIds = new ArrayList<>();
+                                for (DocumentSnapshot doc : acceptedSnapshot.getDocuments()) {
+                                    acceptedIds.add(doc.getId());
+                                }
+
+                                List<String> replacementCandidates = new ArrayList<>();
+                                for (String entrantId : waitingListIds) {
+                                    if (!entrantId.equals(declinedEntrantId) && !acceptedIds.contains(entrantId)) {
+                                        replacementCandidates.add(entrantId);
+                                    }
+                                }
+
+                                if (replacementCandidates.isEmpty()) {
+                                    callback.onSuccess();
+                                    return;
+                                }
+
+                                String replacementEntrantId = replacementCandidates.get(
+                                        new Random().nextInt(replacementCandidates.size())
+                                );
+
+                                long nowMillis = System.currentTimeMillis();
+
+                                WriteBatch replacementBatch = db.batch();
+
+                                Map<String, Object> acceptedData = new HashMap<>();
+                                acceptedData.put("selected", true);
+                                acceptedData.put("status", "pending");
+                                acceptedData.put("selectedAtMillis", nowMillis);
+                                acceptedData.put("replacementFor", declinedEntrantId);
+
+                                replacementBatch.set(
+                                        db.collection("events")
+                                                .document(eventId)
+                                                .collection("accepted")
+                                                .document(replacementEntrantId),
+                                        acceptedData,
+                                        SetOptions.merge()
+                                );
+
+                                replacementBatch.delete(
+                                        db.collection("events")
+                                                .document(eventId)
+                                                .collection("rejected")
+                                                .document(replacementEntrantId)
+                                );
+
+                                Map<String, Object> notificationData = new HashMap<>();
+                                notificationData.put("entrantId", replacementEntrantId);
+                                notificationData.put("eventId", eventId);
+                                notificationData.put(
+                                        "message",
+                                        "A spot opened up for event " + eventId
+                                                + ". You have been invited to sign up. Please respond in the app."
+                                );
+                                notificationData.put("type", "SELECTED");
+                                notificationData.put("sentAtMillis", nowMillis);
+                                notificationData.put("read", false);
+                                notificationData.put("responseStatus", "pending");
+
+                                replacementBatch.set(
+                                        db.collection("profiles")
+                                                .document(replacementEntrantId)
+                                                .collection("notifications")
+                                                .document(),
+                                        notificationData
+                                );
+
+                                replacementBatch.set(
+                                        db.collection("notificationLogs")
+                                                .document(),
+                                        notificationData
+                                );
+
+                                replacementBatch.commit()
+                                        .addOnSuccessListener(unused -> callback.onSuccess())
+                                        .addOnFailureListener(callback::onError);
+                            })
+                            .addOnFailureListener(callback::onError);
+                })
                 .addOnFailureListener(callback::onError);
     }
 }
