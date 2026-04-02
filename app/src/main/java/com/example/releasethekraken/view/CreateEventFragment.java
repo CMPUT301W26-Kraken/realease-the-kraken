@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -28,6 +29,9 @@ import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
@@ -35,7 +39,9 @@ import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class CreateEventFragment extends Fragment {
@@ -141,6 +147,9 @@ public class CreateEventFragment extends Fragment {
                     });
         });
 
+        binding.registrationStartDate.setOnClickListener(v -> showDateTimePicker(binding.registrationStartDate));
+        binding.registrationEndDate.setOnClickListener(v -> showDateTimePicker(binding.registrationEndDate));
+
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
                 Bundle args = new Bundle();
@@ -156,6 +165,43 @@ public class CreateEventFragment extends Fragment {
         });
 
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
+    }
+
+    private void showDateTimePicker(EditText editText) {
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select Date")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_12H)
+                    .setHour(12)
+                    .setMinute(0)
+                    .setTitleText("Select Time")
+                    .build();
+
+            timePicker.addOnPositiveButtonClickListener(v -> {
+                Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                utcCalendar.setTimeInMillis(selection);
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(utcCalendar.get(Calendar.YEAR), 
+                            utcCalendar.get(Calendar.MONTH), 
+                            utcCalendar.get(Calendar.DAY_OF_MONTH),
+                            timePicker.getHour(), 
+                            timePicker.getMinute(), 
+                            0);
+                calendar.set(Calendar.MILLISECOND, 0);
+
+                SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
+                editText.setText(sdf.format(calendar.getTime()));
+            });
+
+            timePicker.show(getChildFragmentManager(), "TIME_PICKER");
+        });
+
+        datePicker.show(getChildFragmentManager(), "DATE_PICKER");
     }
 
     private void toggleInviteSection(boolean visible) {
@@ -242,7 +288,7 @@ public class CreateEventFragment extends Fragment {
             registrationStartMillis = sdf.parse(startText).getTime();
             registrationEndMillis = sdf.parse(endText).getTime();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Enter dates as dd/MM/yyyy h:mm AM/PM", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Please enter a valid date and time", Toast.LENGTH_SHORT).show();
             return;
         }
 

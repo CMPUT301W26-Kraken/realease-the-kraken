@@ -48,9 +48,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
+    public static final String ARG_IS_PRIVATE = "isPrivate";
     private static final long MAX_POSTER_BYTES = 5L * 1024L * 1024L;
 
     private String eventId;
+    private Boolean isPrivateFromArgs;
     private TextView titleTextView;
     private TextView descriptionTextView;
     private TextView registrationStartTextView;
@@ -81,6 +83,9 @@ public class EventDetailsFragment extends Fragment {
             eventId = getArguments().getString(ARG_EVENT_ID);
             if (eventId == null) {
                 eventId = getArguments().getString("eventId");
+            }
+            if (getArguments().containsKey(ARG_IS_PRIVATE)) {
+                isPrivateFromArgs = getArguments().getBoolean(ARG_IS_PRIVATE);
             }
             userType = (UserRole) getArguments().getSerializable("UserType");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -136,13 +141,17 @@ public class EventDetailsFragment extends Fragment {
         if (userType == UserRole.ENTRANT) {
             viewEntrantMapButton.setVisibility(View.GONE);
             createNotificationButton.setVisibility(View.GONE);
-            viewQrButton.setVisibility(View.GONE);
             editEventButton.setVisibility(View.GONE);
             deleteEventButton.setVisibility(View.GONE);
             exportToCsvButton.setVisibility(View.GONE);
             redrawButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER) {
             signupOptOutButton.setVisibility(View.GONE);
+        }
+
+        // Apply initial visibility based on arguments to prevent flicker/delay
+        if (isPrivateFromArgs != null) {
+            viewQrButton.setVisibility(isPrivateFromArgs ? View.GONE : View.VISIBLE);
         }
 
         loadEventDetails();
@@ -172,19 +181,19 @@ public class EventDetailsFragment extends Fragment {
             args.putBoolean("adminView", false);
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
         });
 
         viewCommentsButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
     }
 
     private void showQrCodeDialog() {
-        if (eventId == null) {
+        if (eventId == null || currentEvent == null || currentEvent.isPrivate()) {
             return;
         }
 
@@ -239,6 +248,8 @@ public class EventDetailsFragment extends Fragment {
                 currentEvent = event;
                 if (currentEvent.isPrivate()) {
                     viewQrButton.setVisibility(View.GONE);
+                } else {
+                    viewQrButton.setVisibility(View.VISIBLE);
                 }
                 bindEventToViews();
                 checkIfJoined(currentUserId);
