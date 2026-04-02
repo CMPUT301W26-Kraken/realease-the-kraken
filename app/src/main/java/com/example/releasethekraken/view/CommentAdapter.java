@@ -2,6 +2,7 @@ package com.example.releasethekraken.view;
 
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -44,13 +45,21 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
         Comment comment = comments.get(position);
 
-        // TODO: CHANGE THE COMMENTUSER TEXT FIELD TO BE THE NAME, NOT THE ID
-        // TODO: SET THE textCommentUser FIELD TO BOLD IF THE USER IS AN ORGANIZER OF THIS EVENT
         holder.binding.textCommentUser.setText(comment.getAuthorName());
         holder.binding.textCommentContent.setText(comment.getContent());
         holder.binding.textCommentDate.setText(
                 DateFormat.format("yyyy-MM-dd HH:mm", comment.getPostDateMillis()).toString()
         );
+
+        if (comment.isOrganizer()) {
+            holder.binding.textOrganizerLabel.setText("ORGANIZER");
+            holder.binding.textOrganizerLabel.setVisibility(View.VISIBLE);
+        } else if (comment.isCoOrganizer()) {
+            holder.binding.textOrganizerLabel.setText("CO-ORGANIZER");
+            holder.binding.textOrganizerLabel.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.textOrganizerLabel.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> listener.onCommentClick(comment));
     }

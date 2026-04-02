@@ -54,12 +54,16 @@ public class CommentService {
      * @param userId the user id
      * @param authorName the user's display name
      * @param content the comment text
+     * @param isOrganizer whether the author is the organizer of the event
+     * @param isCoOrganizer whether the author is a co-organizer of the event
      * @param callback callback for result
      */
     public void submitComment(String eventId,
                               String userId,
                               String authorName,
                               String content,
+                              boolean isOrganizer,
+                              boolean isCoOrganizer,
                               AddCommentCallback callback) {
 
         if (eventId == null || userId == null || authorName == null || content == null) {
@@ -81,7 +85,9 @@ public class CommentService {
                 userId,
                 authorName,
                 trimmed,
-                timestamp
+                timestamp,
+                isOrganizer,
+                isCoOrganizer
         );
 
         repository.addComment(comment, new CommentRepository.CompletionCallback() {

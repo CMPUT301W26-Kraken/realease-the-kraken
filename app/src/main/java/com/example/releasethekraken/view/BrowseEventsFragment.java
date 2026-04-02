@@ -55,7 +55,6 @@ public class BrowseEventsFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private boolean yourEvents;
-    private UserRole userRole = UserRole.ENTRANT;
 
     // allEvents is the source-of-truth list from Firestore.
     // visibleEvents is the currently rendered subset after search/filter predicates are applied.
@@ -162,9 +161,10 @@ public class BrowseEventsFragment extends Fragment {
 
                 String currentUserId = currentUser.getUid();
                 boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                boolean isCoOrganizer = event.getCoOrganizerIds().contains(currentUserId);
                 boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
 
-                if (!isOrganizer && !isInvited) {
+                if (!isOrganizer && !isCoOrganizer && !isInvited) {
                     Toast.makeText(getContext(),
                             "You are not invited to this private event",
                             Toast.LENGTH_SHORT).show();
@@ -176,8 +176,8 @@ public class BrowseEventsFragment extends Fragment {
             args.putString(EventDetailsFragment.ARG_EVENT_ID, event.getEventId());
             args.putBoolean(EventDetailsFragment.ARG_IS_PRIVATE, event.isPrivate());
 
-            // TODO: Implement logic that can determine user type before navigation
-            args.putSerializable("UserType", userRole);
+            // Pass UserRole.ENTRANT as default; EventDetailsFragment will re-calculate based on event ownership/co-organizer list
+            args.putSerializable("UserType", UserRole.ENTRANT);
 
             args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
 
@@ -246,18 +246,6 @@ public class BrowseEventsFragment extends Fragment {
                                 .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
                 );
 
-        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
-        // Become an organizer for viewing event details
-        view.findViewById(R.id.dummy_organizer_button).setOnClickListener(v -> {
-            userRole = UserRole.ORGANIZER;
-        });
-
-        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
-        // Become an entrant for viewing event details
-        view.findViewById(R.id.dummy_entrant_button).setOnClickListener(v -> {
-            userRole = UserRole.ENTRANT;
-        });
-
         return view;
     }
 
@@ -312,6 +300,8 @@ public class BrowseEventsFragment extends Fragment {
      */
     private void loadEvents() {
         EventRepository repository = new EventRepository();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String currentUserId = currentUser != null ? currentUser.getUid() : null;
 
         repository.getAllEvents(new EventRepository.EventsCallback() {
             @Override
@@ -319,7 +309,17 @@ public class BrowseEventsFragment extends Fragment {
                 // Replace the source list atomically, then re-run the current filter state against
                 // the fresh data so browse results stay in sync with Firestore.
                 allEvents.clear();
-                allEvents.addAll(events);
+                if (yourEvents && currentUserId != null) {
+                    for (Event event : events) {
+                        if (event.getOrganizerId().equals(currentUserId) ||
+                            event.getCoOrganizerIds().contains(currentUserId) ||
+                            event.getInvitedUserIds().contains(currentUserId)) {
+                            allEvents.add(event);
+                        }
+                    }
+                } else {
+                    allEvents.addAll(events);
+                }
                 applyFilters(false);
             }
 

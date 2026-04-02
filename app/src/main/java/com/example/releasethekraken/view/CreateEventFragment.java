@@ -23,9 +23,11 @@ import androidx.work.WorkManager;
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.DrawEntrantsWorker;
+import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.NotificationRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
@@ -54,6 +56,13 @@ public class CreateEventFragment extends Fragment {
     private Uri selectedPosterUri;
     private String existingPosterUrl = "";
     private final ArrayList<String> invitedUserIds = new ArrayList<>();
+    private final ArrayList<String> coOrganizerIds = new ArrayList<>();
+    
+    // For bracket display
+    private final ArrayList<String> invitedUserNames = new ArrayList<>();
+    private final ArrayList<String> coOrganizerNames = new ArrayList<>();
+
+    private NotificationService notificationService;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -70,6 +79,7 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        notificationService = new NotificationService(new NotificationRepository());
         if (getArguments() != null) {
             editEvent = getArguments().getBoolean("editEvent");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -99,52 +109,85 @@ public class CreateEventFragment extends Fragment {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
             loadEventForEditing();
+        } else {
+            updatePreviews();
         }
 
         binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
         binding.uploadPosterText.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
-        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleInviteSection(isChecked));
+        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            binding.invitedGuestsLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
 
-        binding.addInviteButton.setOnClickListener(v -> {
-            String input = binding.inviteSearchInput.getText().toString().trim();
-            if (TextUtils.isEmpty(input)) {
-                Toast.makeText(getContext(), "Enter a name, email, or phone to invite", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        // Co-organizer logic
+        binding.addCoOrganizerButton.setOnClickListener(v -> {
+            String input = binding.coOrganizerSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) return;
 
-            binding.addInviteButton.setEnabled(false);
-            new ProfileRepository(requireContext())
-                    .searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
-                        @Override
-                        public void onSuccess(Profile profile) {
-                            if (!isAdded()) {
-                                return;
-                            }
-                            binding.addInviteButton.setEnabled(true);
-                            if (profile == null || TextUtils.isEmpty(profile.getUid())) {
-                                Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            if (invitedUserIds.contains(profile.getUid())) {
-                                Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
+            binding.addCoOrganizerButton.setEnabled(false);
+            new ProfileRepository(requireContext()).searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                @Override
+                public void onSuccess(Profile profile) {
+                    if (!isAdded()) return;
+                    binding.addCoOrganizerButton.setEnabled(true);
+                    if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+                        if (!coOrganizerIds.contains(profile.getUid())) {
+                            coOrganizerIds.add(profile.getUid());
+                            coOrganizerNames.add(profile.getName());
+                            binding.coOrganizerSearchInput.setText("");
+                            updatePreviews();
+                            Toast.makeText(getContext(), "Added " + profile.getName() + " as co-organizer", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "Already a co-organizer", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception exception) {
+                    if (!isAdded()) return;
+                    binding.addCoOrganizerButton.setEnabled(true);
+                    Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        // Guest logic
+        binding.addGuestInviteButton.setOnClickListener(v -> {
+            String input = binding.guestInviteSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) return;
+
+            binding.addGuestInviteButton.setEnabled(false);
+            new ProfileRepository(requireContext()).searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                @Override
+                public void onSuccess(Profile profile) {
+                    if (!isAdded()) return;
+                    binding.addGuestInviteButton.setEnabled(true);
+                    if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+                        if (!invitedUserIds.contains(profile.getUid())) {
                             invitedUserIds.add(profile.getUid());
-                            binding.inviteSearchInput.setText("");
-                            updateInvitedUsersPreview(profile.getName());
-                            Toast.makeText(getContext(), "Added " + profile.getName(), Toast.LENGTH_SHORT).show();
+                            invitedUserNames.add(profile.getName());
+                            binding.guestInviteSearchInput.setText("");
+                            updatePreviews();
+                            Toast.makeText(getContext(), "Invited " + profile.getName(), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                        @Override
-                        public void onFailure(Exception exception) {
-                            if (!isAdded()) {
-                                return;
-                            }
-                            binding.addInviteButton.setEnabled(true);
-                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                @Override
+                public void onFailure(Exception exception) {
+                    if (!isAdded()) return;
+                    binding.addGuestInviteButton.setEnabled(true);
+                    Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         binding.registrationStartDate.setOnClickListener(v -> showDateTimePicker(binding.registrationStartDate));
@@ -160,7 +203,7 @@ public class CreateEventFragment extends Fragment {
             } else {
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
-                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_browseEventsFragment_to_mainMenuFragment, args);
             }
         });
 
@@ -204,23 +247,18 @@ public class CreateEventFragment extends Fragment {
         datePicker.show(getChildFragmentManager(), "DATE_PICKER");
     }
 
-    private void toggleInviteSection(boolean visible) {
-        int state = visible ? View.VISIBLE : View.GONE;
-        binding.inviteSectionTitle.setVisibility(state);
-        binding.inviteSearchInput.setVisibility(state);
-        binding.addInviteButton.setVisibility(state);
-        binding.invitedUsersPreview.setVisibility(state);
-        if (visible) {
-            updateInvitedUsersPreview(null);
+    private void updatePreviews() {
+        String coOrgText = "Co-Organizers added: " + coOrganizerIds.size();
+        if (!coOrganizerNames.isEmpty()) {
+            coOrgText += " [" + TextUtils.join(", ", coOrganizerNames) + "]";
         }
-    }
+        binding.coOrganizersPreview.setText(coOrgText);
 
-    private void updateInvitedUsersPreview(@Nullable String lastAddedName) {
-        String text = "Invited: " + invitedUserIds.size();
-        if (lastAddedName != null && !lastAddedName.trim().isEmpty()) {
-            text += " (" + lastAddedName + ")";
+        String guestText = "Guests invited: " + invitedUserIds.size();
+        if (!invitedUserNames.isEmpty()) {
+            guestText += " [" + TextUtils.join(", ", invitedUserNames) + "]";
         }
-        binding.invitedUsersPreview.setText(text);
+        binding.invitedGuestsPreview.setText(guestText);
     }
 
     private void loadEventForEditing() {
@@ -243,11 +281,19 @@ public class CreateEventFragment extends Fragment {
 
                 invitedUserIds.clear();
                 invitedUserIds.addAll(event.getInvitedUserIds());
-                binding.privateEventSwitch.setChecked(event.isPrivate());
-                toggleInviteSection(event.isPrivate());
-                updateInvitedUsersPreview(null);
+                coOrganizerIds.clear();
+                coOrganizerIds.addAll(event.getCoOrganizerIds());
+                
+                // For editing, we'd ideally fetch names, but for now we reset placeholders
+                invitedUserNames.clear();
+                invitedUserNames.addAll(invitedUserIds);
+                coOrganizerNames.clear();
+                coOrganizerNames.addAll(coOrganizerIds);
 
-                // Step 3: restore geolocation switch when editing
+                binding.privateEventSwitch.setChecked(event.isPrivate());
+                binding.invitedGuestsLayout.setVisibility(event.isPrivate() ? View.VISIBLE : View.GONE);
+                updatePreviews();
+
                 binding.enableGeolocationSwitch.setChecked(event.isGeolocationRequired());
 
                 if (!existingPosterUrl.isEmpty()) {
@@ -316,8 +362,6 @@ public class CreateEventFragment extends Fragment {
                 : buildEventId(title);
 
         boolean isPrivate = binding.privateEventSwitch.isChecked();
-
-        // Step 3: read geolocation toggle
         boolean geolocationRequired = binding.enableGeolocationSwitch.isChecked();
 
         String organizerId = "";
@@ -346,8 +390,9 @@ public class CreateEventFragment extends Fragment {
                 existingPosterUrl,
                 isPrivate,
                 invitedUserIds,
+                coOrganizerIds,
                 organizerId,
-                geolocationRequired  // Step 3: pass geolocation flag
+                geolocationRequired
         );
 
         binding.loading.setVisibility(View.VISIBLE);
@@ -384,6 +429,9 @@ public class CreateEventFragment extends Fragment {
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
+                
+                // Send invitations now that event is created
+                sendInvitations(event);
 
                 long delay = registrationEndMillis - System.currentTimeMillis();
                 Data inputData = new Data.Builder()
@@ -411,6 +459,30 @@ public class CreateEventFragment extends Fragment {
                 handleSaveError(e);
             }
         });
+    }
+    
+    private void sendInvitations(Event event) {
+        // Invite co-organizers
+        for (String coOrgId : coOrganizerIds) {
+            notificationService.sendCoOrganizerNotification(event, coOrgId, new NotificationService.NotificationCallback() {
+                @Override
+                public void onResult(NotificationService.NotificationResult result) {}
+                @Override
+                public void onError(Exception e) {}
+            });
+        }
+        
+        // Invite private guests if applicable
+        if (event.isPrivate()) {
+            for (String guestId : invitedUserIds) {
+                notificationService.sendSelectedEntrantNotification(event, guestId, "You've been invited to this private event.", new NotificationService.NotificationCallback() {
+                    @Override
+                    public void onResult(NotificationService.NotificationResult result) {}
+                    @Override
+                    public void onError(Exception e) {}
+                });
+            }
+        }
     }
 
     private void handleSaveError(Exception e) {
