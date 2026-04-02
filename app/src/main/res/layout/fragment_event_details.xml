@@ -1,188 +1,318 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/event_details_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
     tools:context=".view.EventDetailsFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+    <ImageView
+        android:id="@+id/event_poster"
+        android:layout_width="289dp"
+        android:layout_height="189dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/event_image"
+        android:scaleType="centerCrop"
+        android:src="@drawable/krakenlogov1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/event_poster"
-            android:layout_width="326dp"
-            android:layout_height="189dp"
-            android:layout_marginTop="15dp"
-            android:src="@drawable/krakenlogov1"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/event_title_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="Event Title"
+        android:textColor="@color/dark_blue_text"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/event_poster" />
 
-        <TextView
-            android:id="@+id/event_title_text"
-            android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/event_description_display"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="Event description"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/event_title_text" />
+
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="center"
+        android:text="@string/registration_start_text"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/textView10"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/event_description_display" />
+
+    <TextView
+        android:id="@+id/textView10"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="@string/registration_end_text"
+        android:textColor="@color/dark_blue_text"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textView9"
+        app:layout_constraintTop_toBottomOf="@id/event_description_display" />
+
+    <TextView
+        android:id="@+id/registration_start_display"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="12dp"
+        android:gravity="center"
+        android:text="@string/prompt_date"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toStartOf="@id/registration_end_display"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView9" />
+
+    <TextView
+        android:id="@+id/registration_end_display"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="@string/prompt_date"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/registration_start_display"
+        app:layout_constraintTop_toBottomOf="@id/textView10" />
+
+    <ScrollView
+        android:id="@+id/event_details_scroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/registration_start_display">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:text="@string/prompt_event_name"
-            android:textColor="@color/dark_blue_text"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/event_poster" />
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
 
-        <TextView
-            android:id="@+id/event_description_display"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="24dp"
-            android:minLines="7"
-            android:text="TextView"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/event_title_text" />
-
-        <TextView
-            android:id="@+id/registration_start_display"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/prompt_date"
-            app:layout_constraintEnd_toStartOf="@+id/registration_end_display"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/event_description_display" />
-
-        <TextView
-            android:id="@+id/textView9"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/registration_start_text"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="@+id/registration_start_display"
-            app:layout_constraintHorizontal_bias="0.434"
-            app:layout_constraintStart_toStartOf="@+id/registration_start_display"
-            app:layout_constraintTop_toBottomOf="@+id/registration_start_display" />
-
-        <TextView
-            android:id="@+id/registration_end_display"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/prompt_date"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/registration_start_display"
-            app:layout_constraintTop_toBottomOf="@+id/event_description_display" />
-
-        <TextView
-            android:id="@+id/waiting_list_count_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="36dp"
-            android:text="@string/waiting_list_count_placeholder"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.498"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/registration_end_display" />
-
-        <TextView
-            android:id="@+id/textView10"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/registration_end_text"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="@+id/registration_end_display"
-            app:layout_constraintHorizontal_bias="0.559"
-            app:layout_constraintStart_toStartOf="@+id/registration_end_display"
-            app:layout_constraintTop_toBottomOf="@+id/registration_end_display" />
-
-        <ScrollView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/waiting_list_count_text">
-
-            <LinearLayout
-                android:id="@+id/button_container"
+            <TextView
+                android:id="@+id/waiting_list_count_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:text="@string/waiting_list_count_placeholder"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/view_entrant_map_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/view_entrant_map_button" />
+            <TextView
+                android:id="@+id/lottery_criteria_title_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="6dp"
+                android:gravity="center"
+                android:text="@string/lottery_criteria_title"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/view_waiting_list_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/view_waiting_list_button" />
+            <TextView
+                android:id="@+id/lottery_criteria_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="@android:color/white"
+                android:lineSpacingExtra="4dp"
+                android:padding="12dp"
+                android:text="@string/lottery_criteria_body"
+                android:textColor="#064778"
+                android:textSize="15sp" />
 
-                <Button
-                    android:id="@+id/create_notification_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/create_notification_button" />
+            <Button
+                android:id="@+id/view_entrant_map_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="View Entrant Map"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/view_qr_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/view_qr_button"
-                    android:visibility="gone" />
+            <Button
+                android:id="@+id/view_waiting_list_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="View Current Waiting List"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/view_comments_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/view_comments_button" />
+            <Button
+                android:id="@+id/create_notification_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="Notify Selected Entrants"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/export_csv_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/export_csv_button" />
+            <Button
+                android:id="@+id/view_qr_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="View QR Code"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/redraw_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/redraw_button" />
+            <Button
+                android:id="@+id/view_comments_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="View Comments"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/edit_event_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/edit_event_button" />
+            <Button
+                android:id="@+id/export_csv_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="Export Waiting List to CSV"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/signup_optout_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/signup_button" />
+            <Button
+                android:id="@+id/redraw_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="Redraw Participants"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/delete_event_button"
-                    style="@style/DeleteButtonStyle"
-                    android:text="@string/delete_event_button" />
+            <Button
+                android:id="@+id/edit_event_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="Edit Event"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/return_button"
-                    style="@style/ButtonStyle"
-                    android:text="@string/return_button" />
+            <Button
+                android:id="@+id/signup_optout_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="@string/signup_button"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-            </LinearLayout>
-        </ScrollView>
+            <Button
+                android:id="@+id/delete_event_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="@android:color/holo_red_dark"
+                android:text="Delete Event"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <Button
+                android:id="@+id/return_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#2196F3"
+                android:text="Return"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
 
-</FrameLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
