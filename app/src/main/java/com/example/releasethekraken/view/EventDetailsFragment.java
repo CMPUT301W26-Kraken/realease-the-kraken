@@ -49,9 +49,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
+    public static final String ARG_IS_PRIVATE = "isPrivate";
     private static final long MAX_POSTER_BYTES = 5L * 1024L * 1024L;
 
     private String eventId;
+    private Boolean isPrivateFromArgs;
     private TextView titleTextView;
     private TextView descriptionTextView;
     private TextView registrationStartTextView;
@@ -59,6 +61,14 @@ public class EventDetailsFragment extends Fragment {
     private TextView waitingListCountTextView;
     private ImageView posterImageView;
     private Button viewQrButton;
+
+    private Button signupOptOutButton;
+    private Button deleteEventButton;
+    private Button createNotificationButton;
+    private Button editEventButton;
+    private Button viewEntrantMapButton;
+    private Button exportToCsvButton;
+    private Button redrawButton;
 
     private WaitingListRepository waitingListRepository;
     private WaitingListService waitingListService;
@@ -83,6 +93,9 @@ public class EventDetailsFragment extends Fragment {
             eventId = getArguments().getString(ARG_EVENT_ID);
             if (eventId == null) {
                 eventId = getArguments().getString("eventId");
+            }
+            if (getArguments().containsKey(ARG_IS_PRIVATE)) {
+                isPrivateFromArgs = getArguments().getBoolean(ARG_IS_PRIVATE);
             }
             userType = (UserRole) getArguments().getSerializable("UserType");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -123,28 +136,23 @@ public class EventDetailsFragment extends Fragment {
         waitingListCountTextView = view.findViewById(R.id.waiting_list_count_text);
         posterImageView = view.findViewById(R.id.event_poster);
 
-        Button signupOptOutButton = view.findViewById(R.id.signup_optout_button);
+        signupOptOutButton = view.findViewById(R.id.signup_optout_button);
         Button returnToBrowseButton = view.findViewById(R.id.return_button);
-        Button deleteEventButton = view.findViewById(R.id.delete_event_button);
-        Button createNotificationButton = view.findViewById(R.id.create_notification_button);
-        Button editEventButton = view.findViewById(R.id.edit_event_button);
-        Button viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
+        deleteEventButton = view.findViewById(R.id.delete_event_button);
+        createNotificationButton = view.findViewById(R.id.create_notification_button);
+        editEventButton = view.findViewById(R.id.edit_event_button);
+        viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         viewQrButton = view.findViewById(R.id.view_qr_button);
         Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
-        Button exportToCsvButton = view.findViewById(R.id.export_csv_button);
-        Button redrawButton = view.findViewById(R.id.redraw_button);
+        exportToCsvButton = view.findViewById(R.id.export_csv_button);
+        redrawButton = view.findViewById(R.id.redraw_button);
 
-        if (userType == UserRole.ENTRANT) {
-            viewEntrantMapButton.setVisibility(View.GONE);
-            createNotificationButton.setVisibility(View.GONE);
-            viewQrButton.setVisibility(View.GONE);
-            editEventButton.setVisibility(View.GONE);
-            deleteEventButton.setVisibility(View.GONE);
-            exportToCsvButton.setVisibility(View.GONE);
-            redrawButton.setVisibility(View.GONE);
-        } else if (userType == UserRole.ORGANIZER) {
-            signupOptOutButton.setVisibility(View.GONE);
+        updateUIForRole();
+
+        // Apply initial visibility based on arguments to prevent flicker/delay
+        if (isPrivateFromArgs != null) {
+            viewQrButton.setVisibility(isPrivateFromArgs ? View.GONE : View.VISIBLE);
         }
 
         loadEventDetails();
@@ -174,15 +182,35 @@ public class EventDetailsFragment extends Fragment {
             args.putBoolean("adminView", false);
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
         });
 
         viewCommentsButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putString(ARG_EVENT_ID, eventId);
             args.putSerializable("userRole", userType);
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment);
+            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
+    }
+
+    private void updateUIForRole() {
+        if (userType == UserRole.ENTRANT) {
+            viewEntrantMapButton.setVisibility(View.GONE);
+            createNotificationButton.setVisibility(View.GONE);
+            editEventButton.setVisibility(View.GONE);
+            deleteEventButton.setVisibility(View.GONE);
+            exportToCsvButton.setVisibility(View.GONE);
+            redrawButton.setVisibility(View.GONE);
+            signupOptOutButton.setVisibility(View.VISIBLE);
+        } else if (userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN) {
+            viewEntrantMapButton.setVisibility(View.VISIBLE);
+            createNotificationButton.setVisibility(View.VISIBLE);
+            editEventButton.setVisibility(View.VISIBLE);
+            deleteEventButton.setVisibility(View.VISIBLE);
+            exportToCsvButton.setVisibility(View.VISIBLE);
+            redrawButton.setVisibility(View.VISIBLE);
+            signupOptOutButton.setVisibility(View.GONE);
+        }
     }
 
     private void startWaitingListCountListener() {
@@ -221,7 +249,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void showQrCodeDialog() {
-        if (eventId == null) {
+        if (eventId == null || currentEvent == null || currentEvent.isPrivate()) {
             return;
         }
 
@@ -253,16 +281,25 @@ public class EventDetailsFragment extends Fragment {
             public void onSuccess(Event event) {
                 String currentUserId = getCurrentEntrantId();
 
-                if (event.isPrivate()) {
-                    if (TextUtils.isEmpty(currentUserId)) {
-                        if (isAdded()) {
-                            Toast.makeText(requireContext(), "You must be logged in to access this event", Toast.LENGTH_SHORT).show();
-                            Navigation.findNavController(requireView()).popBackStack();
-                        }
-                        return;
+                if (TextUtils.isEmpty(currentUserId)) {
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), "You must be logged in to access this event", Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(requireView()).popBackStack();
                     }
+                    return;
+                }
 
-                    boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                // Determine user role
+                if (event.getOrganizerId().equals(currentUserId)) {
+                    userType = UserRole.ORGANIZER;
+                } else if (event.getCoOrganizerIds().contains(currentUserId)) {
+                    userType = UserRole.CO_ORGANIZER;
+                } else if (userType != UserRole.ADMIN) {
+                    userType = UserRole.ENTRANT;
+                }
+
+                if (event.isPrivate()) {
+                    boolean isOrganizer = userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN;
                     boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
                     if (!isOrganizer && !isInvited) {
                         if (isAdded()) {
@@ -276,9 +313,15 @@ public class EventDetailsFragment extends Fragment {
                 currentEvent = event;
                 if (currentEvent.isPrivate()) {
                     viewQrButton.setVisibility(View.GONE);
+                } else {
+                    viewQrButton.setVisibility(View.VISIBLE);
                 }
-                bindEventToViews();
-                checkIfJoined(currentUserId);
+                
+                if (isAdded()) {
+                    updateUIForRole();
+                    bindEventToViews();
+                    checkIfJoined(currentUserId);
+                }
             }
 
             @Override
@@ -356,8 +399,11 @@ public class EventDetailsFragment extends Fragment {
                         if (result == WaitingListService.JoinResult.SUCCESS) {
                             isJoined = true;
                             button.setText(R.string.opt_out_button);
+                        } else if (result == WaitingListService.JoinResult.ALREADY_ORGANIZER) {
+                            Toast.makeText(requireContext(), "Organizers cannot join the waiting list", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
                         }
-                        Toast.makeText(requireContext(), result.name(), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -374,9 +420,8 @@ public class EventDetailsFragment extends Fragment {
             @Override
             public void onResult(boolean exists) {
                 isJoined = exists;
-                if (getView() != null) {
-                    Button btn = getView().findViewById(R.id.signup_optout_button);
-                    btn.setText(isJoined ? R.string.opt_out_button : R.string.signup_button);
+                if (getView() != null && signupOptOutButton != null) {
+                    signupOptOutButton.setText(isJoined ? R.string.opt_out_button : R.string.signup_button);
                 }
             }
 

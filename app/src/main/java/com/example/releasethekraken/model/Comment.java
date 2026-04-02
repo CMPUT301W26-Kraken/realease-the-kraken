@@ -12,6 +12,8 @@ public class Comment {
     private String authorName;
     private String content;
     private long postDateMillis;
+    private boolean isOrganizer;
+    private boolean isCoOrganizer;
 
     /**
      * empty constructor required for Firestore
@@ -28,11 +30,28 @@ public class Comment {
      * @param postDateMillis the time when the comment was posted stored as a long in milliseconds
      */
     public Comment(String eventId, String userId, String authorName, String content, long postDateMillis) {
+        this(eventId, userId, authorName, content, postDateMillis, false, false);
+    }
+
+    /**
+     * Creating a new comment object with organizer status
+     *
+     * @param eventId the unique ID for the event
+     * @param userId the unique ID for the author
+     * @param authorName the display name of the author
+     * @param content the actual content of the comment stored as a string
+     * @param postDateMillis the time when the comment was posted stored as a long in milliseconds
+     * @param isOrganizer whether the author is the organizer of the event
+     * @param isCoOrganizer whether the author is a co-organizer of the event
+     */
+    public Comment(String eventId, String userId, String authorName, String content, long postDateMillis, boolean isOrganizer, boolean isCoOrganizer) {
         this.eventId = eventId;
         this.userId = userId;
         this.authorName = authorName;
         this.content = content;
         this.postDateMillis = postDateMillis;
+        this.isOrganizer = isOrganizer;
+        this.isCoOrganizer = isCoOrganizer;
     }
 
     public String getEventId() {
@@ -55,6 +74,14 @@ public class Comment {
         return postDateMillis;
     }
 
+    public boolean isOrganizer() {
+        return isOrganizer;
+    }
+
+    public boolean isCoOrganizer() {
+        return isCoOrganizer;
+    }
+
     public void setEventId(String eventId) {
         this.eventId = eventId;
     }
@@ -73,5 +100,13 @@ public class Comment {
 
     public void setPostDateMillis(long postDateMillis) {
         this.postDateMillis = postDateMillis;
+    }
+
+    public void setOrganizer(boolean organizer) {
+        isOrganizer = organizer;
+    }
+
+    public void setCoOrganizer(boolean coOrganizer) {
+        isCoOrganizer = coOrganizer;
     }
 }

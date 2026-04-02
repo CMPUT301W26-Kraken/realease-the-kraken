@@ -66,7 +66,7 @@
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
     <string name="search_events_hint">Search by title or description</string>
-    <string name="filter_available_at_hint">Available at (dd/MM/yyyy h:mm AM/PM)</string>
+    <string name="filter_available_at_hint">Available Time</string>
     <string name="filter_capacity_hint">Min capacity</string>
     <string name="apply_filters_button">Apply Filters</string>
     <string name="clear_filters_button">Clear Filters</string>
@@ -82,10 +82,10 @@
     <string name="edit_event_confirm_button">Confirm Changes</string>
     <string name="prompt_event_name">Event Title</string>
     <string name="prompt_event_description">Event Description…</string>
-    <string name="prompt_date">DD/MM/YYYY HH:MM AM/PM</string>
+    <string name="prompt_date">Time</string>
     <string name="prompt_maximum_entrants">Max Entrants</string>
-    <string name="registration_start_text">Registration Start</string>
-    <string name="registration_end_text">Registration End</string>
+    <string name="registration_start_text">Start Time</string>
+    <string name="registration_end_text">End Time</string>
     <string name="upload_event_poster_text">Upload&#10;Event Poster</string>
     <string name="maximum_entrants_text">Maximum Entrants&#10;(Optional)</string>
     <string name="enable_geolocation_text">Enable&#10;Geo-location</string>

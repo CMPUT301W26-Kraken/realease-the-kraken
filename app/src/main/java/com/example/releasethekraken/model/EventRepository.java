@@ -1,6 +1,7 @@
 package com.example.releasethekraken.model;
 
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -57,6 +58,7 @@ public class EventRepository {
         data.put("capacity", event.getCapacity());
         data.put("isPrivate", event.isPrivate());
         data.put("invitedUserIds", event.getInvitedUserIds());
+        data.put("coOrganizerIds", event.getCoOrganizerIds());
         data.put("organizerId", event.getOrganizerId());
         data.put("createdAt", System.currentTimeMillis());
         data.put("posterImageUrl", finalPosterUrl);
@@ -66,6 +68,14 @@ public class EventRepository {
         db.collection("events")
                 .document(event.getEventId())
                 .set(data)
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void addCoOrganizer(String eventId, String userId, CompletionCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .update("coOrganizerIds", FieldValue.arrayUnion(userId))
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
@@ -132,6 +142,7 @@ public class EventRepository {
 
         Boolean isPrivate = document.getBoolean("isPrivate");
         List<String> invitedUserIds = (List<String>) document.get("invitedUserIds");
+        List<String> coOrganizerIds = (List<String>) document.get("coOrganizerIds");
         String organizerId = document.getString("organizerId");
 
         if (title == null) title = "";
@@ -141,6 +152,7 @@ public class EventRepository {
         if (capacity == null || capacity <= 0) capacity = (long) Event.DEFAULT_CAPACITY;
         if (isPrivate == null) isPrivate = false;
         if (invitedUserIds == null) invitedUserIds = new ArrayList<>();
+        if (coOrganizerIds == null) coOrganizerIds = new ArrayList<>();
         if (organizerId == null) organizerId = "";
 
         // Step 2: read geolocationRequired from Firestore
@@ -157,6 +169,7 @@ public class EventRepository {
                 posterUrl,
                 isPrivate,
                 invitedUserIds,
+                coOrganizerIds,
                 organizerId,
                 geolocationRequired
         );

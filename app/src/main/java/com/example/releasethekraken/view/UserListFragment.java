@@ -1,5 +1,6 @@
 package com.example.releasethekraken.view;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
@@ -46,8 +48,9 @@ public class UserListFragment extends Fragment {
     private UserRole userRole;
     private RecyclerView recyclerView;
     private WaitingListRepository waitingListRepository;
+    private EventRepository eventRepository;
     private ProfileRepository profileRepository;
-    private final List<String> userList = new ArrayList<>();
+    private final List<Profile> profileList = new ArrayList<>();
     private UserListAdapter adapter;
 
     public UserListFragment() {}
@@ -64,6 +67,7 @@ public class UserListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         waitingListRepository = new WaitingListRepository();
+        eventRepository = new EventRepository();
         profileRepository = new ProfileRepository(requireContext());
 
         if (getArguments() != null) {
@@ -89,7 +93,11 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        adapter = new UserListAdapter(userList);
+        adapter = new UserListAdapter(profileList, profile -> {
+            if (userRole == UserRole.ORGANIZER && !adminView) {
+                showCoOrganizerDialog(profile);
+            }
+        });
         recyclerView.setAdapter(adapter);
 
         // Set the welcome text based on admin view or event waiting list view
@@ -132,6 +140,46 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
+    private void showCoOrganizerDialog(Profile profile) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Assign Co-Organizer")
+                .setMessage("Do you want to assign " + profile.getName() + " as a co-organizer for this event? They will be removed from the waiting list.")
+                .setPositiveButton("Assign", (dialog, which) -> assignCoOrganizer(profile))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void assignCoOrganizer(Profile profile) {
+        eventRepository.addCoOrganizer(eventId, profile.getUid(), new EventRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {
+                waitingListRepository.removeFromWaitingList(eventId, profile.getUid(), new WaitingListRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), profile.getName() + " is now a co-organizer", Toast.LENGTH_SHORT).show();
+                            loadWaitingList();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Failed to assign co-organizer", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
     private void loadWaitingList() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -141,24 +189,22 @@ public class UserListFragment extends Fragment {
         waitingListRepository.getAllEntrants(eventId, new WaitingListRepository.EntrantsCallback() {
             @Override
             public void onResult(List<String> entrants) {
-                userList.clear();
+                profileList.clear();
                 adapter.notifyDataSetChanged();
 
                 for (String entrantId : entrants) {
                     profileRepository.getProfileById(entrantId, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
                         @Override
                         public void onSuccess(Profile result) {
-                            if (result.getName() != null && !result.getName().isEmpty()) {
-                                userList.add(result.getName());
-                            } else {
-                                userList.add(entrantId);
-                            }
+                            profileList.add(result);
                             adapter.notifyDataSetChanged();
                         }
 
                         @Override
                         public void onFailure(Exception exception) {
-                            userList.add(entrantId);
+                            Profile placeholder = new Profile(entrantId, "", "", null);
+                            placeholder.setUid(entrantId);
+                            profileList.add(placeholder);
                             adapter.notifyDataSetChanged();
                         }
                     });
@@ -174,10 +220,16 @@ public class UserListFragment extends Fragment {
 
     private static class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserViewHolder> {
 
-        private final List<String> users;
+        private final List<Profile> profiles;
+        private final OnItemClickListener listener;
 
-        UserListAdapter(List<String> users) {
-            this.users = users;
+        public interface OnItemClickListener {
+            void onItemClick(Profile profile);
+        }
+
+        UserListAdapter(List<Profile> profiles, OnItemClickListener listener) {
+            this.profiles = profiles;
+            this.listener = listener;
         }
 
         @NonNull
@@ -195,12 +247,16 @@ public class UserListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
-            holder.textView.setText(users.get(position));
+            Profile profile = profiles.get(position);
+            String displayName = (profile.getName() != null && !profile.getName().isEmpty()) 
+                ? profile.getName() : profile.getUid();
+            holder.textView.setText(displayName);
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(profile));
         }
 
         @Override
         public int getItemCount() {
-            return users.size();
+            return profiles.size();
         }
 
         static class UserViewHolder extends RecyclerView.ViewHolder {

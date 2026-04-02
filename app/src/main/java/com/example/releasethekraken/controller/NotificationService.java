@@ -140,7 +140,7 @@ public class NotificationService {
             NotificationCallback callback
     ) {
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
-            callback.onResult(NotificationResult.INVALID_INPUT);
+            if (callback != null) callback.onResult(NotificationResult.INVALID_INPUT);
             return;
         }
 
@@ -170,6 +170,32 @@ public class NotificationService {
         sendAndLogNotification(notification, callback);
     }
 
+    /**
+     * sends a co-organizer notification
+     */
+    public void sendCoOrganizerNotification(Event event, String userId, NotificationCallback callback) {
+        if (event == null || userId == null || userId.trim().isEmpty()) {
+            if (callback != null) callback.onResult(NotificationResult.INVALID_INPUT);
+            return;
+        }
+
+        long nowMillis = System.currentTimeMillis();
+        String eventName = (event.getTitle() == null || event.getTitle().trim().isEmpty())
+                ? event.getEventId() : event.getTitle();
+
+        String message = "You have been added as a co-organizer for the event: " + eventName;
+
+        Notification notification = new Notification(
+                userId,
+                event.getEventId(),
+                message,
+                "CO_ORGANIZER",
+                nowMillis
+        );
+
+        sendAndLogNotification(notification, callback);
+    }
+
     private void sendAndLogNotification(Notification notification, NotificationCallback callback) {
         notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
             @Override
@@ -177,19 +203,19 @@ public class NotificationService {
                 notificationRepository.logNotification(notification, new NotificationRepository.CompletionCallback() {
                     @Override
                     public void onSuccess() {
-                        callback.onResult(NotificationResult.SUCCESS);
+                        if (callback != null) callback.onResult(NotificationResult.SUCCESS);
                     }
 
                     @Override
                     public void onError(Exception e) {
-                        callback.onError(e);
+                        if (callback != null) callback.onError(e);
                     }
                 });
             }
 
             @Override
             public void onError(Exception e) {
-                callback.onError(e);
+                if (callback != null) callback.onError(e);
             }
         });
     }

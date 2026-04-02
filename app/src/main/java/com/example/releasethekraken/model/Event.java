@@ -20,33 +20,34 @@ public class Event {
     private final String posterUrl;
     private final boolean isPrivate;
     private final ArrayList<String> invitedUserIds;
+    private final ArrayList<String> coOrganizerIds;
     private final String organizerId;
     private final boolean geolocationRequired;
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                DEFAULT_CAPACITY, "", false, new ArrayList<>(), "", false);
+                DEFAULT_CAPACITY, "", false, new ArrayList<>(), new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, "", false, new ArrayList<>(), "", false);
+                capacity, "", false, new ArrayList<>(), new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
                  String posterUrl) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, posterUrl, false, new ArrayList<>(), "", false);
+                capacity, posterUrl, false, new ArrayList<>(), new ArrayList<>(), "", false);
     }
 
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
                  boolean isPrivate, List<String> invitedUserIds, String organizerId) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, "", isPrivate, invitedUserIds, organizerId, false);
+                capacity, "", isPrivate, invitedUserIds, new ArrayList<>(), organizerId, false);
     }
 
     public Event(String eventId, String title, String description,
@@ -54,7 +55,15 @@ public class Event {
                  String posterUrl, boolean isPrivate, List<String> invitedUserIds,
                  String organizerId) {
         this(eventId, title, description, registrationStartMillis, registrationEndMillis,
-                capacity, posterUrl, isPrivate, invitedUserIds, organizerId, false);
+                capacity, posterUrl, isPrivate, invitedUserIds, new ArrayList<>(), organizerId, false);
+    }
+
+    public Event(String eventId, String title, String description,
+                 long registrationStartMillis, long registrationEndMillis, int capacity,
+                 String posterUrl, boolean isPrivate, List<String> invitedUserIds,
+                 String organizerId, boolean geolocationRequired) {
+        this(eventId, title, description, registrationStartMillis, registrationEndMillis,
+                capacity, posterUrl, isPrivate, invitedUserIds, new ArrayList<>(), organizerId, geolocationRequired);
     }
 
     /**
@@ -63,7 +72,7 @@ public class Event {
     public Event(String eventId, String title, String description,
                  long registrationStartMillis, long registrationEndMillis, int capacity,
                  String posterUrl, boolean isPrivate, List<String> invitedUserIds,
-                 String organizerId, boolean geolocationRequired) {
+                 List<String> coOrganizerIds, String organizerId, boolean geolocationRequired) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -73,6 +82,7 @@ public class Event {
         this.posterUrl = posterUrl == null ? "" : posterUrl;
         this.isPrivate = isPrivate;
         this.invitedUserIds = invitedUserIds == null ? new ArrayList<>() : new ArrayList<>(invitedUserIds);
+        this.coOrganizerIds = coOrganizerIds == null ? new ArrayList<>() : new ArrayList<>(coOrganizerIds);
         this.organizerId = organizerId == null ? "" : organizerId;
         this.geolocationRequired = geolocationRequired;
     }
@@ -115,6 +125,10 @@ public class Event {
 
     public ArrayList<String> getInvitedUserIds() {
         return new ArrayList<>(invitedUserIds);
+    }
+
+    public ArrayList<String> getCoOrganizerIds() {
+        return new ArrayList<>(coOrganizerIds);
     }
 
     public String getOrganizerId() {
