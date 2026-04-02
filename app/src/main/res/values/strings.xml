@@ -110,6 +110,9 @@
     <string name="notify_selected_entrants_none_selected">There are no selected entrants to notify.</string>
     <string name="notify_selected_entrants_success">Sent notifications to %1$d of %2$d selected entrants.</string>
     <string name="notification_send_failed">Failed to send notifications.</string>
+    <string name="waiting_list_count_text">Waiting list size: %1$d</string>
+    <string name="waiting_list_count_placeholder">Waiting list size: --</string>
+    <string name="waiting_list_count_unavailable">Waiting list size unavailable</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>

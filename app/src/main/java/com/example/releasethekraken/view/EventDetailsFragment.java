@@ -40,6 +40,7 @@ import com.example.releasethekraken.util.LocationHelper;
 import com.example.releasethekraken.util.QRCodeGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.List;
@@ -57,6 +58,7 @@ public class EventDetailsFragment extends Fragment {
     private TextView descriptionTextView;
     private TextView registrationStartTextView;
     private TextView registrationEndTextView;
+    private TextView waitingListCountTextView;
     private ImageView posterImageView;
     private Button viewQrButton;
 
@@ -69,9 +71,9 @@ public class EventDetailsFragment extends Fragment {
     private boolean cameFromYourEvents;
     private boolean isJoined = false;
 
-    // Step 9: launcher for requesting location permission at runtime
     private ActivityResultLauncher<String> locationPermissionLauncher;
     private Button pendingSignupButton;
+    private ListenerRegistration waitingListCountListener;
 
     public EventDetailsFragment() {}
 
@@ -96,7 +98,6 @@ public class EventDetailsFragment extends Fragment {
         eventRepository = new EventRepository();
         notificationService = new NotificationService(new NotificationRepository());
 
-        // Step 9: register permission launcher — must be done in onCreate
         locationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 granted -> {
@@ -124,6 +125,7 @@ public class EventDetailsFragment extends Fragment {
         descriptionTextView = view.findViewById(R.id.event_description_display);
         registrationStartTextView = view.findViewById(R.id.registration_start_display);
         registrationEndTextView = view.findViewById(R.id.registration_end_display);
+        waitingListCountTextView = view.findViewById(R.id.waiting_list_count_text);
         posterImageView = view.findViewById(R.id.event_poster);
 
         Button signupOptOutButton = view.findViewById(R.id.signup_optout_button);
@@ -155,6 +157,7 @@ public class EventDetailsFragment extends Fragment {
         }
 
         loadEventDetails();
+        startWaitingListCountListener();
 
         viewQrButton.setOnClickListener(v -> showQrCodeDialog());
         signupOptOutButton.setOnClickListener(v -> handleSignupToggle(signupOptOutButton));
@@ -169,7 +172,6 @@ public class EventDetailsFragment extends Fragment {
         createNotificationButton.setOnClickListener(v -> showCreateNotificationDialog());
         editEventButton.setOnClickListener(this::navigateToEditEvent);
 
-        // Step 10: navigate to entrant map (organizer only)
         viewEntrantMapButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putString(ARG_EVENT_ID, eventId);
@@ -190,6 +192,41 @@ public class EventDetailsFragment extends Fragment {
             args.putSerializable("userRole", userType);
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
+    }
+
+    private void startWaitingListCountListener() {
+        if (TextUtils.isEmpty(eventId)) {
+            return;
+        }
+
+        if (waitingListCountListener != null) {
+            waitingListCountListener.remove();
+        }
+
+        waitingListCountListener = waitingListRepository.listenForWaitingListCount(
+                eventId,
+                new WaitingListRepository.WaitingListCountCallback() {
+                    @Override
+                    public void onCountChanged(int count) {
+                        if (!isAdded() || waitingListCountTextView == null) {
+                            return;
+                        }
+                        waitingListCountTextView.setText(
+                                getString(R.string.waiting_list_count_text, count)
+                        );
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (!isAdded() || waitingListCountTextView == null) {
+                            return;
+                        }
+                        waitingListCountTextView.setText(
+                                getString(R.string.waiting_list_count_unavailable)
+                        );
+                    }
+                }
+        );
     }
 
     private void showQrCodeDialog() {
@@ -280,7 +317,6 @@ public class EventDetailsFragment extends Fragment {
         }
 
         if (!isJoined) {
-            // Step 9: if geolocation required, request permission then capture location
             if (currentEvent.isGeolocationRequired()) {
                 if (ContextCompat.checkSelfPermission(requireContext(),
                         Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -290,7 +326,6 @@ public class EventDetailsFragment extends Fragment {
                     locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                 }
             } else {
-                // geolocation not required — join directly with no coordinates
                 joinWaitingListWithCoords(button, 0.0, 0.0);
             }
         } else {
@@ -309,9 +344,6 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    /**
-     * Step 9: captures device location then joins the waiting list with coordinates.
-     */
     private void joinWithLocation(Button button) {
         LocationHelper.getLastLocation(requireContext(), new LocationHelper.LocationCallback() {
             @Override
@@ -321,15 +353,11 @@ public class EventDetailsFragment extends Fragment {
 
             @Override
             public void onError(String reason) {
-                // location unavailable — join without coordinates
                 joinWaitingListWithCoords(button, 0.0, 0.0);
             }
         });
     }
 
-    /**
-     * Step 9: joins the waiting list with the given coordinates.
-     */
     private void joinWaitingListWithCoords(Button button, double latitude, double longitude) {
         String entrantId = getCurrentEntrantId();
         waitingListService.joinWaitingList(currentEvent, entrantId, latitude, longitude,
@@ -504,5 +532,14 @@ public class EventDetailsFragment extends Fragment {
         args.putBoolean("cameFromYourEvents", cameFromYourEvents);
         args.putString("eventId", eventId);
         Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_createEventFragment, args);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (waitingListCountListener != null) {
+            waitingListCountListener.remove();
+            waitingListCountListener = null;
+        }
     }
 }

@@ -3,6 +3,8 @@ package com.example.releasethekraken.model;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +55,13 @@ public class WaitingListRepository {
          *
          * @param e exception describing the failure
          */
+        void onError(Exception e);
+    }
+    /**
+     * Callback interface for waiting list count updates.
+     */
+    public interface WaitingListCountCallback {
+        void onCountChanged(int count);
         void onError(Exception e);
     }
 
@@ -213,6 +222,31 @@ public class WaitingListRepository {
                     callback.onResult(entrants);
                 })
                 .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Listens for live waiting list count updates for an event.
+     *
+     * @param eventId the ID of the event
+     * @param callback callback returning the current waiting list count
+     * @return Firestore listener registration so caller can remove it later
+     */
+    public ListenerRegistration listenForWaitingListCount(String eventId, WaitingListCountCallback callback) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        callback.onError(error);
+                        return;
+                    }
+
+                    int count = 0;
+                    if (snapshots != null) {
+                        count = snapshots.size();
+                    }
+                    callback.onCountChanged(count);
+                });
     }
 
     /**
