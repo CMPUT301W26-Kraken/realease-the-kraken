@@ -52,11 +52,7 @@ public class UserListFragment extends Fragment {
     private EventRepository eventRepository;
     private ProfileRepository profileRepository;
     private final List<Profile> profileList = new ArrayList<>();
-<<<<<<< HEAD
-    private UserListAdapter adapter;
-=======
     private ProfileListAdapter adapter;
->>>>>>> d45e282 (remove profiles)
 
     public UserListFragment() {}
 
@@ -98,18 +94,15 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-<<<<<<< HEAD
-        adapter = new UserListAdapter(profileList, profile -> {
-            if (userRole == UserRole.ORGANIZER && !adminView) {
+        adapter = new ProfileListAdapter(profileList, adminView, (profile, position) -> {
+            if (adminView) {
+                onDeleteClicked(profile, position);
+            } else if (userRole == UserRole.ORGANIZER) {
                 showCoOrganizerDialog(profile);
             }
         });
-=======
-        adapter = new ProfileListAdapter(profileList, adminView, this::onDeleteClicked);
->>>>>>> d45e282 (remove profiles)
         recyclerView.setAdapter(adapter);
 
-        // Set the welcome text based on admin view or event waiting list view
         TextView welcomeText = view.findViewById(R.id.welcome_text);
         if (adminView) {
             welcomeText.setText(getString(R.string.admin_user_list_welcome));
@@ -121,71 +114,29 @@ public class UserListFragment extends Fragment {
             loadWaitingList();
         }
 
-        // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_userListFragment_to_mainMenuFragment)
                 );
 
-        // Go to Profile View from Toolbar
         view.findViewById(R.id.profile_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_userListFragment_to_viewProfileFragment)
                 );
 
-        // Navigate to Notifications
         view.findViewById(R.id.notifications_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_userListFragment_to_notificationFragment)
                 );
 
-        // Navigate back to event details
         returnButton.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
 
         return view;
     }
 
-<<<<<<< HEAD
-    private void showCoOrganizerDialog(Profile profile) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Assign Co-Organizer")
-                .setMessage("Do you want to assign " + profile.getName() + " as a co-organizer for this event? They will be removed from the waiting list.")
-                .setPositiveButton("Assign", (dialog, which) -> assignCoOrganizer(profile))
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void assignCoOrganizer(Profile profile) {
-        eventRepository.addCoOrganizer(eventId, profile.getUid(), new EventRepository.CompletionCallback() {
-            @Override
-            public void onSuccess() {
-                waitingListRepository.removeFromWaitingList(eventId, profile.getUid(), new WaitingListRepository.CompletionCallback() {
-                    @Override
-                    public void onSuccess() {
-                        if (isAdded()) {
-                            Toast.makeText(requireContext(), profile.getName() + " is now a co-organizer", Toast.LENGTH_SHORT).show();
-                            loadWaitingList();
-                        }
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        if (isAdded()) {
-                            Toast.makeText(requireContext(), "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onError(Exception e) {
-                if (isAdded()) {
-                    Toast.makeText(requireContext(), "Failed to assign co-organizer", Toast.LENGTH_SHORT).show();
-                }
-=======
     /**
      * Called when the admin taps the delete button on a profile row.
      * Shows a confirmation dialog before deleting from Firestore.
@@ -239,7 +190,46 @@ public class UserListFragment extends Fragment {
             @Override
             public void onFailure(Exception exception) {
                 Toast.makeText(requireContext(), "Failed to load profiles", Toast.LENGTH_SHORT).show();
->>>>>>> d45e282 (remove profiles)
+            }
+        });
+    }
+
+    private void showCoOrganizerDialog(Profile profile) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Assign Co-Organizer")
+                .setMessage("Do you want to assign " + profile.getName() + " as a co-organizer for this event? They will be removed from the waiting list.")
+                .setPositiveButton("Assign", (dialog, which) -> assignCoOrganizer(profile))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void assignCoOrganizer(Profile profile) {
+        eventRepository.addCoOrganizer(eventId, profile.getUid(), new EventRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {
+                waitingListRepository.removeFromWaitingList(eventId, profile.getUid(), new WaitingListRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), profile.getName() + " is now a co-organizer", Toast.LENGTH_SHORT).show();
+                            loadWaitingList();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Failed to assign co-organizer", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -266,10 +256,7 @@ public class UserListFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception exception) {
-<<<<<<< HEAD
-=======
                             // Add a placeholder profile with just the ID if fetch fails
->>>>>>> d45e282 (remove profiles)
                             Profile placeholder = new Profile(entrantId, "", "", null);
                             placeholder.setUid(entrantId);
                             profileList.add(placeholder);
@@ -293,21 +280,10 @@ public class UserListFragment extends Fragment {
         void onDelete(Profile profile, int position);
     }
 
-<<<<<<< HEAD
-        private final List<Profile> profiles;
-        private final OnItemClickListener listener;
-
-        public interface OnItemClickListener {
-            void onItemClick(Profile profile);
-        }
-
-        UserListAdapter(List<Profile> profiles, OnItemClickListener listener) {
-            this.profiles = profiles;
-            this.listener = listener;
-=======
     /**
      * RecyclerView adapter for displaying a list of profiles.
      * Shows a delete button on each row when in admin view.
+     * Supports both admin delete actions and organizer click actions.
      */
     private static class ProfileListAdapter extends RecyclerView.Adapter<ProfileListAdapter.ProfileViewHolder> {
 
@@ -319,13 +295,11 @@ public class UserListFragment extends Fragment {
             this.profiles = profiles;
             this.showDeleteButton = showDeleteButton;
             this.deleteListener = deleteListener;
->>>>>>> d45e282 (remove profiles)
         }
 
         @NonNull
         @Override
         public ProfileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // Build row layout programmatically: horizontal LinearLayout with name + delete button
             LinearLayout row = new LinearLayout(parent.getContext());
             row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -356,14 +330,6 @@ public class UserListFragment extends Fragment {
         }
 
         @Override
-<<<<<<< HEAD
-        public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
-            Profile profile = profiles.get(position);
-            String displayName = (profile.getName() != null && !profile.getName().isEmpty()) 
-                ? profile.getName() : profile.getUid();
-            holder.textView.setText(displayName);
-            holder.itemView.setOnClickListener(v -> listener.onItemClick(profile));
-=======
         public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
             Profile profile = profiles.get(position);
             String name = profile.getName();
@@ -375,8 +341,9 @@ public class UserListFragment extends Fragment {
                         deleteListener.onDelete(profile, holder.getAdapterPosition()));
             } else {
                 holder.deleteButton.setVisibility(View.GONE);
+                holder.itemView.setOnClickListener(v ->
+                        deleteListener.onDelete(profile, holder.getAdapterPosition()));
             }
->>>>>>> d45e282 (remove profiles)
         }
 
         @Override
