@@ -41,11 +41,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="4dp"
             android:layout_marginEnd="24dp"
             android:minLines="7"
             android:text="TextView"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/event_title_text" />
 
@@ -53,7 +54,7 @@
             android:id="@+id/registration_start_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="4dp"
             android:text="@string/prompt_date"
             app:layout_constraintEnd_toStartOf="@+id/registration_end_display"
             app:layout_constraintStart_toStartOf="parent"
@@ -63,11 +64,12 @@
             android:id="@+id/textView9"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:text="@string/registration_start_text"
             android:textColor="@color/dark_blue_text"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="@+id/registration_start_display"
+            app:layout_constraintHorizontal_bias="0.434"
             app:layout_constraintStart_toStartOf="@+id/registration_start_display"
             app:layout_constraintTop_toBottomOf="@+id/registration_start_display" />
 
@@ -75,21 +77,35 @@
             android:id="@+id/registration_end_display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="8dp"
             android:text="@string/prompt_date"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/registration_start_display"
             app:layout_constraintTop_toBottomOf="@+id/event_description_display" />
 
         <TextView
+            android:id="@+id/waiting_list_count_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:text="@string/waiting_list_count_placeholder"
+            android:textColor="@color/dark_blue_text"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.498"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/registration_end_display" />
+
+        <TextView
             android:id="@+id/textView10"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="8dp"
             android:text="@string/registration_end_text"
             android:textColor="@color/dark_blue_text"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="@+id/registration_end_display"
+            app:layout_constraintHorizontal_bias="0.559"
             app:layout_constraintStart_toStartOf="@+id/registration_end_display"
             app:layout_constraintTop_toBottomOf="@+id/registration_end_display" />
 
@@ -99,7 +115,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textView10">
+            app:layout_constraintTop_toBottomOf="@id/waiting_list_count_text">
 
             <GridLayout
                 android:id="@+id/button_grid"
