@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,7 +52,11 @@ public class UserListFragment extends Fragment {
     private EventRepository eventRepository;
     private ProfileRepository profileRepository;
     private final List<Profile> profileList = new ArrayList<>();
+<<<<<<< HEAD
     private UserListAdapter adapter;
+=======
+    private ProfileListAdapter adapter;
+>>>>>>> d45e282 (remove profiles)
 
     public UserListFragment() {}
 
@@ -93,11 +98,15 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
+<<<<<<< HEAD
         adapter = new UserListAdapter(profileList, profile -> {
             if (userRole == UserRole.ORGANIZER && !adminView) {
                 showCoOrganizerDialog(profile);
             }
         });
+=======
+        adapter = new ProfileListAdapter(profileList, adminView, this::onDeleteClicked);
+>>>>>>> d45e282 (remove profiles)
         recyclerView.setAdapter(adapter);
 
         // Set the welcome text based on admin view or event waiting list view
@@ -105,6 +114,7 @@ public class UserListFragment extends Fragment {
         if (adminView) {
             welcomeText.setText(getString(R.string.admin_user_list_welcome));
             returnButton.setVisibility(View.GONE);
+            loadAllProfiles();
         } else {
             welcomeText.setText(getString(R.string.waiting_list_welcome));
             returnButton.setVisibility(View.VISIBLE);
@@ -133,13 +143,12 @@ public class UserListFragment extends Fragment {
                 );
 
         // Navigate back to event details
-        returnButton.setOnClickListener(v -> {
-            Navigation.findNavController(v).popBackStack();
-        });
+        returnButton.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
 
         return view;
     }
 
+<<<<<<< HEAD
     private void showCoOrganizerDialog(Profile profile) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Assign Co-Organizer")
@@ -176,6 +185,61 @@ public class UserListFragment extends Fragment {
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Failed to assign co-organizer", Toast.LENGTH_SHORT).show();
                 }
+=======
+    /**
+     * Called when the admin taps the delete button on a profile row.
+     * Shows a confirmation dialog before deleting from Firestore.
+     */
+    private void onDeleteClicked(Profile profile, int position) {
+        String displayName = (profile.getName() != null && !profile.getName().isEmpty())
+                ? profile.getName() : profile.getUid();
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Remove Profile")
+                .setMessage("Are you sure you want to remove " + displayName + "? This cannot be undone.")
+                .setPositiveButton("Remove", (dialog, which) -> {
+                    profileRepository.deleteProfileFromFirestore(profile.getUid(),
+                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    if (!isAdded()) return;
+                                    profileList.remove(position);
+                                    adapter.notifyItemRemoved(position);
+                                    adapter.notifyItemRangeChanged(position, profileList.size());
+                                    Toast.makeText(requireContext(),
+                                            displayName + " removed.", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onFailure(Exception exception) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(),
+                                            "Failed to remove profile: " + exception.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    /**
+     * Fetches all profiles from Firestore and populates the RecyclerView.
+     * Used when the fragment is opened in admin view.
+     */
+    private void loadAllProfiles() {
+        profileRepository.getAllProfiles(new ProfileRepository.ProfileRepositoryCallback<List<Profile>>() {
+            @Override
+            public void onSuccess(List<Profile> result) {
+                profileList.clear();
+                profileList.addAll(result);
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onFailure(Exception exception) {
+                Toast.makeText(requireContext(), "Failed to load profiles", Toast.LENGTH_SHORT).show();
+>>>>>>> d45e282 (remove profiles)
             }
         });
     }
@@ -202,6 +266,10 @@ public class UserListFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception exception) {
+<<<<<<< HEAD
+=======
+                            // Add a placeholder profile with just the ID if fetch fails
+>>>>>>> d45e282 (remove profiles)
                             Profile placeholder = new Profile(entrantId, "", "", null);
                             placeholder.setUid(entrantId);
                             profileList.add(placeholder);
@@ -218,8 +286,14 @@ public class UserListFragment extends Fragment {
         });
     }
 
-    private static class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserViewHolder> {
+    /**
+     * Callback interface for delete button clicks in the adapter.
+     */
+    interface OnDeleteClickListener {
+        void onDelete(Profile profile, int position);
+    }
 
+<<<<<<< HEAD
         private final List<Profile> profiles;
         private final OnItemClickListener listener;
 
@@ -230,28 +304,79 @@ public class UserListFragment extends Fragment {
         UserListAdapter(List<Profile> profiles, OnItemClickListener listener) {
             this.profiles = profiles;
             this.listener = listener;
+=======
+    /**
+     * RecyclerView adapter for displaying a list of profiles.
+     * Shows a delete button on each row when in admin view.
+     */
+    private static class ProfileListAdapter extends RecyclerView.Adapter<ProfileListAdapter.ProfileViewHolder> {
+
+        private final List<Profile> profiles;
+        private final boolean showDeleteButton;
+        private final OnDeleteClickListener deleteListener;
+
+        ProfileListAdapter(List<Profile> profiles, boolean showDeleteButton, OnDeleteClickListener deleteListener) {
+            this.profiles = profiles;
+            this.showDeleteButton = showDeleteButton;
+            this.deleteListener = deleteListener;
+>>>>>>> d45e282 (remove profiles)
         }
 
         @NonNull
         @Override
-        public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            TextView textView = new TextView(parent.getContext());
-            textView.setLayoutParams(new ViewGroup.LayoutParams(
+        public ProfileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            // Build row layout programmatically: horizontal LinearLayout with name + delete button
+            LinearLayout row = new LinearLayout(parent.getContext());
+            row.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            textView.setPadding(32, 24, 32, 24);
-            textView.setTextSize(16);
-            return new UserViewHolder(textView);
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(32, 16, 32, 16);
+
+            TextView nameView = new TextView(parent.getContext());
+            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            nameView.setLayoutParams(nameParams);
+            nameView.setTextSize(16);
+            nameView.setPadding(0, 8, 0, 8);
+
+            ImageButton deleteBtn = new ImageButton(parent.getContext());
+            LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            deleteBtn.setLayoutParams(btnParams);
+            deleteBtn.setImageDrawable(
+                    parent.getContext().getDrawable(android.R.drawable.ic_menu_delete));
+            deleteBtn.setBackground(null);
+
+            row.addView(nameView);
+            row.addView(deleteBtn);
+
+            return new ProfileViewHolder(row, nameView, deleteBtn);
         }
 
         @Override
+<<<<<<< HEAD
         public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
             Profile profile = profiles.get(position);
             String displayName = (profile.getName() != null && !profile.getName().isEmpty()) 
                 ? profile.getName() : profile.getUid();
             holder.textView.setText(displayName);
             holder.itemView.setOnClickListener(v -> listener.onItemClick(profile));
+=======
+        public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
+            Profile profile = profiles.get(position);
+            String name = profile.getName();
+            holder.nameView.setText((name != null && !name.isEmpty()) ? name : profile.getUid());
+
+            if (showDeleteButton) {
+                holder.deleteButton.setVisibility(View.VISIBLE);
+                holder.deleteButton.setOnClickListener(v ->
+                        deleteListener.onDelete(profile, holder.getAdapterPosition()));
+            } else {
+                holder.deleteButton.setVisibility(View.GONE);
+            }
+>>>>>>> d45e282 (remove profiles)
         }
 
         @Override
@@ -259,12 +384,14 @@ public class UserListFragment extends Fragment {
             return profiles.size();
         }
 
-        static class UserViewHolder extends RecyclerView.ViewHolder {
-            TextView textView;
+        static class ProfileViewHolder extends RecyclerView.ViewHolder {
+            TextView nameView;
+            ImageButton deleteButton;
 
-            UserViewHolder(@NonNull View itemView) {
+            ProfileViewHolder(@NonNull View itemView, TextView nameView, ImageButton deleteButton) {
                 super(itemView);
-                textView = (TextView) itemView;
+                this.nameView = nameView;
+                this.deleteButton = deleteButton;
             }
         }
     }
