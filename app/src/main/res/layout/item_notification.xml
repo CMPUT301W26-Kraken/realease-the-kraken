@@ -2,40 +2,72 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@android:color/white"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp">
+    android:padding="12dp">
 
     <TextView
         android:id="@+id/text_notification_type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="WIN"
-        android:textStyle="bold"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/text_notification_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Notification message"
         android:layout_marginTop="4dp"
+        android:text="Notification message"
         android:textSize="14sp" />
 
     <TextView
         android:id="@+id/text_notification_event_id"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Event: event123"
         android:layout_marginTop="6dp"
+        android:text="Event: event123"
         android:textSize="13sp" />
 
     <TextView
         android:id="@+id/text_notification_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2026-03-11 15:30"
         android:layout_marginTop="4dp"
+        android:text="2026-03-11 15:30"
         android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/text_invitation_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Status: pending"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_accept_invitation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accept invitation"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/button_decline_invitation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Decline invitation"
+            android:visibility="gone" />
+    </LinearLayout>
 
 </LinearLayout>
