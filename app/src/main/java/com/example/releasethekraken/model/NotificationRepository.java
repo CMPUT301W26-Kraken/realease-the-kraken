@@ -3,6 +3,8 @@ package com.example.releasethekraken.model;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +60,7 @@ public class NotificationRepository {
         data.put("type", notification.getType());
         data.put("sentAtMillis", notification.getSentAtMillis());
         data.put("read", false);
+        data.put("responseStatus", notification.getResponseStatus());
 
         db.collection("profiles")
                 .document(notification.getEntrantId())
@@ -79,6 +82,7 @@ public class NotificationRepository {
         data.put("message", notification.getMessage());
         data.put("type", notification.getType());
         data.put("sentAtMillis", notification.getSentAtMillis());
+        data.put("responseStatus", notification.getResponseStatus());
 
         db.collection("notificationLogs")
                 .add(data)
@@ -105,6 +109,8 @@ public class NotificationRepository {
                         String message = document.getString("message");
                         String type = document.getString("type");
                         Long sentAtMillis = document.getLong("sentAtMillis");
+                        Boolean read = document.getBoolean("read");
+                        String responseStatus = document.getString("responseStatus");
 
                         if (eventId == null) {
                             eventId = "";
@@ -118,13 +124,19 @@ public class NotificationRepository {
                         if (sentAtMillis == null) {
                             sentAtMillis = 0L;
                         }
+                        if (read == null) {
+                            read = false;
+                        }
 
                         Notification notification = new Notification(
+                                document.getId(),
                                 entrantId,
                                 eventId,
                                 message,
                                 type,
-                                sentAtMillis
+                                sentAtMillis,
+                                read,
+                                responseStatus
                         );
 
                         notifications.add(notification);
@@ -132,6 +144,53 @@ public class NotificationRepository {
 
                     callback.onSuccess(notifications);
                 })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Marks an invitation notification as accepted and updates the entrant's
+     * accepted record for the event.
+     */
+    public void acceptInvitation(String entrantId,
+                                 String eventId,
+                                 String notificationId,
+                                 CompletionCallback callback) {
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid invitation data."));
+            return;
+        }
+
+        long respondedAtMillis = System.currentTimeMillis();
+        WriteBatch batch = db.batch();
+
+        batch.update(
+                db.collection("profiles")
+                        .document(entrantId)
+                        .collection("notifications")
+                        .document(notificationId),
+                "read", true,
+                "responseStatus", "accepted",
+                "respondedAtMillis", respondedAtMillis
+        );
+
+        Map<String, Object> acceptedData = new HashMap<>();
+        acceptedData.put("selected", true);
+        acceptedData.put("status", "accepted");
+        acceptedData.put("respondedAtMillis", respondedAtMillis);
+
+        batch.set(
+                db.collection("events")
+                        .document(eventId)
+                        .collection("accepted")
+                        .document(entrantId),
+                acceptedData,
+                SetOptions.merge()
+        );
+
+        batch.commit()
+                .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
 }

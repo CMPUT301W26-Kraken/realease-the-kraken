@@ -2,6 +2,7 @@ package com.example.releasethekraken.view;
 
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -14,10 +15,16 @@ import java.util.List;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
 
-    private final List<Notification> notifications;
+    public interface NotificationActionListener {
+        void onAcceptInvitation(Notification notification);
+    }
 
-    public NotificationAdapter(List<Notification> notifications) {
+    private final List<Notification> notifications;
+    private final NotificationActionListener actionListener;
+
+    public NotificationAdapter(List<Notification> notifications, NotificationActionListener actionListener) {
         this.notifications = notifications;
+        this.actionListener = actionListener;
     }
 
     @NonNull
@@ -41,6 +48,28 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.binding.textNotificationTime.setText(
                 DateFormat.format("yyyy-MM-dd HH:mm", notification.getSentAtMillis()).toString()
         );
+
+        String responseStatus = notification.getResponseStatus();
+        if (responseStatus == null || responseStatus.trim().isEmpty()) {
+            holder.binding.textInvitationStatus.setVisibility(View.GONE);
+        } else {
+            holder.binding.textInvitationStatus.setVisibility(View.VISIBLE);
+            holder.binding.textInvitationStatus.setText("Status: " + responseStatus);
+        }
+
+        if (notification.canAcceptInvitation()) {
+            holder.binding.buttonAcceptInvitation.setVisibility(View.VISIBLE);
+            holder.binding.buttonAcceptInvitation.setEnabled(true);
+            holder.binding.buttonAcceptInvitation.setOnClickListener(v -> {
+                holder.binding.buttonAcceptInvitation.setEnabled(false);
+                if (actionListener != null) {
+                    actionListener.onAcceptInvitation(notification);
+                }
+            });
+        } else {
+            holder.binding.buttonAcceptInvitation.setVisibility(View.GONE);
+            holder.binding.buttonAcceptInvitation.setOnClickListener(null);
+        }
     }
 
     @Override
