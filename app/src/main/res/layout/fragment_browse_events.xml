@@ -161,28 +161,6 @@
         android:textColor="@color/dark_blue_text"
         android:visibility="gone" />
 
-    <!-- Temporary dummy role controls left in place from the existing browse screen. -->
-    <LinearLayout
-        android:id="@+id/DummyButtonLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/dummy_organizer_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Organizer" />
-
-        <Button
-            android:id="@+id/dummy_entrant_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Entrant" />
-    </LinearLayout>
-
     <!-- Existing bottom toolbar/navigation controls. -->
     <LinearLayout
         android:id="@+id/fullscreen_content_controls"

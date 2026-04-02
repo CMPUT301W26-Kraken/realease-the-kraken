@@ -22,6 +22,8 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.CommentService;
 import com.example.releasethekraken.model.Comment;
 import com.example.releasethekraken.model.CommentRepository;
+import com.example.releasethekraken.model.Event;
+import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
@@ -43,6 +45,7 @@ public class CommentsFragment extends Fragment {
     private String eventId;
     private UserRole userRole;
     private CommentService commentService;
+    private Event currentEvent;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,7 +80,7 @@ public class CommentsFragment extends Fragment {
             recyclerView.setAdapter(adapter);
         }
 
-        loadComments();
+        loadEventAndComments();
 
         Button createCommentButton = view.findViewById(R.id.create_comment_button);
         if (createCommentButton != null) {
@@ -92,6 +95,25 @@ public class CommentsFragment extends Fragment {
         }
 
         return view;
+    }
+
+    private void loadEventAndComments() {
+        if (TextUtils.isEmpty(eventId)) return;
+
+        new EventRepository().getEventById(eventId, new EventRepository.EventCallback() {
+            @Override
+            public void onSuccess(Event event) {
+                if (!isAdded()) return;
+                currentEvent = event;
+                loadComments();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                loadComments(); // Still try to load comments
+            }
+        });
     }
 
     private void showCommentCreateDialog(String eventId) {
@@ -135,7 +157,10 @@ public class CommentsFragment extends Fragment {
                         return;
                     }
 
-                    commentService.submitComment(eventId, userId, authorName, commentText, result -> {
+                    boolean isOrganizer = currentEvent != null && userId.equals(currentEvent.getOrganizerId());
+                    boolean isCoOrganizer = currentEvent != null && currentEvent.getCoOrganizerIds().contains(userId);
+
+                    commentService.submitComment(eventId, userId, authorName, commentText, isOrganizer, isCoOrganizer, result -> {
                         if (!isAdded()) return;
                         
                         switch (result) {

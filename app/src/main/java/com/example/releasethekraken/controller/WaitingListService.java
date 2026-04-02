@@ -36,6 +36,7 @@ public class WaitingListService {
         REGISTRATION_CLOSED,
         DUPLICATE_ENTRY,
         INVALID_INPUT,
+        ALREADY_ORGANIZER,
     }
 
     /**
@@ -162,6 +163,12 @@ public class WaitingListService {
         //validation to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
             if (callback != null) callback.onResult(JoinResult.INVALID_INPUT);
+            return;
+        }
+
+        // Prevent organizers/co-organizers from joining the waiting list
+        if (entrantId.equals(event.getOrganizerId()) || event.getCoOrganizerIds().contains(entrantId)) {
+            if (callback != null) callback.onResult(JoinResult.ALREADY_ORGANIZER);
             return;
         }
 
