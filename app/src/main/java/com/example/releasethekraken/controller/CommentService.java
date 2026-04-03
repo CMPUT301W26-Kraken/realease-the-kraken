@@ -48,6 +48,14 @@ public class CommentService {
     }
 
     /**
+     * callback interface for deleting a comment
+     */
+    public interface DeleteCommentCallback {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    /**
      * submits a comment after validating input
      *
      * @param eventId the event id
@@ -114,6 +122,33 @@ public class CommentService {
             @Override
             public void onSuccess(List<Comment> comments) {
                 callback.onSuccess(comments);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    /**
+     * deletes a comment if the user has permission
+     *
+     * @param eventId the event id
+     * @param commentId the comment id
+     * @param isOrganizerOrCoOrganizer whether the current user is an organizer or co-organizer
+     * @param callback callback for success or failure
+     */
+    public void deleteComment(String eventId, String commentId, boolean isOrganizerOrCoOrganizer, DeleteCommentCallback callback) {
+        if (!isOrganizerOrCoOrganizer) {
+            callback.onError(new SecurityException("Only organizers and co-organizers can delete comments"));
+            return;
+        }
+
+        repository.deleteComment(eventId, commentId, new CommentRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {
+                callback.onSuccess();
             }
 
             @Override

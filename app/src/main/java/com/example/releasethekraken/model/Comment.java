@@ -7,6 +7,7 @@ package com.example.releasethekraken.model;
  * this class belongs to the model layer and contains no UI logic
  */
 public class Comment {
+    private String commentId;
     private String eventId;
     private String userId; // Will be whatever we use as the document ID for the users
     private String authorName;
@@ -52,6 +53,14 @@ public class Comment {
         this.postDateMillis = postDateMillis;
         this.isOrganizer = isOrganizer;
         this.isCoOrganizer = isCoOrganizer;
+    }
+
+    public String getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(String commentId) {
+        this.commentId = commentId;
     }
 
     public String getEventId() {

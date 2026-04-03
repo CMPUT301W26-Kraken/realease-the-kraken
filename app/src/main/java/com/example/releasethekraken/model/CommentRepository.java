@@ -62,7 +62,13 @@ public class CommentRepository {
                 .document(comment.getEventId())
                 .collection("comments")
                 .add(comment)
-                .addOnSuccessListener(documentReference -> callback.onSuccess())
+                .addOnSuccessListener(documentReference -> {
+                    comment.setCommentId(documentReference.getId());
+                    // Update the document with its ID
+                    documentReference.update("commentId", documentReference.getId())
+                            .addOnSuccessListener(aVoid -> callback.onSuccess())
+                            .addOnFailureListener(callback::onError);
+                })
                 .addOnFailureListener(callback::onError);
     }
 
@@ -82,10 +88,33 @@ public class CommentRepository {
                     List<Comment> comments = new ArrayList<>();
                     for (QueryDocumentSnapshot document : querySnapshot) {
                         Comment comment = document.toObject(Comment.class);
+                        comment.setCommentId(document.getId());
                         comments.add(comment);
                     }
                     callback.onSuccess(comments);
                 })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * deletes a comment from Firestore
+     *
+     * @param eventId the id of the event the comment belongs to
+     * @param commentId the id of the comment to delete
+     * @param callback callback for success or failure
+     */
+    public void deleteComment(String eventId, String commentId, CompletionCallback callback) {
+        if (eventId == null || commentId == null) {
+            callback.onError(new IllegalArgumentException("invalid eventId or commentId"));
+            return;
+        }
+
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .document(commentId)
+                .delete()
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
 }

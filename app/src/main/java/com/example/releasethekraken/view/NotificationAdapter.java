@@ -55,7 +55,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             } else if (type.equalsIgnoreCase("PRIVATE_INVITE")) {
                 formattedType = "Private Invite";
             } else if (type.equalsIgnoreCase("WIN") || type.equalsIgnoreCase("SELECTED")) {
-                formattedType = "Event Invitation";
+                formattedType = "Event Win !";
+            } else if (type.equalsIgnoreCase("LOSS")) {
+                formattedType = "Event Loss";
             } else {
                 formattedType = type.toLowerCase(Locale.ROOT).replace("_", " ");
                 formattedType = Character.toUpperCase(formattedType.charAt(0)) + formattedType.substring(1);

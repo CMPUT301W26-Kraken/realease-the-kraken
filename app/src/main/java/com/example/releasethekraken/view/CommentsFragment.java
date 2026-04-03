@@ -46,6 +46,7 @@ public class CommentsFragment extends Fragment {
     private UserRole userRole;
     private CommentService commentService;
     private Event currentEvent;
+    private boolean isOrganizerOrCoOrganizer = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,8 +75,16 @@ public class CommentsFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.comments_recycler_view);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-            adapter = new CommentAdapter(comments, comment -> {
-                // TODO: Implement delete logic for organizers/admins
+            adapter = new CommentAdapter(comments, new CommentAdapter.OnCommentClickListener() {
+                @Override
+                public void onCommentClick(Comment comment) {
+                    // Optional: show comment details or do nothing
+                }
+
+                @Override
+                public void onDeleteClick(Comment comment) {
+                    showDeleteConfirmationDialog(comment);
+                }
             });
             recyclerView.setAdapter(adapter);
         }
@@ -97,6 +106,34 @@ public class CommentsFragment extends Fragment {
         return view;
     }
 
+    private void showDeleteConfirmationDialog(Comment comment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Comment")
+                .setMessage("Are you sure you want to delete this comment?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteComment(comment);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteComment(Comment comment) {
+        commentService.deleteComment(eventId, comment.getCommentId(), isOrganizerOrCoOrganizer, new CommentService.DeleteCommentCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Comment deleted", Toast.LENGTH_SHORT).show();
+                loadComments();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Failed to delete comment: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void loadEventAndComments() {
         if (TextUtils.isEmpty(eventId)) return;
 
@@ -105,6 +142,7 @@ public class CommentsFragment extends Fragment {
             public void onSuccess(Event event) {
                 if (!isAdded()) return;
                 currentEvent = event;
+                checkPermissions();
                 loadComments();
             }
 
@@ -114,6 +152,31 @@ public class CommentsFragment extends Fragment {
                 loadComments(); // Still try to load comments
             }
         });
+    }
+
+    private void checkPermissions() {
+        if (currentEvent == null) return;
+
+        ProfileRepository profileRepository = new ProfileRepository(requireContext());
+        Profile profile = profileRepository.getProfile();
+        String currentUserId = (profile != null) ? profile.getUid() : "";
+
+        if (TextUtils.isEmpty(currentUserId)) {
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (firebaseUser != null) {
+                currentUserId = firebaseUser.getUid();
+            }
+        }
+
+        if (!TextUtils.isEmpty(currentUserId)) {
+            boolean isOrganizer = currentUserId.equals(currentEvent.getOrganizerId());
+            boolean isCoOrganizer = currentEvent.getCoOrganizerIds() != null && currentEvent.getCoOrganizerIds().contains(currentUserId);
+            isOrganizerOrCoOrganizer = isOrganizer || isCoOrganizer;
+            
+            if (adapter != null) {
+                adapter.setOrganizerOrCoOrganizer(isOrganizerOrCoOrganizer);
+            }
+        }
     }
 
     private void showCommentCreateDialog(String eventId) {

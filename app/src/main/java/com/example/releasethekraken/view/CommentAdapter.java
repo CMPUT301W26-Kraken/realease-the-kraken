@@ -17,14 +17,21 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     private final List<Comment> comments;
     private final OnCommentClickListener listener;
+    private boolean isOrganizerOrCoOrganizer = false;
 
     public interface OnCommentClickListener {
         void onCommentClick(Comment comment);
+        void onDeleteClick(Comment comment);
     }
 
     public CommentAdapter(List<Comment> items, OnCommentClickListener listener) {
         comments = items;
         this.listener = listener;
+    }
+
+    public void setOrganizerOrCoOrganizer(boolean organizerOrCoOrganizer) {
+        isOrganizerOrCoOrganizer = organizerOrCoOrganizer;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -59,6 +66,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             holder.binding.textOrganizerLabel.setVisibility(View.VISIBLE);
         } else {
             holder.binding.textOrganizerLabel.setVisibility(View.GONE);
+        }
+
+        if (isOrganizerOrCoOrganizer) {
+            holder.binding.buttonDeleteComment.setVisibility(View.VISIBLE);
+            holder.binding.buttonDeleteComment.setOnClickListener(v -> listener.onDeleteClick(comment));
+        } else {
+            holder.binding.buttonDeleteComment.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> listener.onCommentClick(comment));
