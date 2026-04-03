@@ -12,6 +12,7 @@ public class Notification {
     private final String notificationId;
     private final String entrantId;
     private final String eventId;
+    private final String eventTitle; // Added to show user-friendly name instead of ID
     private final String message;
     private final String type;
     private final long sentAtMillis;
@@ -22,12 +23,13 @@ public class Notification {
      * Backward-compatible constructor for older call sites.
      */
     public Notification(String entrantId, String eventId, String message, String type, long sentAtMillis) {
-        this(null, entrantId, eventId, message, type, sentAtMillis, false, null);
+        this(null, entrantId, eventId, null, message, type, sentAtMillis, false, null);
     }
 
     public Notification(String notificationId,
                         String entrantId,
                         String eventId,
+                        String eventTitle,
                         String message,
                         String type,
                         long sentAtMillis,
@@ -36,6 +38,7 @@ public class Notification {
         this.notificationId = notificationId;
         this.entrantId = entrantId;
         this.eventId = eventId;
+        this.eventTitle = eventTitle;
         this.message = message;
         this.type = type;
         this.sentAtMillis = sentAtMillis;
@@ -53,6 +56,10 @@ public class Notification {
 
     public String getEventId() {
         return eventId;
+    }
+
+    public String getEventTitle() {
+        return eventTitle;
     }
 
     public String getMessage() {
@@ -80,6 +87,8 @@ public class Notification {
                 type.equalsIgnoreCase("win")
                         || type.equalsIgnoreCase("invitation")
                         || type.equalsIgnoreCase("selected")
+                        || type.equalsIgnoreCase("co_organizer")
+                        || type.equalsIgnoreCase("private_invite")
         );
     }
 

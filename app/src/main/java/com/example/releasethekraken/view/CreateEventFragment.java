@@ -55,6 +55,7 @@ public class CreateEventFragment extends Fragment {
     private String eventID;
     private Uri selectedPosterUri;
     private String existingPosterUrl = "";
+    
     private final ArrayList<String> invitedUserIds = new ArrayList<>();
     private final ArrayList<String> coOrganizerIds = new ArrayList<>();
     
@@ -132,8 +133,13 @@ public class CreateEventFragment extends Fragment {
                     if (!isAdded()) return;
                     binding.addCoOrganizerButton.setEnabled(true);
                     if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
-                        if (!coOrganizerIds.contains(profile.getUid())) {
-                            coOrganizerIds.add(profile.getUid());
+                        String uid = profile.getUid();
+                        if (invitedUserIds.contains(uid)) {
+                            Toast.makeText(getContext(), "User is already invited as a guest", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!coOrganizerIds.contains(uid)) {
+                            coOrganizerIds.add(uid);
                             coOrganizerNames.add(profile.getName());
                             binding.coOrganizerSearchInput.setText("");
                             updatePreviews();
@@ -167,8 +173,13 @@ public class CreateEventFragment extends Fragment {
                     if (!isAdded()) return;
                     binding.addGuestInviteButton.setEnabled(true);
                     if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
-                        if (!invitedUserIds.contains(profile.getUid())) {
-                            invitedUserIds.add(profile.getUid());
+                        String uid = profile.getUid();
+                        if (coOrganizerIds.contains(uid)) {
+                            Toast.makeText(getContext(), "User is already a co-organizer", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!invitedUserIds.contains(uid)) {
+                            invitedUserIds.add(uid);
                             invitedUserNames.add(profile.getName());
                             binding.guestInviteSearchInput.setText("");
                             updatePreviews();
@@ -284,7 +295,7 @@ public class CreateEventFragment extends Fragment {
                 coOrganizerIds.clear();
                 coOrganizerIds.addAll(event.getCoOrganizerIds());
                 
-                // For editing, we'd ideally fetch names, but for now we reset placeholders
+                // For editing, we'd ideally fetch names, but for now we use IDs as placeholders
                 invitedUserNames.clear();
                 invitedUserNames.addAll(invitedUserIds);
                 coOrganizerNames.clear();
@@ -380,6 +391,11 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        // According to requirement: we become co-organizer or guest on ACCEPTANCE.
+        // So during creation, we only save the organizer.
+        // HOWEVER, for private events, people MUST be in invitedUserIds to even see it.
+        // So we add guests to invitedUserIds immediately, but co-organizers will be added on acceptance.
+        
         Event event = new Event(
                 eventId,
                 title,
@@ -389,8 +405,8 @@ public class CreateEventFragment extends Fragment {
                 capacity,
                 existingPosterUrl,
                 isPrivate,
-                invitedUserIds,
-                coOrganizerIds,
+                invitedUserIds, // Guests allowed to see private event
+                new ArrayList<>(), // No co-organizers yet
                 organizerId,
                 geolocationRequired
         );
@@ -462,27 +478,38 @@ public class CreateEventFragment extends Fragment {
     }
     
     private void sendInvitations(Event event) {
-        // Invite co-organizers
+        // Invite co-organizers - use specific type for acceptance flow
         for (String coOrgId : coOrganizerIds) {
-            notificationService.sendCoOrganizerNotification(event, coOrgId, new NotificationService.NotificationCallback() {
-                @Override
-                public void onResult(NotificationService.NotificationResult result) {}
-                @Override
-                public void onError(Exception e) {}
-            });
+            notificationService.sendCoOrganizerNotification(event, coOrgId, null);
         }
         
         // Invite private guests if applicable
         if (event.isPrivate()) {
             for (String guestId : invitedUserIds) {
-                notificationService.sendSelectedEntrantNotification(event, guestId, "You've been invited to this private event.", new NotificationService.NotificationCallback() {
-                    @Override
-                    public void onResult(NotificationService.NotificationResult result) {}
-                    @Override
-                    public void onError(Exception e) {}
-                });
+                // Use a specific type for private invites
+                sendPrivateInviteNotification(event, guestId);
             }
         }
+    }
+
+    private void sendPrivateInviteNotification(Event event, String userId) {
+        long nowMillis = System.currentTimeMillis();
+        String message = "You have been invited to join the private event: " + event.getTitle();
+        
+        com.example.releasethekraken.model.Notification notification = new com.example.releasethekraken.model.Notification(
+                userId,
+                event.getEventId(),
+                message,
+                "PRIVATE_INVITE",
+                nowMillis
+        );
+        
+        new NotificationRepository().sendNotification(notification, new NotificationRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {}
+            @Override
+            public void onError(Exception e) {}
+        });
     }
 
     private void handleSaveError(Exception e) {
