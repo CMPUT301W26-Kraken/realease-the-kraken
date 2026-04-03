@@ -1,4 +1,5 @@
 <resources>
+    <!-- Strings related to the app | ai was used for comments & used to double check this file -->
     <string name="app_name">Release The Kraken</string>
     <string name="title_activity_main2">MainActivity2</string>
 
@@ -127,6 +128,14 @@
     <string name="admin_user_list_welcome">All Users</string>
     <string name="waiting_list_welcome">Event Waiting List</string>
     <string name="prompt_search">Search</string>
+    <string name="remove_profile_title">Remove Profile</string>
+    <string name="remove_profile_message">Are you sure you want to remove %1$s? This cannot be undone.</string>
+    <string name="remove_profile_confirm">Remove</string>
+    <string name="remove_profile_success">%1$s removed.</string>
+    <string name="remove_profile_failure">Failed to remove profile: %1$s</string>
+    <string name="load_profiles_failure">Failed to load profiles</string>
+    <string name="delete_profile_button_description">Delete profile</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Strings related to the Comments -->
     <string name="comments_welcome">Comments For This Event</string>

@@ -42,6 +42,16 @@ public class NotificationService {
     }
 
     /**
+     * Helper to get a clean display name for an event.
+     * Replaces underscores with spaces and uses title if available.
+     */
+    private String getEventDisplayName(Event event) {
+        String name = (event.getTitle() == null || event.getTitle().trim().isEmpty())
+                ? event.getEventId() : event.getTitle();
+        return name.replace("_", " ");
+    }
+
+    /**
      * sends a win notification to an entrant
      * responsibilities:
      *  - validate input
@@ -66,20 +76,26 @@ public class NotificationService {
         //this timestamp can later be used for logging or display purposes
         long nowMillis = System.currentTimeMillis();
 
+        String eventDisplayName = getEventDisplayName(event);
+
         //create a message informing the entrant that they won
         //the message states the event and instructs the entrant
         //to check the app for next steps
         String message = "Congratulations! You have been selected for event "
-                + event.getEventId()
+                + eventDisplayName
                 + ". Please check the app for next steps to complete your registration.";
 
         //create a notification object containing all required information
         Notification notification = new Notification(
+                null,
                 entrantId,
                 event.getEventId(),
+                event.getTitle(),
                 message,
                 "WIN",
-                nowMillis
+                nowMillis,
+                false,
+                "pending"
         );
 
         sendAndLogNotification(notification, callback);
@@ -108,18 +124,24 @@ public class NotificationService {
         //capture the exact time the notification is being created
         long nowMillis = System.currentTimeMillis();
 
+        String eventDisplayName = getEventDisplayName(event);
+
         //create a message informing the entrant that they were not selected
         String message = "Thank you for your interest in event "
-                + event.getEventId()
+                + eventDisplayName
                 + ". You were not selected in this draw.";
 
         //create a notification object containing all required information
         Notification notification = new Notification(
+                null,
                 entrantId,
                 event.getEventId(),
+                event.getTitle(),
                 message,
                 "LOSS",
-                nowMillis
+                nowMillis,
+                false,
+                "pending"
         );
 
         sendAndLogNotification(notification, callback);
@@ -146,13 +168,11 @@ public class NotificationService {
 
         long nowMillis = System.currentTimeMillis();
         String trimmedMessage = organizerMessage == null ? "" : organizerMessage.trim();
-        String eventName = event.getTitle() == null || event.getTitle().trim().isEmpty()
-                ? event.getEventId()
-                : event.getTitle();
+        String eventDisplayName = getEventDisplayName(event);
 
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append("You have been invited to sign up for ")
-                .append(eventName)
+                .append(eventDisplayName)
                 .append(". Please check the app and complete your registration.");
 
         if (!trimmedMessage.isEmpty()) {
@@ -160,11 +180,15 @@ public class NotificationService {
         }
 
         Notification notification = new Notification(
+                null,
                 entrantId,
                 event.getEventId(),
+                event.getTitle(),
                 messageBuilder.toString(),
                 "SELECTED",
-                nowMillis
+                nowMillis,
+                false,
+                "pending"
         );
 
         sendAndLogNotification(notification, callback);
@@ -180,17 +204,20 @@ public class NotificationService {
         }
 
         long nowMillis = System.currentTimeMillis();
-        String eventName = (event.getTitle() == null || event.getTitle().trim().isEmpty())
-                ? event.getEventId() : event.getTitle();
+        String eventDisplayName = getEventDisplayName(event);
 
-        String message = "You have been added as a co-organizer for the event: " + eventName;
+        String message = "You have been added as a co-organizer for the event: " + eventDisplayName;
 
         Notification notification = new Notification(
+                null,
                 userId,
                 event.getEventId(),
+                event.getTitle(),
                 message,
                 "CO_ORGANIZER",
-                nowMillis
+                nowMillis,
+                false,
+                "pending"
         );
 
         sendAndLogNotification(notification, callback);

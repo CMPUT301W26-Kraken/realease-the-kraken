@@ -155,7 +155,15 @@ public class NotificationFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        Toast.makeText(requireContext(), "Invitation declined. Replacement draw triggered.", Toast.LENGTH_SHORT).show();
+
+                        // Only show the "replacement draw triggered" toast for actual lottery wins
+                        String type = notification.getType();
+                        if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+                            Toast.makeText(requireContext(), "Invitation declined. Replacement draw triggered.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), "Invitation declined.", Toast.LENGTH_SHORT).show();
+                        }
+
                         loadNotifications();
                     }
 

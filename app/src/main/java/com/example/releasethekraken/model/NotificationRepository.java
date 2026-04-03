@@ -1,6 +1,7 @@
 package com.example.releasethekraken.model;
 
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -44,24 +45,30 @@ public class NotificationRepository {
         Map<String, Object> data = new HashMap<>();
         data.put("entrantId", notification.getEntrantId());
         data.put("eventId", notification.getEventId());
+        data.put("eventTitle", notification.getEventTitle()); // Store title
         data.put("message", notification.getMessage());
         data.put("type", notification.getType());
         data.put("sentAtMillis", notification.getSentAtMillis());
         data.put("read", false);
-        data.put("responseStatus", notification.getResponseStatus());
+        data.put("responseStatus", "pending");
 
         db.collection("profiles")
                 .document(notification.getEntrantId())
                 .collection("notifications")
                 .add(data)
-                .addOnSuccessListener(documentReference -> callback.onSuccess())
-                .addOnFailureListener(callback::onError);
+                .addOnSuccessListener(documentReference -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
     }
 
     public void logNotification(Notification notification, CompletionCallback callback) {
         Map<String, Object> data = new HashMap<>();
         data.put("entrantId", notification.getEntrantId());
         data.put("eventId", notification.getEventId());
+        data.put("eventTitle", notification.getEventTitle());
         data.put("message", notification.getMessage());
         data.put("type", notification.getType());
         data.put("sentAtMillis", notification.getSentAtMillis());
@@ -69,8 +76,12 @@ public class NotificationRepository {
 
         db.collection("notificationLogs")
                 .add(data)
-                .addOnSuccessListener(documentReference -> callback.onSuccess())
-                .addOnFailureListener(callback::onError);
+                .addOnSuccessListener(documentReference -> {
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
     }
 
     public void getNotificationsForEntrant(String entrantId, NotificationsCallback callback) {
@@ -84,32 +95,24 @@ public class NotificationRepository {
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         String eventId = document.getString("eventId");
+                        String eventTitle = document.getString("eventTitle");
                         String message = document.getString("message");
                         String type = document.getString("type");
                         Long sentAtMillis = document.getLong("sentAtMillis");
                         Boolean read = document.getBoolean("read");
                         String responseStatus = document.getString("responseStatus");
 
-                        if (eventId == null) {
-                            eventId = "";
-                        }
-                        if (message == null) {
-                            message = "";
-                        }
-                        if (type == null) {
-                            type = "";
-                        }
-                        if (sentAtMillis == null) {
-                            sentAtMillis = 0L;
-                        }
-                        if (read == null) {
-                            read = false;
-                        }
+                        if (eventId == null) eventId = "";
+                        if (message == null) message = "";
+                        if (type == null) type = "";
+                        if (sentAtMillis == null) sentAtMillis = 0L;
+                        if (read == null) read = false;
 
                         Notification notification = new Notification(
                                 document.getId(),
                                 entrantId,
                                 eventId,
+                                eventTitle,
                                 message,
                                 type,
                                 sentAtMillis,
@@ -129,13 +132,24 @@ public class NotificationRepository {
                                  String eventId,
                                  String notificationId,
                                  CompletionCallback callback) {
-        if (entrantId == null || entrantId.trim().isEmpty()
-                || eventId == null || eventId.trim().isEmpty()
-                || notificationId == null || notificationId.trim().isEmpty()) {
+        if (entrantId == null || eventId == null || notificationId == null) {
             callback.onError(new IllegalArgumentException("Invalid invitation data."));
             return;
         }
 
+        db.collection("profiles")
+                .document(entrantId)
+                .collection("notifications")
+                .document(notificationId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String type = documentSnapshot.getString("type");
+                    processAcceptance(entrantId, eventId, notificationId, type, callback);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    private void processAcceptance(String entrantId, String eventId, String notificationId, String type, CompletionCallback callback) {
         long respondedAtMillis = System.currentTimeMillis();
         WriteBatch batch = db.batch();
 
@@ -149,19 +163,26 @@ public class NotificationRepository {
                 "respondedAtMillis", respondedAtMillis
         );
 
-        Map<String, Object> acceptedData = new HashMap<>();
-        acceptedData.put("selected", true);
-        acceptedData.put("status", "accepted");
-        acceptedData.put("respondedAtMillis", respondedAtMillis);
+        if ("CO_ORGANIZER".equalsIgnoreCase(type)) {
+            batch.update(
+                    db.collection("events").document(eventId),
+                    "coOrganizerIds", FieldValue.arrayUnion(entrantId)
+            );
+        } else if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+            Map<String, Object> acceptedData = new HashMap<>();
+            acceptedData.put("selected", true);
+            acceptedData.put("status", "accepted");
+            acceptedData.put("respondedAtMillis", respondedAtMillis);
 
-        batch.set(
-                db.collection("events")
-                        .document(eventId)
-                        .collection("accepted")
-                        .document(entrantId),
-                acceptedData,
-                SetOptions.merge()
-        );
+            batch.set(
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("accepted")
+                            .document(entrantId),
+                    acceptedData,
+                    SetOptions.merge()
+            );
+        }
 
         batch.commit()
                 .addOnSuccessListener(unused -> callback.onSuccess())
@@ -172,18 +193,28 @@ public class NotificationRepository {
                                   String eventId,
                                   String notificationId,
                                   CompletionCallback callback) {
-        if (entrantId == null || entrantId.trim().isEmpty()
-                || eventId == null || eventId.trim().isEmpty()
-                || notificationId == null || notificationId.trim().isEmpty()) {
+        if (entrantId == null || eventId == null || notificationId == null) {
             callback.onError(new IllegalArgumentException("Invalid invitation data."));
             return;
         }
 
+        db.collection("profiles")
+                .document(entrantId)
+                .collection("notifications")
+                .document(notificationId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String type = documentSnapshot.getString("type");
+                    processDecline(entrantId, eventId, notificationId, type, callback);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    private void processDecline(String entrantId, String eventId, String notificationId, String type, CompletionCallback callback) {
         long respondedAtMillis = System.currentTimeMillis();
+        WriteBatch batch = db.batch();
 
-        WriteBatch declineBatch = db.batch();
-
-        declineBatch.update(
+        batch.update(
                 db.collection("profiles")
                         .document(entrantId)
                         .collection("notifications")
@@ -193,15 +224,29 @@ public class NotificationRepository {
                 "respondedAtMillis", respondedAtMillis
         );
 
-        declineBatch.delete(
-                db.collection("events")
-                        .document(eventId)
-                        .collection("accepted")
-                        .document(entrantId)
-        );
+        if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+            batch.update(
+                    db.collection("events").document(eventId),
+                    "invitedUserIds", FieldValue.arrayRemove(entrantId)
+            );
+        } else if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+            batch.delete(
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("accepted")
+                            .document(entrantId)
+            );
+        }
 
-        declineBatch.commit()
-                .addOnSuccessListener(unused -> triggerReplacementSelection(eventId, entrantId, callback))
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    // Replacement should only happen for lottery winners (WIN or SELECTED types)
+                    if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+                        triggerReplacementSelection(eventId, entrantId, callback);
+                    } else {
+                        callback.onSuccess();
+                    }
+                })
                 .addOnFailureListener(callback::onError);
     }
 
@@ -276,7 +321,7 @@ public class NotificationRepository {
                                 notificationData.put("eventId", eventId);
                                 notificationData.put(
                                         "message",
-                                        "A spot opened up for event " + eventId
+                                        "A spot opened up for event " + eventId.replace("_", " ")
                                                 + ". You have been invited to sign up. Please respond in the app."
                                 );
                                 notificationData.put("type", "SELECTED");
