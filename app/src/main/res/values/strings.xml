@@ -73,6 +73,8 @@
     <string name="clear_filters_button">Clear Filters</string>
     <string name="no_matching_events">No events match the current search and filters.</string>
     <string name="toggle_detailed_switch">Detailed Event View</string>
+    <string name="registration_end_text_browse">"End Time: "</string>
+    <string name="current_wait_list_browse">"Current Wait List: "</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>

@@ -176,7 +176,7 @@ public class AccountCreateFragment extends Fragment {
                 if (!isAdded()) return;
                 repo.saveProfileLocally(profile);
                 Toast.makeText(getContext(), "Profile Saved!", Toast.LENGTH_SHORT).show();
-                Navigation.findNavController(requireView()).navigate(R.id.action_accountCreateFragment_to_mainMenuFragment);
+                Navigation.findNavController(requireView()).navigate(R.id.action_global_mainMenuFragment);
             }
             @Override
             public void onFailure(Exception e) {

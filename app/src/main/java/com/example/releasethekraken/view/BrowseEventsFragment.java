@@ -26,6 +26,7 @@ import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.model.WaitingListRepository;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
@@ -66,11 +67,8 @@ public class BrowseEventsFragment extends Fragment {
     private EditText filterAvailableAtText;
     private EditText filterCapacityText;
     private TextView emptyResultsText;
-
-    private LinearLayout searchBar;
     private LinearLayout filterBar;
     private LinearLayout filterButtons;
-
     private LinearSnapHelper snapHelper;
 
     public BrowseEventsFragment() { }
@@ -116,7 +114,6 @@ public class BrowseEventsFragment extends Fragment {
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
         emptyResultsText = view.findViewById(R.id.empty_results_text);
 
-        searchBar = view.findViewById(R.id.browse_search_layout);
         filterBar = view.findViewById(R.id.browse_filter_layout);
         filterButtons = view.findViewById(R.id.browse_filter_button_layout);
 
@@ -190,7 +187,7 @@ public class BrowseEventsFragment extends Fragment {
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
 
         // Following lines set the default behavior of the fragment to the default browsing mode
-        searchBar.setVisibility(View.VISIBLE);
+        searchEventsText.setVisibility(View.VISIBLE);
         filterBar.setVisibility(View.VISIBLE);
         filterButtons.setVisibility(View.VISIBLE);
         adapter.setDetailed(false);
@@ -203,7 +200,7 @@ public class BrowseEventsFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    searchBar.setVisibility(View.GONE);
+                    searchEventsText.setVisibility(View.GONE);
                     filterBar.setVisibility(View.GONE);
                     filterButtons.setVisibility(View.GONE);
                     recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
@@ -211,11 +208,11 @@ public class BrowseEventsFragment extends Fragment {
                     snapHelper.attachToRecyclerView(recyclerView);
                     adapter.setDetailed(true);
                 } else {
-                    searchBar.setVisibility(View.VISIBLE);
+                    searchEventsText.setVisibility(View.VISIBLE);
                     filterBar.setVisibility(View.VISIBLE);
                     filterButtons.setVisibility(View.VISIBLE);
                     recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-                    // Detach the snaphelper if it we are coming back from a detailed view.
+                    // Detach the snaphelper if we are coming back from a detailed view.
                     if (snapHelper != null) {
                         snapHelper.attachToRecyclerView(null);
                         snapHelper = null;
@@ -229,21 +226,21 @@ public class BrowseEventsFragment extends Fragment {
         view.findViewById(R.id.home_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_mainMenuFragment)
+                                .navigate(R.id.action_global_mainMenuFragment)
                 );
 
         // Go to Profile View from Toolbar
         view.findViewById(R.id.profile_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_viewProfileFragment)
+                                .navigate(R.id.action_global_viewProfileFragment)
                 );
 
         // Navigate to Notifications
         view.findViewById(R.id.notifications_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
+                                .navigate(R.id.action_global_notificationFragment)
                 );
 
         return view;
@@ -289,7 +286,6 @@ public class BrowseEventsFragment extends Fragment {
     private void wireSearchAndFilters(View view) {
         // Search and structured filters both feed the same applyFilters method so ticket #98
         // ("combine search with filters") is just the shared code path, not a separate screen.
-        view.findViewById(R.id.search_events_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.apply_filters_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.clear_filters_button).setOnClickListener(v -> clearFilters());
     }

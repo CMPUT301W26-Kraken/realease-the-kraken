@@ -61,7 +61,7 @@ public class TicketTestFragment extends Fragment {
 
         binding.backToMenuButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_ticketTestFragment_to_mainMenuFragment)
+                        .navigate(R.id.action_global_mainMenuFragment)
         );
 
         setupRolePicker();

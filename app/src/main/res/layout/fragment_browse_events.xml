@@ -7,35 +7,17 @@
     android:orientation="vertical">
 
     <!-- Search entry point for keyword-based event lookup (#97). -->
-    <LinearLayout
-        android:id="@+id/browse_search_layout"
+    <EditText
+        android:id="@+id/search_events_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/search_events_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="@string/search_events_hint"
-            android:inputType="text" />
-
-        <ImageButton
-            android:id="@+id/search_events_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="20dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:tint="@color/black"
-            app:srcCompat="@android:drawable/ic_menu_search" />
-    </LinearLayout>
+        android:layout_marginEnd="20dp"
+        android:layout_weight="0"
+        android:ems="10"
+        android:hint="@string/search_events_hint"
+        android:inputType="text" />
 
     <!-- Structured filters for timestamp availability and minimum capacity (#83). -->
     <LinearLayout

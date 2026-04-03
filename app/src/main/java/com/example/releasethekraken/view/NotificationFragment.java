@@ -57,12 +57,12 @@ public class NotificationFragment extends Fragment {
 
         binding.homeToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_notificationFragment_to_mainMenuFragment)
+                        .navigate(R.id.action_global_mainMenuFragment)
         );
 
         binding.profileToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_notificationFragment_to_viewProfileFragment)
+                        .navigate(R.id.action_global_viewProfileFragment)
         );
 
         adapter = new NotificationAdapter(notifications, new NotificationAdapter.NotificationActionListener() {
