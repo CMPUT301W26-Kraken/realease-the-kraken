@@ -19,7 +19,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.NotificationService;
+import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.NotificationRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
@@ -39,6 +42,7 @@ public class UserListFragment extends Fragment {
     private WaitingListRepository waitingListRepository;
     private EventRepository eventRepository;
     private ProfileRepository profileRepository;
+    private NotificationService notificationService;
     private final List<Profile> profileList = new ArrayList<>();
     private ProfileListAdapter adapter;
 
@@ -58,6 +62,7 @@ public class UserListFragment extends Fragment {
         waitingListRepository = new WaitingListRepository();
         eventRepository = new EventRepository();
         profileRepository = new ProfileRepository(requireContext());
+        notificationService = new NotificationService(new NotificationRepository());
 
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
@@ -82,6 +87,9 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
+        adapter = new UserListAdapter(profileList, profile -> {
+            if (userRole == UserRole.ORGANIZER && !adminView) {
+                showCoOrganizerInviteDialog(profile);
         // FIX 4: Renamed OnDeleteClickListener -> OnProfileClickListener
         adapter = new ProfileListAdapter(profileList, adminView, (profile, position) -> {
             if (adminView) {
@@ -126,6 +134,7 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
+    private void showCoOrganizerInviteDialog(Profile profile) {
     // FIX 1: Removed position param — now finds item by UID after Firestore callback
     private void onDeleteClicked(Profile profile) {
         String displayName = (profile.getName() != null && !profile.getName().isEmpty())
@@ -194,30 +203,29 @@ public class UserListFragment extends Fragment {
 
     private void showCoOrganizerDialog(Profile profile) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Assign Co-Organizer")
-                .setMessage("Do you want to assign " + profile.getName() + " as a co-organizer for this event? They will be removed from the waiting list.")
-                .setPositiveButton("Assign", (dialog, which) -> assignCoOrganizer(profile))
+                .setTitle("Invite Co-Organizer")
+                .setMessage("Do you want to invite " + profile.getName() + " to be a co-organizer for this event?")
+                .setPositiveButton("Invite", (dialog, which) -> inviteCoOrganizer(profile))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void assignCoOrganizer(Profile profile) {
-        eventRepository.addCoOrganizer(eventId, profile.getUid(), new EventRepository.CompletionCallback() {
+    private void inviteCoOrganizer(Profile profile) {
+        eventRepository.getEventById(eventId, new EventRepository.EventCallback() {
             @Override
-            public void onSuccess() {
-                waitingListRepository.removeFromWaitingList(eventId, profile.getUid(), new WaitingListRepository.CompletionCallback() {
+            public void onSuccess(Event event) {
+                notificationService.sendCoOrganizerNotification(event, profile.getUid(), new NotificationService.NotificationCallback() {
                     @Override
-                    public void onSuccess() {
+                    public void onResult(NotificationService.NotificationResult result) {
                         if (isAdded()) {
-                            Toast.makeText(requireContext(), profile.getName() + " is now a co-organizer", Toast.LENGTH_SHORT).show();
-                            loadWaitingList();
+                            Toast.makeText(requireContext(), "Invitation sent to " + profile.getName(), Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onError(Exception e) {
                         if (isAdded()) {
-                            Toast.makeText(requireContext(), "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "Failed to send invitation", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -226,7 +234,7 @@ public class UserListFragment extends Fragment {
             @Override
             public void onError(Exception e) {
                 if (isAdded()) {
-                    Toast.makeText(requireContext(), "Failed to assign co-organizer", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Failed to load event details", Toast.LENGTH_SHORT).show();
                 }
             }
         });
