@@ -87,15 +87,11 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        adapter = new UserListAdapter(profileList, profile -> {
-            if (userRole == UserRole.ORGANIZER && !adminView) {
-                showCoOrganizerInviteDialog(profile);
-        // FIX 4: Renamed OnDeleteClickListener -> OnProfileClickListener
         adapter = new ProfileListAdapter(profileList, adminView, (profile, position) -> {
             if (adminView) {
                 onDeleteClicked(profile);
             } else if (userRole == UserRole.ORGANIZER) {
-                showCoOrganizerDialog(profile);
+                showCoOrganizerInviteDialog(profile);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -134,8 +130,6 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
-    private void showCoOrganizerInviteDialog(Profile profile) {
-    // FIX 1: Removed position param — now finds item by UID after Firestore callback
     private void onDeleteClicked(Profile profile) {
         String displayName = (profile.getName() != null && !profile.getName().isEmpty())
                 ? profile.getName() : profile.getUid();
@@ -149,7 +143,6 @@ public class UserListFragment extends Fragment {
                                 @Override
                                 public void onSuccess(Void result) {
                                     if (!isAdded()) return;
-                                    // FIX 1: Find by UID instead of stale position
                                     int index = -1;
                                     for (int i = 0; i < profileList.size(); i++) {
                                         if (profileList.get(i).getUid().equals(profile.getUid())) {
@@ -184,7 +177,6 @@ public class UserListFragment extends Fragment {
         profileRepository.getAllProfiles(new ProfileRepository.ProfileRepositoryCallback<List<Profile>>() {
             @Override
             public void onSuccess(List<Profile> result) {
-                // FIX 2: Guard against detached fragment
                 if (!isAdded()) return;
                 profileList.clear();
                 profileList.addAll(result);
@@ -193,7 +185,6 @@ public class UserListFragment extends Fragment {
 
             @Override
             public void onFailure(Exception exception) {
-                // FIX 2: Guard against detached fragment
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(),
                         getString(R.string.load_profiles_failure), Toast.LENGTH_SHORT).show();
@@ -201,7 +192,7 @@ public class UserListFragment extends Fragment {
         });
     }
 
-    private void showCoOrganizerDialog(Profile profile) {
+    private void showCoOrganizerInviteDialog(Profile profile) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Invite Co-Organizer")
                 .setMessage("Do you want to invite " + profile.getName() + " to be a co-organizer for this event?")
@@ -278,7 +269,6 @@ public class UserListFragment extends Fragment {
         });
     }
 
-    // FIX 4: Renamed from OnDeleteClickListener to OnProfileClickListener
     interface OnProfileClickListener {
         void onProfileClick(Profile profile, int position);
     }
@@ -320,7 +310,6 @@ public class UserListFragment extends Fragment {
             deleteBtn.setImageDrawable(
                     parent.getContext().getDrawable(android.R.drawable.ic_menu_delete));
             deleteBtn.setBackground(null);
-            // FIX 5: Added contentDescription for screen reader accessibility
             deleteBtn.setContentDescription(parent.getContext().getString(R.string.delete_profile_button_description));
 
             row.addView(nameView);
