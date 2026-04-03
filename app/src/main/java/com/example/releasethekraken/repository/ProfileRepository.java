@@ -12,6 +12,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -256,6 +258,32 @@ public class ProfileRepository {
                 .remove(KEY_IMAGE_URL)
                 .apply();
     }
+
+
+    /**
+     * Fetches all profiles from Firestore.
+     *
+     * @param callback Callback returning a list of all profiles on success
+     */
+    public void getAllProfiles(ProfileRepositoryCallback<List<Profile>> callback) {
+        firestore.collection(COLLECTION_PROFILES)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Profile> profiles = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Profile profile = doc.toObject(Profile.class);
+                        if (profile != null) {
+                            if (profile.getUid() == null || profile.getUid().trim().isEmpty()) {
+                                profile.setUid(doc.getId());
+                            }
+                            profiles.add(profile);
+                        }
+                    }
+                    callback.onSuccess(profiles);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
 
     /**
      * Deletes the profile from Firestore using Firebase Auth UID as the document ID.
