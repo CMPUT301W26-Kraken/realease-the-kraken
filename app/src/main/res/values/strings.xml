@@ -1,4 +1,5 @@
 <resources>
+    <!-- Strings related to the app | ai was used for comments & used to double check this file -->
     <string name="app_name">Release The Kraken</string>
     <string name="title_activity_main2">MainActivity2</string>
 
@@ -66,11 +67,14 @@
     <string name="your_events_welcome">Your Events</string>
     <string name="create_event_button">Create Event</string>
     <string name="search_events_hint">Search by title or description</string>
-    <string name="filter_available_at_hint">Available at (dd/MM/yyyy h:mm AM/PM)</string>
+    <string name="filter_available_at_hint">Available Time</string>
     <string name="filter_capacity_hint">Min capacity</string>
     <string name="apply_filters_button">Apply Filters</string>
     <string name="clear_filters_button">Clear Filters</string>
     <string name="no_matching_events">No events match the current search and filters.</string>
+    <string name="toggle_detailed_switch">Detailed Event View</string>
+    <string name="registration_end_text_browse">"End Time: "</string>
+    <string name="current_wait_list_browse">"Current Wait List: "</string>
 
     <!-- Strings related to the notifications fragment -->
     <string name="notification_welcome">Notifications</string>
@@ -81,10 +85,10 @@
     <string name="edit_event_confirm_button">Confirm Changes</string>
     <string name="prompt_event_name">Event Title</string>
     <string name="prompt_event_description">Event Description…</string>
-    <string name="prompt_date">DD/MM/YYYY HH:MM AM/PM</string>
+    <string name="prompt_date">Time</string>
     <string name="prompt_maximum_entrants">Max Entrants</string>
-    <string name="registration_start_text">Registration Start</string>
-    <string name="registration_end_text">Registration End</string>
+    <string name="registration_start_text">Start Time</string>
+    <string name="registration_end_text">End Time</string>
     <string name="upload_event_poster_text">Upload&#10;Event Poster</string>
     <string name="maximum_entrants_text">Maximum Entrants&#10;(Optional)</string>
     <string name="enable_geolocation_text">Enable&#10;Geo-location</string>
@@ -109,6 +113,12 @@
     <string name="notify_selected_entrants_none_selected">There are no selected entrants to notify.</string>
     <string name="notify_selected_entrants_success">Sent notifications to %1$d of %2$d selected entrants.</string>
     <string name="notification_send_failed">Failed to send notifications.</string>
+    <string name="waiting_list_count_text">Waiting list size: %1$d</string>
+    <string name="waiting_list_count_placeholder">Waiting list size: --</string>
+    <string name="waiting_list_count_unavailable">Waiting list size unavailable</string>
+    <string name="event_image">Event poster</string>
+    <string name="lottery_criteria_title">How the lottery works</string>
+    <string name="lottery_criteria_body">• You can join the waiting list while registration is open.\n\n• If the number of entrants is greater than the available spots, the app runs a random draw.\n\n• Selected entrants receive an invitation in the app.\n\n• If a selected entrant declines, another person may be chosen from the waiting list.\n\n• Waiting list size can change as people join, leave, accept, or decline.</string>
 
     <!-- Strings related to the delete popup -->
     <string name="delete_account_popup_splash">Are you sure you want to&#10;delete this account?</string>
@@ -118,10 +128,23 @@
     <string name="admin_user_list_welcome">All Users</string>
     <string name="waiting_list_welcome">Event Waiting List</string>
     <string name="prompt_search">Search</string>
+    <string name="remove_profile_title">Remove Profile</string>
+    <string name="remove_profile_message">Are you sure you want to remove %1$s? This cannot be undone.</string>
+    <string name="remove_profile_confirm">Remove</string>
+    <string name="remove_profile_success">%1$s removed.</string>
+    <string name="remove_profile_failure">Failed to remove profile: %1$s</string>
+    <string name="load_profiles_failure">Failed to load profiles</string>
+    <string name="delete_profile_button_description">Delete profile</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Strings related to the Comments -->
     <string name="comments_welcome">Comments For This Event</string>
     <string name="create_comment_button">Leave A Comment</string>
+
+    <!-- Strings related to the Image List -->
+    <string name="image_list_welcome">All Images on the Platform</string>
+    <string name="delete_image_title">Delete Image</string>
+    <string name="delete_image_message">Are you sure you want to delete this image?</string>
 
     <!-- Misc strings -->
     <string name="dummy_button">Dummy Button</string>

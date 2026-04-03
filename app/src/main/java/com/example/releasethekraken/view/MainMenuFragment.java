@@ -50,7 +50,7 @@ public class MainMenuFragment extends Fragment {
         // Navigate to View Profile
         binding.profileToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_mainMenuFragment_to_viewProfileFragment)
+                        .navigate(R.id.action_global_viewProfileFragment)
         );
 
         // Navigate to Browse Events
@@ -81,6 +81,11 @@ public class MainMenuFragment extends Fragment {
                     .navigate(R.id.action_mainMenuFragment_to_userListFragment, bundle);
         });
 
+        binding.adminBrowseImagesButton.setOnClickListener(v -> {
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_mainMenuFragment_to_imageListFragment);
+        });
+
         // Navigate to Ticket Test (role access, filtering, history)
         binding.ticketTestButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
@@ -90,7 +95,7 @@ public class MainMenuFragment extends Fragment {
         // Navigate to Notifications
         binding.notificationsToolbarButton.setOnClickListener(v ->
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_mainMenuFragment_to_notificationFragment)
+                        .navigate(R.id.action_global_notificationFragment)
         );
 
         // Navigate to QR Scan

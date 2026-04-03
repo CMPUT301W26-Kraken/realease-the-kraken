@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -10,274 +11,335 @@
     android:paddingBottom="@dimen/fragment_vertical_margin"
     tools:context=".view.CreateEventFragment">
 
-    <TextView
-        android:id="@+id/event_create_welcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="@string/create_event_welcome"
-        android:textColor="@color/dark_blue_text"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/event_description_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="24dp"
-        android:ems="10"
-        android:gravity="start|top"
-        android:hint="@string/prompt_event_description"
-        android:inputType="textMultiLine"
-        android:minLines="7"
-        android:scrollbars="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name_event_create" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="40dp">
 
-    <EditText
-        android:id="@+id/name_event_create"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="24dp"
-        android:ems="10"
-        android:hint="@string/prompt_event_name"
-        android:inputType="text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/event_create_welcome" />
+            <TextView
+                android:id="@+id/event_create_welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="20dp"
+                android:text="@string/create_event_welcome"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/registration_start_date"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="15dp"
-        android:ems="10"
-        android:hint="@string/prompt_date"
-        android:inputType="text"
-        android:textSize="11sp"
-        app:layout_constraintEnd_toStartOf="@+id/registration_end_date"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/event_description_text" />
+            <EditText
+                android:id="@+id/name_event_create"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="24dp"
+                android:ems="10"
+                android:hint="@string/prompt_event_name"
+                android:inputType="text" />
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/registration_start_text"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/registration_start_date"
-        app:layout_constraintStart_toStartOf="@+id/registration_start_date"
-        app:layout_constraintTop_toBottomOf="@+id/registration_start_date" />
+            <EditText
+                android:id="@+id/event_description_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="24dp"
+                android:ems="10"
+                android:gravity="start|top"
+                android:hint="@string/prompt_event_description"
+                android:inputType="textMultiLine"
+                android:minLines="4"
+                android:scrollbars="vertical" />
 
-    <EditText
-        android:id="@+id/registration_end_date"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="24dp"
-        android:ems="10"
-        android:hint="@string/prompt_date"
-        android:inputType="text"
-        android:textSize="11sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/registration_start_date"
-        app:layout_constraintTop_toBottomOf="@+id/event_description_text" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="15dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp">
 
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/registration_end_text"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/registration_end_date"
-        app:layout_constraintStart_toStartOf="@+id/registration_end_date"
-        app:layout_constraintTop_toBottomOf="@+id/registration_end_date" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="8dp">
 
-    <EditText
-        android:id="@+id/max_entrants_editText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:ems="10"
-        android:hint="@string/prompt_maximum_entrants"
-        android:inputType="number"
-        android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageButton"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+                    <EditText
+                        android:id="@+id/registration_start_date"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/registration_start_text"
+                        android:inputType="text"
+                        android:textSize="11sp"
+                        android:focusable="false"
+                        android:clickable="true" />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="@string/maximum_entrants_text"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/max_entrants_editText"
-        app:layout_constraintStart_toStartOf="@+id/max_entrants_editText"
-        app:layout_constraintTop_toBottomOf="@+id/max_entrants_editText" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/registration_start_text"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold"
+                        android:layout_gravity="center_horizontal" />
+                </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/imageButton"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
-        android:layout_marginTop="30dp"
-        android:padding="25dp"
-        android:scaleType="fitCenter"
-        android:src="@android:drawable/stat_sys_upload_done"
-        app:layout_constraintEnd_toStartOf="@+id/max_entrants_editText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3"
-        app:tint="@color/dark_blue_text" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/upload_poster_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="@string/upload_event_poster_text"
-        android:textAlignment="center"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@+id/imageButton"
-        app:layout_constraintStart_toStartOf="@+id/imageButton"
-        app:layout_constraintTop_toBottomOf="@+id/imageButton" />
+                    <EditText
+                        android:id="@+id/registration_end_date"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/registration_end_text"
+                        android:inputType="text"
+                        android:textSize="11sp"
+                        android:focusable="false"
+                        android:clickable="true" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/registration_end_text"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold"
+                        android:layout_gravity="center_horizontal" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <ImageButton
+                        android:id="@+id/imageButton"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:padding="15dp"
+                        android:scaleType="fitCenter"
+                        android:src="@android:drawable/stat_sys_upload_done"
+                        app:tint="@color/dark_blue_text"
+                        android:background="?attr/selectableItemBackground" />
+
+                    <TextView
+                        android:id="@+id/upload_poster_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="@string/upload_event_poster_text"
+                        android:textAlignment="center"
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="20dp">
+
+                    <EditText
+                        android:id="@+id/max_entrants_editText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/prompt_maximum_entrants"
+                        android:inputType="number"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/maximum_entrants_text"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
+
+                    <Switch
+                        android:id="@+id/enable_geolocation_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/enable_geolocation_text"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
+
+                    <Switch
+                        android:id="@+id/private_event_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Private Event"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Co-Organizer Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginStart="24dp"
+                android:text="Add Co-Organizers"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/co_organizer_search_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Name, email, or phone"
+                    android:inputType="text" />
+
+                <Button
+                    android:id="@+id/add_co_organizer_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="@color/light_grey_button"
+                    android:text="Add"
+                    android:textColor="@color/dark_blue_text"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/co_organizers_preview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginTop="4dp"
+                android:text="No co-organizers added"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="12sp" />
+
+            <!-- Invited Guest Section (Visible only when Private Event is ON) -->
+            <LinearLayout
+                android:id="@+id/invited_guests_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginStart="24dp"
+                    android:text="Invite Private Guests"
+                    android:textColor="@color/dark_blue_text"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="8dp">
+
+                    <EditText
+                        android:id="@+id/guest_invite_search_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Name, email, or phone"
+                        android:inputType="text" />
+
+                    <Button
+                        android:id="@+id/add_guest_invite_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/light_grey_button"
+                        android:text="Add"
+                        android:textColor="@color/dark_blue_text"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/invited_guests_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="4dp"
+                    android:text="No guests invited"
+                    android:textColor="@color/dark_blue_text"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="30dp">
+
+                <Button
+                    android:id="@+id/cancel_event_creation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/light_grey_button"
+                    android:text="@string/cancel_button"
+                    android:textColor="@color/dark_blue_text"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="10dp" />
+
+                <Button
+                    android:id="@+id/create_event"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/light_grey_button"
+                    android:text="@string/create_event_button"
+                    android:textColor="@color/dark_blue_text"
+                    android:textStyle="bold"
+                    android:layout_marginStart="10dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
 
     <ProgressBar
         android:id="@+id/loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="64dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="64dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
-
-    <Switch
-        android:id="@+id/enable_geolocation_switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/enable_geolocation_text"
-        android:textAlignment="center"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageButton"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <Switch
-        android:id="@+id/private_event_switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Private Event"
-        android:textAlignment="center"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageButton"
-        app:layout_constraintTop_toBottomOf="@+id/enable_geolocation_switch" />
-
-    <TextView
-        android:id="@+id/invite_section_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Invite Users"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="@+id/private_event_switch"
-        app:layout_constraintTop_toBottomOf="@+id/private_event_switch" />
-
-    <EditText
-        android:id="@+id/invite_search_input"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:ems="10"
-        android:hint="Search by name, email, or phone"
-        android:inputType="text"
-        android:visibility="gone"
-        app:layout_constraintEnd_toStartOf="@+id/add_invite_button"
-        app:layout_constraintStart_toStartOf="@+id/invite_section_title"
-        app:layout_constraintTop_toBottomOf="@+id/invite_section_title" />
-
-    <Button
-        android:id="@+id/add_invite_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="10dp"
-        android:backgroundTint="@color/light_grey_button"
-        android:text="Add"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintBaseline_toBaselineOf="@+id/invite_search_input"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/invite_search_input" />
-
-    <TextView
-        android:id="@+id/invited_users_preview"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="No users invited"
-        android:textColor="@color/dark_blue_text"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/add_invite_button"
-        app:layout_constraintStart_toStartOf="@+id/invite_search_input"
-        app:layout_constraintTop_toBottomOf="@+id/invite_search_input" />
-
-    <Button
-        android:id="@+id/create_event"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:backgroundTint="@color/light_grey_button"
-        android:enabled="true"
-        android:text="@string/create_event_button"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cancel_event_creation"
-        app:layout_constraintTop_toBottomOf="@+id/invited_users_preview" />
-
-    <Button
-        android:id="@+id/cancel_event_creation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="7dp"
-        android:backgroundTint="@color/light_grey_button"
-        android:text="@string/cancel_button"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/create_event"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/invited_users_preview" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

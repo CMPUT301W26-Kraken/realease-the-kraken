@@ -13,9 +13,6 @@
         <action
             android:id="@+id/action_loginFragment_to_accountCreateFragment"
             app:destination="@id/accountCreateFragment" />
-        <action
-            android:id="@+id/action_loginFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
     </fragment>
 
     <fragment
@@ -23,12 +20,6 @@
         android:name="com.example.releasethekraken.view.ViewProfileFragment"
         android:label="fragment_view_profile"
         tools:layout="@layout/fragment_view_profile">
-        <action
-            android:id="@+id/action_viewProfileFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-        <action
-            android:id="@+id/action_viewProfileFragment_to_notificationFragment"
-            app:destination="@id/notificationFragment" />
         <action
             android:id="@+id/action_viewProfileFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -43,14 +34,8 @@
         android:label="fragment_main_menu"
         tools:layout="@layout/fragment_main_menu">
         <action
-            android:id="@+id/action_mainMenuFragment_to_viewProfileFragment"
-            app:destination="@id/viewProfileFragment" />
-        <action
             android:id="@+id/action_mainMenuFragment_to_browseEventsFragment"
             app:destination="@id/browseEventsFragment" />
-        <action
-            android:id="@+id/action_mainMenuFragment_to_notificationFragment"
-            app:destination="@id/notificationFragment" />
         <action
             android:id="@+id/action_mainMenuFragment_to_ticketTestFragment"
             app:destination="@id/ticketTestFragment" />
@@ -60,6 +45,9 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_userListFragment"
             app:destination="@id/userListFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_imageListFragment"
+            app:destination="@id/imageListFragment" />
     </fragment>
 
     <fragment
@@ -76,12 +64,6 @@
         <action
             android:id="@+id/action_accountCreateFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_accountCreateFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-        <action
-            android:id="@+id/action_accountCreateFragment_to_viewProfileFragment"
-            app:destination="@id/viewProfileFragment" />
     </fragment>
 
     <fragment
@@ -89,15 +71,6 @@
         android:name="com.example.releasethekraken.view.BrowseEventsFragment"
         android:label="fragment_browse_events_list"
         tools:layout="@layout/item_event">
-        <action
-            android:id="@+id/action_browseEventsFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-        <action
-            android:id="@+id/action_browseEventsFragment_to_viewProfileFragment"
-            app:destination="@id/viewProfileFragment" />
-        <action
-            android:id="@+id/action_browseEventsFragment_to_notificationFragment"
-            app:destination="@id/notificationFragment" />
         <argument
             android:name="yourEvents"
             app:argType="boolean" />
@@ -107,6 +80,9 @@
         <action
             android:id="@+id/action_browseEventsFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment" />
+        <action
+            android:id="@+id/action_browseEventsFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" />
     </fragment>
 
     <fragment
@@ -114,13 +90,8 @@
         android:name="com.example.releasethekraken.view.NotificationFragment"
         android:label="fragment_notification"
         tools:layout="@layout/fragment_notification">
-        <action
-            android:id="@+id/action_notificationFragment_to_viewProfileFragment"
-            app:destination="@id/viewProfileFragment" />
-        <action
-            android:id="@+id/action_notificationFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/createEventFragment"
         android:name="com.example.releasethekraken.view.CreateEventFragment"
@@ -133,6 +104,7 @@
             android:id="@+id/action_createEventFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/eventDetailsFragment"
         android:name="com.example.releasethekraken.view.EventDetailsFragment"
@@ -147,6 +119,13 @@
         <action
             android:id="@+id/action_eventDetailsFragment_to_userListFragment"
             app:destination="@id/userListFragment" />
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" />
+        <!-- Step 10: navigate to entrant map -->
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_entrantMapFragment"
+            app:destination="@id/entrantMapFragment" />
 
         <argument
             android:name="UserType"
@@ -157,9 +136,6 @@
             android:name="eventId"
             app:argType="string"
             app:nullable="true" />
-        <action
-            android:id="@+id/action_eventDetailsFragment_to_commentsFragment"
-            app:destination="@id/commentsFragment" />
     </fragment>
 
     <fragment
@@ -167,24 +143,13 @@
         android:name="com.example.releasethekraken.view.TicketTestFragment"
         android:label="fragment_ticket_test"
         tools:layout="@layout/fragment_ticket_test">
-        <action
-            android:id="@+id/action_ticketTestFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/userListFragment"
         android:name="com.example.releasethekraken.view.UserListFragment"
         android:label="fragment_user_list"
         tools:layout="@layout/fragment_user_list" >
-        <action
-            android:id="@+id/action_userListFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-        <action
-            android:id="@+id/action_userListFragment_to_viewProfileFragment"
-            app:destination="@id/viewProfileFragment" />
-        <action
-            android:id="@+id/action_userListFragment_to_notificationFragment"
-            app:destination="@id/notificationFragment" />
         <action
             android:id="@+id/action_userListFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment" />
@@ -200,21 +165,53 @@
             android:id="@+id/action_qrScanFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/commentsFragment"
         android:name="com.example.releasethekraken.view.CommentsFragment"
         android:label="fragment_comments"
         tools:layout="@layout/fragment_comments">
-
         <argument
             android:name="eventId"
             app:argType="string"
             app:nullable="true" />
-
         <argument
             android:name="userRole"
             app:argType="com.example.releasethekraken.model.UserRole" />
-
     </fragment>
+
+    <!-- Step 10: entrant map fragment -->
+    <fragment
+        android:id="@+id/entrantMapFragment"
+        android:name="com.example.releasethekraken.view.EntrantMapFragment"
+        android:label="fragment_entrant_map"
+        tools:layout="@layout/fragment_entrant_map">
+        <argument
+            android:name="eventId"
+            app:argType="string"
+            app:nullable="true" />
+        <action
+            android:id="@+id/action_entrantMapFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/imageListFragment"
+        android:name="com.example.releasethekraken.view.ImageListFragment"
+        android:label="fragment_image_list"
+        tools:layout="@layout/fragment_image_list" >
+    </fragment>
+
+    <action
+        android:id="@+id/action_global_mainMenuFragment"
+        app:destination="@id/mainMenuFragment" />
+
+    <action
+        android:id="@+id/action_global_viewProfileFragment"
+        app:destination="@id/viewProfileFragment" />
+
+    <action
+        android:id="@+id/action_global_notificationFragment"
+        app:destination="@id/notificationFragment" />
 
 </navigation>

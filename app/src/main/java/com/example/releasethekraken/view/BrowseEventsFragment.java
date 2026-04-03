@@ -6,7 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,22 +17,29 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.SnapHelper;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.model.WaitingListRepository;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * BrowseEventsFragment acts as the fragment that displays lists of events and is used
@@ -48,9 +58,7 @@ public class BrowseEventsFragment extends Fragment {
     private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
     private static final String ARG_COLUMN_COUNT = "column-count";
-    private int mColumnCount = 2;
     private boolean yourEvents;
-    private UserRole userRole = UserRole.ENTRANT;
 
     // allEvents is the source-of-truth list from Firestore.
     // visibleEvents is the currently rendered subset after search/filter predicates are applied.
@@ -65,6 +73,9 @@ public class BrowseEventsFragment extends Fragment {
     private String restoredSearchQuery = "";
     private String restoredAvailableAt = "";
     private String restoredCapacity = "";
+    private LinearLayout filterBar;
+    private LinearLayout filterButtons;
+    private LinearSnapHelper snapHelper;
 
     public BrowseEventsFragment() { }
 
@@ -80,7 +91,6 @@ public class BrowseEventsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
             yourEvents = getArguments().getBoolean(ARG_YOUR_EVENTS, false);
             restoredSearchQuery = getArguments().getString(ARG_SEARCH_QUERY, "");
             restoredAvailableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT, "");
@@ -108,17 +118,38 @@ public class BrowseEventsFragment extends Fragment {
         // already-filtered data set.
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
 
-        if (mColumnCount <= 1) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        } else {
-            recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
-        }
-
         searchEventsText = view.findViewById(R.id.search_events_text);
         filterAvailableAtText = view.findViewById(R.id.filter_available_at_text);
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
         emptyResultsText = view.findViewById(R.id.empty_results_text);
         restoreFilterInputs();
+
+        filterBar = view.findViewById(R.id.browse_filter_layout);
+        filterButtons = view.findViewById(R.id.browse_filter_button_layout);
+
+        filterAvailableAtText.setOnClickListener(v -> showDateTimePicker(filterAvailableAtText));
+
+        Button createEventButton = view.findViewById(R.id.create_event_button);
+        Switch toggleDetailedView = view.findViewById(R.id.toggle_detailed_switch);
+        // Hide create button during normal event browsing, and vice versa with the detailed mode switch
+        if (!yourEvents) {
+            createEventButton.setVisibility(View.GONE);
+            toggleDetailedView.setVisibility(View.VISIBLE);
+        } else {
+            createEventButton.setVisibility(View.VISIBLE);
+            toggleDetailedView.setVisibility(View.GONE);
+        }
+
+        // Navigate to Create Events
+        createEventButton
+                .setOnClickListener(v -> {
+                    Bundle args = new Bundle();
+                    args.putBoolean("editEvent", false);
+                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
+
+                    Navigation.findNavController(v)
+                            .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
+                });
 
         // Event taps still navigate using the existing event-details flow. Search/filtering only
         // changes which events are visible, not how selection/navigation works.
@@ -137,9 +168,10 @@ public class BrowseEventsFragment extends Fragment {
 
                 String currentUserId = currentUser.getUid();
                 boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                boolean isCoOrganizer = event.getCoOrganizerIds().contains(currentUserId);
                 boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
 
-                if (!isOrganizer && !isInvited) {
+                if (!isOrganizer && !isCoOrganizer && !isInvited) {
                     Toast.makeText(getContext(),
                             "You are not invited to this private event",
                             Toast.LENGTH_SHORT).show();
@@ -148,10 +180,11 @@ public class BrowseEventsFragment extends Fragment {
             }
 
             Bundle args = new Bundle();
-            args.putString("eventId", event.getEventId());
+            args.putString(EventDetailsFragment.ARG_EVENT_ID, event.getEventId());
+            args.putBoolean(EventDetailsFragment.ARG_IS_PRIVATE, event.isPrivate());
 
-            // TODO: Implement logic that can determine user type before navigation
-            args.putSerializable("UserType", userRole);
+            // Pass UserRole.ENTRANT as default; EventDetailsFragment will re-calculate based on event ownership/co-organizer list
+            args.putSerializable("UserType", UserRole.ENTRANT);
 
             args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
             args.putString(ARG_SEARCH_QUERY, searchEventsText.getText().toString());
@@ -164,61 +197,103 @@ public class BrowseEventsFragment extends Fragment {
 
         recyclerView.setAdapter(adapter);
 
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+
+        // Following lines set the default behavior of the fragment to the default browsing mode
+        searchEventsText.setVisibility(View.VISIBLE);
+        filterBar.setVisibility(View.VISIBLE);
+        filterButtons.setVisibility(View.VISIBLE);
+        adapter.setDetailed(false);
+
         // Load the source data first, then allow UI controls to refine the in-memory list.
         loadEvents();
         wireSearchAndFilters(view);
 
-        Button createEventButton = view.findViewById(R.id.create_event_button);
-        // Hide button visibility to people browsing from the Browse Events button option
-        if (!yourEvents) {
-            createEventButton.setVisibility(View.GONE);
-        }
-
-        // Navigate to Create Events
-        createEventButton
-                .setOnClickListener(v -> {
-                    Bundle args = new Bundle();
-                    args.putBoolean("editEvent", false);
-                    args.putBoolean("cameFromYourEvents", true); // Set to true because it guaranteed means the user came from the your events page
-
-                    Navigation.findNavController(v)
-                            .navigate(R.id.action_browseEventsFragment_to_createEventFragment, args);
-                });
+        toggleDetailedView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    searchEventsText.setVisibility(View.GONE);
+                    filterBar.setVisibility(View.GONE);
+                    filterButtons.setVisibility(View.GONE);
+                    recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+                    snapHelper = new LinearSnapHelper();
+                    snapHelper.attachToRecyclerView(recyclerView);
+                    adapter.setDetailed(true);
+                } else {
+                    searchEventsText.setVisibility(View.VISIBLE);
+                    filterBar.setVisibility(View.VISIBLE);
+                    filterButtons.setVisibility(View.VISIBLE);
+                    recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+                    // Detach the snaphelper if we are coming back from a detailed view.
+                    if (snapHelper != null) {
+                        snapHelper.attachToRecyclerView(null);
+                        snapHelper = null;
+                    }
+                    adapter.setDetailed(false);
+                }
+            }
+        });
 
         // Return to Main Menu from Toolbar
         view.findViewById(R.id.home_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_mainMenuFragment)
+                                .navigate(R.id.action_global_mainMenuFragment)
                 );
 
         // Go to Profile View from Toolbar
         view.findViewById(R.id.profile_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_viewProfileFragment)
+                                .navigate(R.id.action_global_viewProfileFragment)
                 );
 
         // Navigate to Notifications
         view.findViewById(R.id.notifications_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_browseEventsFragment_to_notificationFragment)
+                                .navigate(R.id.action_global_notificationFragment)
                 );
 
-        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
-        // Become an organizer for viewing event details
-        view.findViewById(R.id.dummy_organizer_button).setOnClickListener(v -> {
-            userRole = UserRole.ORGANIZER;
-        });
-
-        // TODO: REMOVE DUMMY TEST BUTTON + FUNCTION
-        // Become an entrant for viewing event details
-        view.findViewById(R.id.dummy_entrant_button).setOnClickListener(v -> {
-            userRole = UserRole.ENTRANT;
-        });
-
         return view;
+    }
+
+    private void showDateTimePicker(EditText editText) {
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select Date")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            utcCalendar.setTimeInMillis(selection);
+
+            MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_12H)
+                    .setHour(12)
+                    .setMinute(0)
+                    .setTitleText("Select Time")
+                    .build();
+
+            timePicker.addOnPositiveButtonClickListener(v -> {
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.YEAR, utcCalendar.get(Calendar.YEAR));
+                calendar.set(Calendar.MONTH, utcCalendar.get(Calendar.MONTH));
+                calendar.set(Calendar.DAY_OF_MONTH, utcCalendar.get(Calendar.DAY_OF_MONTH));
+                calendar.set(Calendar.HOUR_OF_DAY, timePicker.getHour());
+                calendar.set(Calendar.MINUTE, timePicker.getMinute());
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+
+                SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
+                editText.setText(sdf.format(calendar.getTime()));
+            });
+
+            timePicker.show(getParentFragmentManager(), "TIME_PICKER");
+        });
+
+        datePicker.show(getParentFragmentManager(), "DATE_PICKER");
     }
 
     private void wireSearchAndFilters(View view) {
@@ -234,6 +309,8 @@ public class BrowseEventsFragment extends Fragment {
      */
     private void loadEvents() {
         EventRepository repository = new EventRepository();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String currentUserId = currentUser != null ? currentUser.getUid() : null;
 
         repository.getAllEvents(new EventRepository.EventsCallback() {
             @Override
@@ -241,7 +318,17 @@ public class BrowseEventsFragment extends Fragment {
                 // Replace the source list atomically, then re-run the current filter state against
                 // the fresh data so browse results stay in sync with Firestore.
                 allEvents.clear();
-                allEvents.addAll(events);
+                if (yourEvents && currentUserId != null) {
+                    for (Event event : events) {
+                        if (event.getOrganizerId().equals(currentUserId) ||
+                            event.getCoOrganizerIds().contains(currentUserId) ||
+                            event.getInvitedUserIds().contains(currentUserId)) {
+                            allEvents.add(event);
+                        }
+                    }
+                } else {
+                    allEvents.addAll(events);
+                }
                 applyFilters(false);
             }
 
@@ -320,7 +407,7 @@ public class BrowseEventsFragment extends Fragment {
             if (showValidationErrors && getContext() != null) {
                 Toast.makeText(
                         getContext(),
-                        "Enter availability as dd/MM/yyyy h:mm AM/PM",
+                        "Please enter a valid date and time",
                         Toast.LENGTH_SHORT
                 ).show();
             }

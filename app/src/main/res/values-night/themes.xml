@@ -2,8 +2,21 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.ReleaseTheKraken" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">@color/dark_blue_text</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/dark_blue_text</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondary">@color/dark_blue_text</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- AM/PM selector in TimePicker uses Tertiary colors in Material 3 -->
+        <item name="colorTertiary">@color/dark_blue_text</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorTertiaryContainer">@color/dark_blue_text</item>
+        <item name="colorOnTertiaryContainer">@color/white</item>
     </style>
+
+    <style name="Theme.ReleaseTheKraken" parent="Base.Theme.ReleaseTheKraken" />
 
     <style name="ThemeOverlay.ReleaseTheKraken.FullscreenContainer" parent="">
         <item name="fullscreenBackgroundColor">@color/light_blue_900</item>

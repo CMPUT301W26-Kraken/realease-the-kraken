@@ -36,6 +36,7 @@ public class WaitingListService {
         REGISTRATION_CLOSED,
         DUPLICATE_ENTRY,
         INVALID_INPUT,
+        ALREADY_ORGANIZER,
     }
 
     /**
@@ -132,11 +133,8 @@ public class WaitingListService {
     }
 
     /**
-     * join the waiting list for an event
-     * this method enforces acceptance criteria
-     *  - Entrant can join during registration period
-     *  - Duplicate entries prevented
-     *  - Entry is stored via WaitingListRepository using Firestore
+     * join the waiting list for an event without location data
+     * delegates to the full method with 0.0 coordinates
      *
      * @param event event the entrant is trying to join
      * @param entrantId  entrant/device identifier
@@ -144,9 +142,33 @@ public class WaitingListService {
      * @param entrantId entrant/device identifier
      */
     public void joinWaitingList(Event event, String entrantId, JoinCallback callback) {
+        joinWaitingList(event, entrantId, 0.0, 0.0, callback);
+    }
+
+    /**
+     * join the waiting list for an event with optional location data
+     * this method enforces acceptance criteria
+     *  - Entrant can join during registration period
+     *  - Duplicate entries prevented
+     *  - Entry is stored via WaitingListRepository using Firestore
+     *
+     * @param event     event the entrant is trying to join
+     * @param entrantId entrant/device identifier
+     * @param latitude  latitude where entrant joined, 0.0 if not captured
+     * @param longitude longitude where entrant joined, 0.0 if not captured
+     * @param callback  callback returning the join result
+     */
+    public void joinWaitingList(Event event, String entrantId,
+                                double latitude, double longitude, JoinCallback callback) {
         //validation to avoid null or empty values causing crashes
         if (event == null || entrantId == null || entrantId.trim().isEmpty()) {
             if (callback != null) callback.onResult(JoinResult.INVALID_INPUT);
+            return;
+        }
+
+        // Prevent organizers/co-organizers from joining the waiting list
+        if (entrantId.equals(event.getOrganizerId()) || event.getCoOrganizerIds().contains(entrantId)) {
+            if (callback != null) callback.onResult(JoinResult.ALREADY_ORGANIZER);
             return;
         }
 
@@ -167,11 +189,13 @@ public class WaitingListService {
                             if (callback != null) callback.onResult(JoinResult.DUPLICATE_ENTRY);
                             return;
                         }
-                        // 3. create the waiting list entry with exact join time
+                        // 3. create the waiting list entry with exact join time and coordinates
                         WaitingListEntry entry = new WaitingListEntry(
                                 event.getEventId(),
                                 entrantId,
-                                nowMillis
+                                nowMillis,
+                                latitude,
+                                longitude
                         );
                         // 4. store it repository will later store in Firestore
                         waitingListRepository.addToWaitingList(

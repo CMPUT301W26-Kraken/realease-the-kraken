@@ -5,54 +5,106 @@ package com.example.releasethekraken.model;
  * stores information about which entrant received the notification,
  * which event it relates to, the message content, the notification
  * type, and the time the notification was sent.
- *this class belongs to the model layer and contains no UI logic
+ * this class belongs to the model layer and contains no UI logic
  */
-
-
 public class Notification {
 
-    private final String entrantId; //unique id for entrant receiving the notification
-    private final String eventId; //unique id for the event the notification is for
-    private final String message; //notification message
-    private final String type; //type of notification (e.g. "win")
-    private final long sentAtMillis; //time in milliseconds when the notification was sent
-
+    private final String notificationId;
+    private final String entrantId;
+    private final String eventId;
+    private final String eventTitle; // Added to show user-friendly name instead of ID
+    private final String message;
+    private final String type;
+    private final long sentAtMillis;
+    private final boolean read;
+    private final String responseStatus;
 
     /**
-     * creates a notification object
-     *
-     * @param entrantId the entrant receiving the notification
-     * @param eventId the event related to the notification
-     * @param message the message content of the notification
-     * @param type the type of notification
-     * @param sentAtMillis the timestamp of when the notification was sent
+     * Backward-compatible constructor for older call sites.
      */
     public Notification(String entrantId, String eventId, String message, String type, long sentAtMillis) {
+        this(null, entrantId, eventId, null, message, type, sentAtMillis, false, null);
+    }
+
+    public Notification(String notificationId,
+                        String entrantId,
+                        String eventId,
+                        String eventTitle,
+                        String message,
+                        String type,
+                        long sentAtMillis,
+                        boolean read,
+                        String responseStatus) {
+        this.notificationId = notificationId;
         this.entrantId = entrantId;
         this.eventId = eventId;
+        this.eventTitle = eventTitle;
         this.message = message;
         this.type = type;
         this.sentAtMillis = sentAtMillis;
-
-    }
-        public String getEntrantId() {
-            return entrantId;  //returns entrant id
-        }
-
-        public String getEventId() {
-            return eventId; //returns event id
-        }
-
-        public String getMessage() {
-            return message; //returns message
-        }
-
-        public String getType() {
-            return type; //returns type of message
-        }
-
-        public long getSentAtMillis() {
-            return sentAtMillis; //returns sent at
-        }
+        this.read = read;
+        this.responseStatus = responseStatus;
     }
 
+    public String getNotificationId() {
+        return notificationId;
+    }
+
+    public String getEntrantId() {
+        return entrantId;
+    }
+
+    public String getEventId() {
+        return eventId;
+    }
+
+    public String getEventTitle() {
+        return eventTitle;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public long getSentAtMillis() {
+        return sentAtMillis;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public String getResponseStatus() {
+        return responseStatus;
+    }
+
+    public boolean isInvitation() {
+        return type != null && (
+                type.equalsIgnoreCase("win")
+                        || type.equalsIgnoreCase("invitation")
+                        || type.equalsIgnoreCase("selected")
+                        || type.equalsIgnoreCase("co_organizer")
+                        || type.equalsIgnoreCase("private_invite")
+        );
+    }
+
+    public boolean canAcceptInvitation() {
+        return isInvitation()
+                && (responseStatus == null
+                || responseStatus.trim().isEmpty()
+                || (!responseStatus.equalsIgnoreCase("accepted")
+                && !responseStatus.equalsIgnoreCase("declined")));
+    }
+
+    public boolean canDeclineInvitation() {
+        return isInvitation()
+                && (responseStatus == null
+                || responseStatus.trim().isEmpty()
+                || (!responseStatus.equalsIgnoreCase("accepted")
+                && !responseStatus.equalsIgnoreCase("declined")));
+    }
+}

@@ -7,28 +7,21 @@
     android:orientation="vertical">
 
     <!-- Search entry point for keyword-based event lookup (#97). -->
-    <LinearLayout
+    <EditText
+        android:id="@+id/search_events_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/search_events_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="20dp"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="@string/search_events_hint"
-            android:inputType="text" />
-    </LinearLayout>
+        android:layout_marginEnd="20dp"
+        android:layout_weight="0"
+        android:ems="10"
+        android:hint="@string/search_events_hint"
+        android:inputType="text" />
 
     <!-- Structured filters for timestamp availability and minimum capacity (#83). -->
     <LinearLayout
+        android:id="@+id/browse_filter_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -42,7 +35,9 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="2"
             android:hint="@string/filter_available_at_hint"
-            android:inputType="text" />
+            android:inputType="text"
+            android:focusable="false"
+            android:clickable="true" />
 
         <EditText
             android:id="@+id/filter_capacity_text"
@@ -56,6 +51,7 @@
 
     <!-- Search and filter submission controls. Clear restores the unfiltered event list. -->
     <LinearLayout
+        android:id="@+id/browse_filter_button_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -113,6 +109,15 @@
             android:textColor="@color/dark_blue_text"
             android:textStyle="bold" />
 
+        <Switch
+            android:id="@+id/toggle_detailed_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="@string/toggle_detailed_switch" />
+
     </LinearLayout>
 
     <!-- RecyclerView renders the filtered subset maintained by BrowseEventsFragment. -->
@@ -137,28 +142,6 @@
         android:text="@string/no_matching_events"
         android:textColor="@color/dark_blue_text"
         android:visibility="gone" />
-
-    <!-- Temporary dummy role controls left in place from the existing browse screen. -->
-    <LinearLayout
-        android:id="@+id/DummyButtonLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/dummy_organizer_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Organizer" />
-
-        <Button
-            android:id="@+id/dummy_entrant_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Entrant" />
-    </LinearLayout>
 
     <!-- Existing bottom toolbar/navigation controls. -->
     <LinearLayout

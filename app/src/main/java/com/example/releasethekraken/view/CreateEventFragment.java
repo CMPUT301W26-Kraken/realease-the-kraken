@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,12 +23,17 @@ import androidx.work.WorkManager;
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.DrawEntrantsWorker;
+import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.databinding.FragmentCreateEventBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.NotificationRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
@@ -35,7 +41,9 @@ import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class CreateEventFragment extends Fragment {
@@ -47,7 +55,15 @@ public class CreateEventFragment extends Fragment {
     private String eventID;
     private Uri selectedPosterUri;
     private String existingPosterUrl = "";
+    
     private final ArrayList<String> invitedUserIds = new ArrayList<>();
+    private final ArrayList<String> coOrganizerIds = new ArrayList<>();
+    
+    // For bracket display
+    private final ArrayList<String> invitedUserNames = new ArrayList<>();
+    private final ArrayList<String> coOrganizerNames = new ArrayList<>();
+
+    private NotificationService notificationService;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -64,6 +80,7 @@ public class CreateEventFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        notificationService = new NotificationService(new NotificationRepository());
         if (getArguments() != null) {
             editEvent = getArguments().getBoolean("editEvent");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
@@ -93,53 +110,99 @@ public class CreateEventFragment extends Fragment {
             binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
             binding.createEvent.setText(R.string.edit_event_confirm_button);
             loadEventForEditing();
+        } else {
+            updatePreviews();
         }
 
         binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
         binding.uploadPosterText.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
-        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleInviteSection(isChecked));
-
-        binding.addInviteButton.setOnClickListener(v -> {
-            String input = binding.inviteSearchInput.getText().toString().trim();
-            if (TextUtils.isEmpty(input)) {
-                Toast.makeText(getContext(), "Enter a name, email, or phone to invite", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            binding.addInviteButton.setEnabled(false);
-            new ProfileRepository(requireContext())
-                    .searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
-                        @Override
-                        public void onSuccess(Profile profile) {
-                            if (!isAdded()) {
-                                return;
-                            }
-                            binding.addInviteButton.setEnabled(true);
-                            if (profile == null || TextUtils.isEmpty(profile.getUid())) {
-                                Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            if (invitedUserIds.contains(profile.getUid())) {
-                                Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            invitedUserIds.add(profile.getUid());
-                            binding.inviteSearchInput.setText("");
-                            updateInvitedUsersPreview(profile.getName());
-                            Toast.makeText(getContext(), "Added " + profile.getName(), Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onFailure(Exception exception) {
-                            if (!isAdded()) {
-                                return;
-                            }
-                            binding.addInviteButton.setEnabled(true);
-                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+        binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            binding.invitedGuestsLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
+
+        // Co-organizer logic
+        binding.addCoOrganizerButton.setOnClickListener(v -> {
+            String input = binding.coOrganizerSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) return;
+
+            binding.addCoOrganizerButton.setEnabled(false);
+            new ProfileRepository(requireContext()).searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                @Override
+                public void onSuccess(Profile profile) {
+                    if (!isAdded()) return;
+                    binding.addCoOrganizerButton.setEnabled(true);
+                    if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+                        String uid = profile.getUid();
+                        if (invitedUserIds.contains(uid)) {
+                            Toast.makeText(getContext(), "User is already invited as a guest", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!coOrganizerIds.contains(uid)) {
+                            coOrganizerIds.add(uid);
+                            coOrganizerNames.add(profile.getName());
+                            binding.coOrganizerSearchInput.setText("");
+                            updatePreviews();
+                            Toast.makeText(getContext(), "Added " + profile.getName() + " as co-organizer", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "Already a co-organizer", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception exception) {
+                    if (!isAdded()) return;
+                    binding.addCoOrganizerButton.setEnabled(true);
+                    Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        // Guest logic
+        binding.addGuestInviteButton.setOnClickListener(v -> {
+            String input = binding.guestInviteSearchInput.getText().toString().trim();
+            if (TextUtils.isEmpty(input)) return;
+
+            binding.addGuestInviteButton.setEnabled(false);
+            new ProfileRepository(requireContext()).searchProfiles(input, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                @Override
+                public void onSuccess(Profile profile) {
+                    if (!isAdded()) return;
+                    binding.addGuestInviteButton.setEnabled(true);
+                    if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+                        String uid = profile.getUid();
+                        if (coOrganizerIds.contains(uid)) {
+                            Toast.makeText(getContext(), "User is already a co-organizer", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!invitedUserIds.contains(uid)) {
+                            invitedUserIds.add(uid);
+                            invitedUserNames.add(profile.getName());
+                            binding.guestInviteSearchInput.setText("");
+                            updatePreviews();
+                            Toast.makeText(getContext(), "Invited " + profile.getName(), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "User already invited", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception exception) {
+                    if (!isAdded()) return;
+                    binding.addGuestInviteButton.setEnabled(true);
+                    Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        binding.registrationStartDate.setOnClickListener(v -> showDateTimePicker(binding.registrationStartDate));
+        binding.registrationEndDate.setOnClickListener(v -> showDateTimePicker(binding.registrationEndDate));
 
         binding.cancelEventCreation.setOnClickListener(v -> {
             if (editEvent) {
@@ -158,23 +221,55 @@ public class CreateEventFragment extends Fragment {
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
 
-    private void toggleInviteSection(boolean visible) {
-        int state = visible ? View.VISIBLE : View.GONE;
-        binding.inviteSectionTitle.setVisibility(state);
-        binding.inviteSearchInput.setVisibility(state);
-        binding.addInviteButton.setVisibility(state);
-        binding.invitedUsersPreview.setVisibility(state);
-        if (visible) {
-            updateInvitedUsersPreview(null);
-        }
+    private void showDateTimePicker(EditText editText) {
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Select Date")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_12H)
+                    .setHour(12)
+                    .setMinute(0)
+                    .setTitleText("Select Time")
+                    .build();
+
+            timePicker.addOnPositiveButtonClickListener(v -> {
+                Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                utcCalendar.setTimeInMillis(selection);
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(utcCalendar.get(Calendar.YEAR), 
+                            utcCalendar.get(Calendar.MONTH), 
+                            utcCalendar.get(Calendar.DAY_OF_MONTH),
+                            timePicker.getHour(), 
+                            timePicker.getMinute(), 
+                            0);
+                calendar.set(Calendar.MILLISECOND, 0);
+
+                SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
+                editText.setText(sdf.format(calendar.getTime()));
+            });
+
+            timePicker.show(getChildFragmentManager(), "TIME_PICKER");
+        });
+
+        datePicker.show(getChildFragmentManager(), "DATE_PICKER");
     }
 
-    private void updateInvitedUsersPreview(@Nullable String lastAddedName) {
-        String text = "Invited: " + invitedUserIds.size();
-        if (lastAddedName != null && !lastAddedName.trim().isEmpty()) {
-            text += " (" + lastAddedName + ")";
+    private void updatePreviews() {
+        String coOrgText = "Co-Organizers added: " + coOrganizerIds.size();
+        if (!coOrganizerNames.isEmpty()) {
+            coOrgText += " [" + TextUtils.join(", ", coOrganizerNames) + "]";
         }
-        binding.invitedUsersPreview.setText(text);
+        binding.coOrganizersPreview.setText(coOrgText);
+
+        String guestText = "Guests invited: " + invitedUserIds.size();
+        if (!invitedUserNames.isEmpty()) {
+            guestText += " [" + TextUtils.join(", ", invitedUserNames) + "]";
+        }
+        binding.invitedGuestsPreview.setText(guestText);
     }
 
     private void loadEventForEditing() {
@@ -197,9 +292,20 @@ public class CreateEventFragment extends Fragment {
 
                 invitedUserIds.clear();
                 invitedUserIds.addAll(event.getInvitedUserIds());
+                coOrganizerIds.clear();
+                coOrganizerIds.addAll(event.getCoOrganizerIds());
+                
+                // For editing, we'd ideally fetch names, but for now we use IDs as placeholders
+                invitedUserNames.clear();
+                invitedUserNames.addAll(invitedUserIds);
+                coOrganizerNames.clear();
+                coOrganizerNames.addAll(coOrganizerIds);
+
                 binding.privateEventSwitch.setChecked(event.isPrivate());
-                toggleInviteSection(event.isPrivate());
-                updateInvitedUsersPreview(null);
+                binding.invitedGuestsLayout.setVisibility(event.isPrivate() ? View.VISIBLE : View.GONE);
+                updatePreviews();
+
+                binding.enableGeolocationSwitch.setChecked(event.isGeolocationRequired());
 
                 if (!existingPosterUrl.isEmpty()) {
                     Glide.with(CreateEventFragment.this)
@@ -239,7 +345,7 @@ public class CreateEventFragment extends Fragment {
             registrationStartMillis = sdf.parse(startText).getTime();
             registrationEndMillis = sdf.parse(endText).getTime();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Enter dates as dd/MM/yyyy h:mm AM/PM", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Please enter a valid date and time", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -267,6 +373,7 @@ public class CreateEventFragment extends Fragment {
                 : buildEventId(title);
 
         boolean isPrivate = binding.privateEventSwitch.isChecked();
+        boolean geolocationRequired = binding.enableGeolocationSwitch.isChecked();
 
         String organizerId = "";
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -284,6 +391,11 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        // According to requirement: we become co-organizer or guest on ACCEPTANCE.
+        // So during creation, we only save the organizer.
+        // HOWEVER, for private events, people MUST be in invitedUserIds to even see it.
+        // So we add guests to invitedUserIds immediately, but co-organizers will be added on acceptance.
+        
         Event event = new Event(
                 eventId,
                 title,
@@ -293,8 +405,10 @@ public class CreateEventFragment extends Fragment {
                 capacity,
                 existingPosterUrl,
                 isPrivate,
-                invitedUserIds,
-                organizerId
+                invitedUserIds, // Guests allowed to see private event
+                new ArrayList<>(), // No co-organizers yet
+                organizerId,
+                geolocationRequired
         );
 
         binding.loading.setVisibility(View.VISIBLE);
@@ -331,6 +445,9 @@ public class CreateEventFragment extends Fragment {
 
                 binding.loading.setVisibility(View.GONE);
                 binding.createEvent.setEnabled(true);
+                
+                // Send invitations now that event is created
+                sendInvitations(event);
 
                 long delay = registrationEndMillis - System.currentTimeMillis();
                 Data inputData = new Data.Builder()
@@ -357,6 +474,41 @@ public class CreateEventFragment extends Fragment {
             public void onError(Exception e) {
                 handleSaveError(e);
             }
+        });
+    }
+    
+    private void sendInvitations(Event event) {
+        // Invite co-organizers - use specific type for acceptance flow
+        for (String coOrgId : coOrganizerIds) {
+            notificationService.sendCoOrganizerNotification(event, coOrgId, null);
+        }
+        
+        // Invite private guests if applicable
+        if (event.isPrivate()) {
+            for (String guestId : invitedUserIds) {
+                // Use a specific type for private invites
+                sendPrivateInviteNotification(event, guestId);
+            }
+        }
+    }
+
+    private void sendPrivateInviteNotification(Event event, String userId) {
+        long nowMillis = System.currentTimeMillis();
+        String message = "You have been invited to join the private event: " + event.getTitle();
+        
+        com.example.releasethekraken.model.Notification notification = new com.example.releasethekraken.model.Notification(
+                userId,
+                event.getEventId(),
+                message,
+                "PRIVATE_INVITE",
+                nowMillis
+        );
+        
+        new NotificationRepository().sendNotification(notification, new NotificationRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {}
+            @Override
+            public void onError(Exception e) {}
         });
     }
 
