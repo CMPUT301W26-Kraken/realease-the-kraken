@@ -273,6 +273,9 @@ public class ProfileRepository {
                     for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                         Profile profile = doc.toObject(Profile.class);
                         if (profile != null) {
+                            if (profile.getUid() == null || profile.getUid().trim().isEmpty()) {
+                                profile.setUid(doc.getId());
+                            }
                             profiles.add(profile);
                         }
                     }
