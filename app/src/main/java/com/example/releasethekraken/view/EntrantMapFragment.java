@@ -66,8 +66,7 @@ public class EntrantMapFragment extends Fragment implements OnMapReadyCallback {
 
         Button backButton = view.findViewById(R.id.map_back_button);
         backButton.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(
-                        R.id.action_entrantMapFragment_to_eventDetailsFragment));
+                Navigation.findNavController(v).popBackStack());
 
         // initialise the map
         SupportMapFragment mapFragment = (SupportMapFragment)

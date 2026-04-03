@@ -115,21 +115,21 @@ public class UserListFragment extends Fragment {
         view.findViewById(R.id.home_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_userListFragment_to_mainMenuFragment)
+                                .navigate(R.id.action_global_mainMenuFragment)
                 );
 
         // Go to Profile View from Toolbar
         view.findViewById(R.id.profile_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_userListFragment_to_viewProfileFragment)
+                                .navigate(R.id.action_global_viewProfileFragment)
                 );
 
         // Navigate to Notifications
         view.findViewById(R.id.notifications_toolbar_button)
                 .setOnClickListener(v ->
                         Navigation.findNavController(v)
-                                .navigate(R.id.action_userListFragment_to_notificationFragment)
+                                .navigate(R.id.action_global_notificationFragment)
                 );
 
         // Navigate back to event details

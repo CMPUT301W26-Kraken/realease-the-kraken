@@ -203,7 +203,7 @@ public class CreateEventFragment extends Fragment {
             } else {
                 Bundle args = new Bundle();
                 args.putBoolean("yourEvents", true);
-                Navigation.findNavController(v).navigate(R.id.action_browseEventsFragment_to_mainMenuFragment, args);
+                Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
         });
 

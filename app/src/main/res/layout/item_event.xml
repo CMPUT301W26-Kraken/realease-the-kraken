@@ -18,10 +18,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Event Title"
         android:textAlignment="center"
         android:textSize="16sp"
-        android:textStyle="bold"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/event_browse_reg_end"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Registration Ends at : Time"
+        android:textAlignment="center" />
 
 </LinearLayout>
