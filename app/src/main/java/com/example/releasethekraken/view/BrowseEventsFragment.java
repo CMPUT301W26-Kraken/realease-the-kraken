@@ -41,6 +41,9 @@ import java.util.Locale;
  */
 public class BrowseEventsFragment extends Fragment {
     private static final String ARG_YOUR_EVENTS = "yourEvents";
+    private static final String ARG_SEARCH_QUERY = "searchQuery";
+    private static final String ARG_FILTER_AVAILABLE_AT = "filterAvailableAt";
+    private static final String ARG_FILTER_CAPACITY = "filterCapacity";
     // Keep browse-screen parsing aligned with create-event input so users enter one shared format.
     private static final String DATE_TIME_PATTERN = "dd/MM/yyyy h:mm a";
 
@@ -59,6 +62,9 @@ public class BrowseEventsFragment extends Fragment {
     private EditText filterAvailableAtText;
     private EditText filterCapacityText;
     private TextView emptyResultsText;
+    private String restoredSearchQuery = "";
+    private String restoredAvailableAt = "";
+    private String restoredCapacity = "";
 
     public BrowseEventsFragment() { }
 
@@ -76,6 +82,9 @@ public class BrowseEventsFragment extends Fragment {
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
             yourEvents = getArguments().getBoolean(ARG_YOUR_EVENTS, false);
+            restoredSearchQuery = getArguments().getString(ARG_SEARCH_QUERY, "");
+            restoredAvailableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT, "");
+            restoredCapacity = getArguments().getString(ARG_FILTER_CAPACITY, "");
         }
     }
 
@@ -109,6 +118,7 @@ public class BrowseEventsFragment extends Fragment {
         filterAvailableAtText = view.findViewById(R.id.filter_available_at_text);
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
         emptyResultsText = view.findViewById(R.id.empty_results_text);
+        restoreFilterInputs();
 
         // Event taps still navigate using the existing event-details flow. Search/filtering only
         // changes which events are visible, not how selection/navigation works.
@@ -144,6 +154,9 @@ public class BrowseEventsFragment extends Fragment {
             args.putSerializable("UserType", userRole);
 
             args.putBoolean("cameFromYourEvents", yourEvents); // Need to pass on so it can return to the proper fragment
+            args.putString(ARG_SEARCH_QUERY, searchEventsText.getText().toString());
+            args.putString(ARG_FILTER_AVAILABLE_AT, filterAvailableAtText.getText().toString());
+            args.putString(ARG_FILTER_CAPACITY, filterCapacityText.getText().toString());
 
             Navigation.findNavController(view)
                     .navigate(R.id.action_browseEventsFragment_to_eventDetailsFragment, args);
@@ -211,7 +224,6 @@ public class BrowseEventsFragment extends Fragment {
     private void wireSearchAndFilters(View view) {
         // Search and structured filters both feed the same applyFilters method so ticket #98
         // ("combine search with filters") is just the shared code path, not a separate screen.
-        view.findViewById(R.id.search_events_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.apply_filters_button).setOnClickListener(v -> applyFilters(true));
         view.findViewById(R.id.clear_filters_button).setOnClickListener(v -> clearFilters());
     }
@@ -271,7 +283,16 @@ public class BrowseEventsFragment extends Fragment {
         searchEventsText.setText("");
         filterAvailableAtText.setText("");
         filterCapacityText.setText("");
+        restoredSearchQuery = "";
+        restoredAvailableAt = "";
+        restoredCapacity = "";
         updateVisibleEvents(allEvents);
+    }
+
+    private void restoreFilterInputs() {
+        searchEventsText.setText(restoredSearchQuery);
+        filterAvailableAtText.setText(restoredAvailableAt);
+        filterCapacityText.setText(restoredCapacity);
     }
 
     private void updateVisibleEvents(List<Event> filteredEvents) {

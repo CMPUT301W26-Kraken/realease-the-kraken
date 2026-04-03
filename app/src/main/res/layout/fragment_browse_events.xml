@@ -20,20 +20,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
             android:layout_weight="1"
             android:ems="10"
             android:hint="@string/search_events_hint"
             android:inputType="text" />
-
-        <ImageButton
-            android:id="@+id/search_events_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="20dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:tint="@color/black"
-            app:srcCompat="@android:drawable/ic_menu_search" />
     </LinearLayout>
 
     <!-- Structured filters for timestamp availability and minimum capacity (#83). -->

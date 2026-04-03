@@ -42,6 +42,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";
+    private static final String ARG_SEARCH_QUERY = "searchQuery";
+    private static final String ARG_FILTER_AVAILABLE_AT = "filterAvailableAt";
+    private static final String ARG_FILTER_CAPACITY = "filterCapacity";
     private static final long MAX_POSTER_BYTES = 5L * 1024L * 1024L;
 
     private String eventId;
@@ -60,6 +63,9 @@ public class EventDetailsFragment extends Fragment {
     private UserRole userType;
     private boolean cameFromYourEvents;
     private boolean isJoined = false;
+    private String browseSearchQuery = "";
+    private String browseFilterAvailableAt = "";
+    private String browseFilterCapacity = "";
 
     public EventDetailsFragment() {}
 
@@ -74,6 +80,9 @@ public class EventDetailsFragment extends Fragment {
             }
             userType = (UserRole) getArguments().getSerializable("UserType");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
+            browseSearchQuery = getArguments().getString(ARG_SEARCH_QUERY, "");
+            browseFilterAvailableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT, "");
+            browseFilterCapacity = getArguments().getString(ARG_FILTER_CAPACITY, "");
         }
 
         waitingListRepository = new WaitingListRepository();
@@ -129,6 +138,9 @@ public class EventDetailsFragment extends Fragment {
         returnToBrowseButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putBoolean("yourEvents", cameFromYourEvents);
+            args.putString(ARG_SEARCH_QUERY, browseSearchQuery);
+            args.putString(ARG_FILTER_AVAILABLE_AT, browseFilterAvailableAt);
+            args.putString(ARG_FILTER_CAPACITY, browseFilterCapacity);
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_browseEventsFragment, args);
         });
 
