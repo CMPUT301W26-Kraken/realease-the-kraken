@@ -28,18 +28,6 @@ import com.example.releasethekraken.repository.ProfileRepository;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * UserListFragment is a fragment that displays a list of users. This fragment can either be used
- * by admins by navigating to it from the main menu in order to see all the users or from an event
- * details page as an organizer or admin in order to see users who are in the waiting list for that event.
- *
- * Takes a Boolean argument called adminView that sets visibility and determines if all users are going
- * to be shown, or just those belonging to a specific event's waiting list.
- * Takes a String argument called eventId that corresponds the event's id so that it fetches the proper
- * waiting list.
- * Takes a UserRole argument userRole that determines the role of the user, whether it is an admin
- * viewing the all users list or an organizer viewing their waiting list makes a difference here.
- */
 public class UserListFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -94,9 +82,10 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
+        // FIX 4: Renamed OnDeleteClickListener -> OnProfileClickListener
         adapter = new ProfileListAdapter(profileList, adminView, (profile, position) -> {
             if (adminView) {
-                onDeleteClicked(profile, position);
+                onDeleteClicked(profile);
             } else if (userRole == UserRole.ORGANIZER) {
                 showCoOrganizerDialog(profile);
             }
@@ -137,51 +126,57 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
-    /**
-     * Called when the admin taps the delete button on a profile row.
-     * Shows a confirmation dialog before deleting from Firestore.
-     */
-    private void onDeleteClicked(Profile profile, int position) {
+    // FIX 1: Removed position param — now finds item by UID after Firestore callback
+    private void onDeleteClicked(Profile profile) {
         String displayName = (profile.getName() != null && !profile.getName().isEmpty())
                 ? profile.getName() : profile.getUid();
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Remove Profile")
-                .setMessage("Are you sure you want to remove " + displayName + "? This cannot be undone.")
-                .setPositiveButton("Remove", (dialog, which) -> {
+                .setTitle(getString(R.string.remove_profile_title))
+                .setMessage(getString(R.string.remove_profile_message, displayName))
+                .setPositiveButton(getString(R.string.remove_profile_confirm), (dialog, which) -> {
                     profileRepository.deleteProfileFromFirestore(profile.getUid(),
                             new ProfileRepository.ProfileRepositoryCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
                                     if (!isAdded()) return;
-                                    profileList.remove(position);
-                                    adapter.notifyItemRemoved(position);
-                                    adapter.notifyItemRangeChanged(position, profileList.size());
+                                    // FIX 1: Find by UID instead of stale position
+                                    int index = -1;
+                                    for (int i = 0; i < profileList.size(); i++) {
+                                        if (profileList.get(i).getUid().equals(profile.getUid())) {
+                                            index = i;
+                                            break;
+                                        }
+                                    }
+                                    if (index != -1) {
+                                        profileList.remove(index);
+                                        adapter.notifyItemRemoved(index);
+                                        adapter.notifyItemRangeChanged(index, profileList.size());
+                                    }
                                     Toast.makeText(requireContext(),
-                                            displayName + " removed.", Toast.LENGTH_SHORT).show();
+                                            getString(R.string.remove_profile_success, displayName),
+                                            Toast.LENGTH_SHORT).show();
                                 }
 
                                 @Override
                                 public void onFailure(Exception exception) {
                                     if (!isAdded()) return;
                                     Toast.makeText(requireContext(),
-                                            "Failed to remove profile: " + exception.getMessage(),
+                                            getString(R.string.remove_profile_failure, exception.getMessage()),
                                             Toast.LENGTH_SHORT).show();
                                 }
                             });
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
-    /**
-     * Fetches all profiles from Firestore and populates the RecyclerView.
-     * Used when the fragment is opened in admin view.
-     */
     private void loadAllProfiles() {
         profileRepository.getAllProfiles(new ProfileRepository.ProfileRepositoryCallback<List<Profile>>() {
             @Override
             public void onSuccess(List<Profile> result) {
+                // FIX 2: Guard against detached fragment
+                if (!isAdded()) return;
                 profileList.clear();
                 profileList.addAll(result);
                 adapter.notifyDataSetChanged();
@@ -189,7 +184,10 @@ public class UserListFragment extends Fragment {
 
             @Override
             public void onFailure(Exception exception) {
-                Toast.makeText(requireContext(), "Failed to load profiles", Toast.LENGTH_SHORT).show();
+                // FIX 2: Guard against detached fragment
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(),
+                        getString(R.string.load_profiles_failure), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -256,7 +254,6 @@ public class UserListFragment extends Fragment {
 
                         @Override
                         public void onFailure(Exception exception) {
-                            // Add a placeholder profile with just the ID if fetch fails
                             Profile placeholder = new Profile(entrantId, "", "", null);
                             placeholder.setUid(entrantId);
                             profileList.add(placeholder);
@@ -273,28 +270,21 @@ public class UserListFragment extends Fragment {
         });
     }
 
-    /**
-     * Callback interface for delete button clicks in the adapter.
-     */
-    interface OnDeleteClickListener {
-        void onDelete(Profile profile, int position);
+    // FIX 4: Renamed from OnDeleteClickListener to OnProfileClickListener
+    interface OnProfileClickListener {
+        void onProfileClick(Profile profile, int position);
     }
 
-    /**
-     * RecyclerView adapter for displaying a list of profiles.
-     * Shows a delete button on each row when in admin view.
-     * Supports both admin delete actions and organizer click actions.
-     */
     private static class ProfileListAdapter extends RecyclerView.Adapter<ProfileListAdapter.ProfileViewHolder> {
 
         private final List<Profile> profiles;
         private final boolean showDeleteButton;
-        private final OnDeleteClickListener deleteListener;
+        private final OnProfileClickListener clickListener;
 
-        ProfileListAdapter(List<Profile> profiles, boolean showDeleteButton, OnDeleteClickListener deleteListener) {
+        ProfileListAdapter(List<Profile> profiles, boolean showDeleteButton, OnProfileClickListener clickListener) {
             this.profiles = profiles;
             this.showDeleteButton = showDeleteButton;
-            this.deleteListener = deleteListener;
+            this.clickListener = clickListener;
         }
 
         @NonNull
@@ -322,6 +312,8 @@ public class UserListFragment extends Fragment {
             deleteBtn.setImageDrawable(
                     parent.getContext().getDrawable(android.R.drawable.ic_menu_delete));
             deleteBtn.setBackground(null);
+            // FIX 5: Added contentDescription for screen reader accessibility
+            deleteBtn.setContentDescription(parent.getContext().getString(R.string.delete_profile_button_description));
 
             row.addView(nameView);
             row.addView(deleteBtn);
@@ -338,11 +330,11 @@ public class UserListFragment extends Fragment {
             if (showDeleteButton) {
                 holder.deleteButton.setVisibility(View.VISIBLE);
                 holder.deleteButton.setOnClickListener(v ->
-                        deleteListener.onDelete(profile, holder.getAdapterPosition()));
+                        clickListener.onProfileClick(profile, holder.getAdapterPosition()));
             } else {
                 holder.deleteButton.setVisibility(View.GONE);
                 holder.itemView.setOnClickListener(v ->
-                        deleteListener.onDelete(profile, holder.getAdapterPosition()));
+                        clickListener.onProfileClick(profile, holder.getAdapterPosition()));
             }
         }
 
