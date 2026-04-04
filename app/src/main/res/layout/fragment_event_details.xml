@@ -222,6 +222,20 @@
                 android:textStyle="bold" />
 
             <Button
+                android:id="@+id/send_invite_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="24dp"
+                android:backgroundTint="#A2673AB7"
+                android:text="@string/send_invite_button"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_blue_text"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <Button
                 android:id="@+id/view_comments_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
