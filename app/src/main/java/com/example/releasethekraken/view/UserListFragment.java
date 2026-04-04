@@ -14,10 +14,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.model.Event;
@@ -295,6 +297,12 @@ public class UserListFragment extends Fragment {
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setPadding(32, 16, 32, 16);
 
+            ImageView profilePicture = new ImageView(parent.getContext());
+            LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(100, 100);
+            imageParams.setMargins(0, 0, 32, 0);
+            profilePicture.setLayoutParams(imageParams);
+            profilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
             TextView nameView = new TextView(parent.getContext());
             LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
@@ -312,10 +320,11 @@ public class UserListFragment extends Fragment {
             deleteBtn.setBackground(null);
             deleteBtn.setContentDescription(parent.getContext().getString(R.string.delete_profile_button_description));
 
+            row.addView(profilePicture);
             row.addView(nameView);
             row.addView(deleteBtn);
 
-            return new ProfileViewHolder(row, nameView, deleteBtn);
+            return new ProfileViewHolder(row, profilePicture, nameView, deleteBtn);
         }
 
         @Override
@@ -323,6 +332,16 @@ public class UserListFragment extends Fragment {
             Profile profile = profiles.get(position);
             String name = profile.getName();
             holder.nameView.setText((name != null && !name.isEmpty()) ? name : profile.getUid());
+
+            String imageUrl = profile.getProfileImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                Glide.with(holder.profilePicture.getContext())
+                        .load(imageUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_launcher_foreground)
+                        .error(R.drawable.ic_launcher_foreground)
+                        .into(holder.profilePicture);
+            }
 
             if (showDeleteButton) {
                 holder.deleteButton.setVisibility(View.VISIBLE);
@@ -341,11 +360,13 @@ public class UserListFragment extends Fragment {
         }
 
         static class ProfileViewHolder extends RecyclerView.ViewHolder {
+            ImageView profilePicture;
             TextView nameView;
             ImageButton deleteButton;
 
-            ProfileViewHolder(@NonNull View itemView, TextView nameView, ImageButton deleteButton) {
+            ProfileViewHolder(@NonNull View itemView, ImageView profilePicture, TextView nameView, ImageButton deleteButton) {
                 super(itemView);
+                this.profilePicture = profilePicture;
                 this.nameView = nameView;
                 this.deleteButton = deleteButton;
             }

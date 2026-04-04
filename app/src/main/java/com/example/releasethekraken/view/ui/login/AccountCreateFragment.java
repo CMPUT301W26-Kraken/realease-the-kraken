@@ -87,6 +87,7 @@ public class AccountCreateFragment extends Fragment {
         if (isEditMode) {
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
             binding.createAccount.setText(R.string.action_update_profile);
+            binding.cancelAccountCreation.setText(R.string.action_cancel_account_edits);
             
             // In edit mode, password field is usually hidden or handled differently
             if (binding.passwordCreate != null) binding.passwordCreate.setVisibility(View.GONE);
@@ -166,6 +167,7 @@ public class AccountCreateFragment extends Fragment {
         p.setName(name);
         p.setEmail(email);
         p.setPhone(phone);
+
         saveProfileAndFinish(p, repo);
     }
 
