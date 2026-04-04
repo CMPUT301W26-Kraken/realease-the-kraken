@@ -5,328 +5,430 @@
     android:id="@+id/event_details_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     tools:context=".view.EventDetailsFragment">
 
-    <ImageView
-        android:id="@+id/event_poster"
-        android:layout_width="289dp"
-        android:layout_height="189dp"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="@string/event_image"
-        android:scaleType="centerCrop"
-        android:src="@drawable/krakenlogov1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/event_title_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="24dp"
-        android:gravity="center"
-        android:text="Event Title"
-        android:textColor="@color/dark_blue_text"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/event_poster" />
-
-    <TextView
-        android:id="@+id/event_description_display"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="24dp"
-        android:gravity="center"
-        android:text="Event description"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/event_title_text" />
-
-    <TextView
-        android:id="@+id/textView9"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="center"
-        android:text="@string/registration_start_text"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/textView10"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/event_description_display" />
-
-    <TextView
-        android:id="@+id/textView10"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="24dp"
-        android:gravity="center"
-        android:text="@string/registration_end_text"
-        android:textColor="@color/dark_blue_text"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/textView9"
-        app:layout_constraintTop_toBottomOf="@id/event_description_display" />
-
-    <TextView
-        android:id="@+id/registration_start_display"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="center"
-        android:text="@string/prompt_date"
-        android:textSize="15sp"
-        app:layout_constraintEnd_toStartOf="@id/registration_end_display"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textView9" />
-
-    <TextView
-        android:id="@+id/registration_end_display"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginEnd="24dp"
-        android:gravity="center"
-        android:text="@string/prompt_date"
-        android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/registration_start_display"
-        app:layout_constraintTop_toBottomOf="@id/textView10" />
-
-    <ScrollView
-        android:id="@+id/event_details_scroll"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/registration_start_display">
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="24dp">
+            android:padding="16dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/return_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_back_arrow"
+                    app:tint="#001541" />
+            </FrameLayout>
+
+            <ImageView
+                android:id="@+id/event_poster"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/event_image"
+                android:scaleType="fitCenter"
+                android:src="@drawable/krakenlogov1" />
+
+            <TextView
+                android:id="@+id/event_title_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="Event Title"
+                android:textColor="#001541"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/event_description_display"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Event description"
+                android:textColor="#8E8E93"
+                android:textSize="16sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="#EEEEEE" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Start Time"
+                        android:textColor="#001541"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="#001541" />
+
+                        <TextView
+                            android:id="@+id/registration_start_display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="April 2, 2026 | 9:00 AM"
+                            android:textColor="#555555"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#EEEEEE" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="End Time"
+                        android:textColor="#001541"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="#001541" />
+
+                        <TextView
+                            android:id="@+id/registration_end_display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="April 2, 2026 | 11:55 PM"
+                            android:textColor="#555555"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:background="#EEEEEE" />
 
             <TextView
                 android:id="@+id/waiting_list_count_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="@string/waiting_list_count_placeholder"
-                android:textColor="@color/dark_blue_text"
+                android:text="Waiting List Size: 0"
+                android:textColor="#001541"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/lottery_criteria_title_text"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/lottery_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginBottom="6dp"
-                android:gravity="center"
-                android:text="@string/lottery_criteria_title"
-                android:textColor="@color/dark_blue_text"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/lottery_criteria_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginBottom="16dp"
-                android:background="@android:color/white"
-                android:lineSpacingExtra="4dp"
-                android:padding="12dp"
-                android:text="@string/lottery_criteria_body"
-                android:textColor="#064778"
-                android:textSize="15sp" />
-
-            <Button
-                android:id="@+id/view_entrant_map_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="View Entrant Map"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/view_waiting_list_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
                 android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="View Current Waiting List"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                app:cardBackgroundColor="#F0F5F9"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
 
-            <Button
-                android:id="@+id/create_notification_button"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/lottery_criteria_title_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#E2EDF5"
+                        android:padding="8dp"
+                        android:text="How the Lottery Works"
+                        android:textColor="#001541"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/lottery_criteria_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="12dp"
+                        android:text="@string/lottery_criteria_body"
+                        android:textColor="#064778"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <LinearLayout
+                android:id="@+id/action_buttons_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="Notify Selected Entrants"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
 
-            <Button
-                android:id="@+id/view_qr_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="View QR Code"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_entrant_map_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="View Entrant Map"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_map"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/send_invite_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="@string/send_invite_button"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_waiting_list_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Current Waiting List"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_calendar"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/view_comments_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="View Comments"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/create_notification_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Notify Selected Entrants"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_megaphone"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/export_csv_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="Export Waiting List to CSV"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_qr_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="View QR Code"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_qr_code"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/redraw_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="Redraw Participants"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/send_invite_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Send Private Invite"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_send_invite"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/edit_event_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="Edit Event"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_comments_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="View Comments"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_comments"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/signup_optout_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#A2673AB7"
-                android:text="@string/signup_button"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/export_csv_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Export Waiting List to CSV"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_download"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/delete_event_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="@android:color/holo_red_dark"
-                android:text="Delete Event"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/redraw_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Redraw Participants"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_shuffle"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
 
-            <Button
-                android:id="@+id/return_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:backgroundTint="#2196F3"
-                android:text="Return"
-                android:textAllCaps="false"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/edit_event_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="Edit Event"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_edit"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/signup_optout_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="Join Waiting List"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#001541"
+                    app:cornerRadius="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/delete_event_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Delete Event"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#D32F2F"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

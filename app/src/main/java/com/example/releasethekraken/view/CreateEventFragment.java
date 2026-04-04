@@ -53,11 +53,16 @@ public class CreateEventFragment extends Fragment {
     private boolean editEvent;
     private boolean cameFromYourEvents;
     private String eventID;
+    private String originalOrganizerId;
     private Uri selectedPosterUri;
     private String existingPosterUrl = "";
     
     private final ArrayList<String> invitedUserIds = new ArrayList<>();
     private final ArrayList<String> coOrganizerIds = new ArrayList<>();
+
+    // Track initial lists to avoid resending notifications on edit
+    private final ArrayList<String> initialInvitedUserIds = new ArrayList<>();
+    private final ArrayList<String> initialCoOrganizerIds = new ArrayList<>();
     
     // For bracket display
     private final ArrayList<String> invitedUserNames = new ArrayList<>();
@@ -284,6 +289,7 @@ public class CreateEventFragment extends Fragment {
                     return;
                 }
                 existingPosterUrl = event.getPosterUrl();
+                originalOrganizerId = event.getOrganizerId();
                 binding.nameEventCreate.setText(event.getTitle());
                 binding.eventDescriptionText.setText(event.getDescription());
                 binding.registrationStartDate.setText(formatMillisForInput(event.getRegistrationStartMillis()));
@@ -292,8 +298,13 @@ public class CreateEventFragment extends Fragment {
 
                 invitedUserIds.clear();
                 invitedUserIds.addAll(event.getInvitedUserIds());
+                initialInvitedUserIds.clear();
+                initialInvitedUserIds.addAll(event.getInvitedUserIds());
+
                 coOrganizerIds.clear();
                 coOrganizerIds.addAll(event.getCoOrganizerIds());
+                initialCoOrganizerIds.clear();
+                initialCoOrganizerIds.addAll(event.getCoOrganizerIds());
                 
                 // For editing, we'd ideally fetch names, but for now we use IDs as placeholders
                 invitedUserNames.clear();
@@ -376,13 +387,17 @@ public class CreateEventFragment extends Fragment {
         boolean geolocationRequired = binding.enableGeolocationSwitch.isChecked();
 
         String organizerId = "";
-        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (firebaseUser != null) {
-            organizerId = firebaseUser.getUid();
+        if (editEvent && !TextUtils.isEmpty(originalOrganizerId)) {
+            organizerId = originalOrganizerId;
         } else {
-            Profile profile = new ProfileRepository(requireContext()).getProfile();
-            if (profile != null) {
-                organizerId = profile.getUid();
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (firebaseUser != null) {
+                organizerId = firebaseUser.getUid();
+            } else {
+                Profile profile = new ProfileRepository(requireContext()).getProfile();
+                if (profile != null) {
+                    organizerId = profile.getUid();
+                }
             }
         }
 
@@ -406,7 +421,7 @@ public class CreateEventFragment extends Fragment {
                 existingPosterUrl,
                 isPrivate,
                 invitedUserIds, // Guests allowed to see private event
-                new ArrayList<>(), // No co-organizers yet
+                coOrganizerIds, // Maintain existing co-organizers
                 organizerId,
                 geolocationRequired
         );
@@ -480,14 +495,18 @@ public class CreateEventFragment extends Fragment {
     private void sendInvitations(Event event) {
         // Invite co-organizers - use specific type for acceptance flow
         for (String coOrgId : coOrganizerIds) {
-            notificationService.sendCoOrganizerNotification(event, coOrgId, null);
+            if (!editEvent || !initialCoOrganizerIds.contains(coOrgId)) {
+                notificationService.sendCoOrganizerNotification(event, coOrgId, null);
+            }
         }
         
         // Invite private guests if applicable
         if (event.isPrivate()) {
             for (String guestId : invitedUserIds) {
-                // Use a specific type for private invites
-                sendPrivateInviteNotification(event, guestId);
+                if (!editEvent || !initialInvitedUserIds.contains(guestId)) {
+                    // Use a specific type for private invites
+                    sendPrivateInviteNotification(event, guestId);
+                }
             }
         }
     }

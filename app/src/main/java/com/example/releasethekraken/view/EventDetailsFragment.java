@@ -64,16 +64,18 @@ public class EventDetailsFragment extends Fragment {
     private TextView registrationEndTextView;
     private TextView waitingListCountTextView;
     private ImageView posterImageView;
-    private Button viewQrButton;
-    private Button sendInviteButton;
+    private View viewQrButton;
+    private View sendInviteButton;
 
     private Button signupOptOutButton;
-    private Button deleteEventButton;
-    private Button createNotificationButton;
-    private Button editEventButton;
-    private Button viewEntrantMapButton;
-    private Button exportToCsvButton;
-    private Button redrawButton;
+    private View deleteEventButton;
+    private View createNotificationButton;
+    private View editEventButton;
+    private View viewEntrantMapButton;
+    private View exportToCsvButton;
+    private View redrawButton;
+    private View viewWaitingListButton;
+    private View viewCommentsButton;
 
     private WaitingListRepository waitingListRepository;
     private WaitingListService waitingListService;
@@ -150,15 +152,15 @@ public class EventDetailsFragment extends Fragment {
         posterImageView = view.findViewById(R.id.event_poster);
 
         signupOptOutButton = view.findViewById(R.id.signup_optout_button);
-        Button returnToBrowseButton = view.findViewById(R.id.return_button);
+        ImageView returnButton = view.findViewById(R.id.return_button);
         deleteEventButton = view.findViewById(R.id.delete_event_button);
         createNotificationButton = view.findViewById(R.id.create_notification_button);
         editEventButton = view.findViewById(R.id.edit_event_button);
         viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         viewQrButton = view.findViewById(R.id.view_qr_button);
         sendInviteButton = view.findViewById(R.id.send_invite_button);
-        Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
-        Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
+        viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
+        viewCommentsButton = view.findViewById(R.id.view_comments_button);
         exportToCsvButton = view.findViewById(R.id.export_csv_button);
         redrawButton = view.findViewById(R.id.redraw_button);
 
@@ -167,8 +169,6 @@ public class EventDetailsFragment extends Fragment {
         // Apply initial visibility based on arguments to prevent flicker/delay
         if (isPrivateFromArgs != null) {
             viewQrButton.setVisibility(isPrivateFromArgs ? View.GONE : View.VISIBLE);
-            // We only show sendInviteButton if it's private AND the user is an organizer, 
-            // but we'll refine this in loadEventDetails once we have the actual Event object and confirmed role.
         }
 
         loadEventDetails();
@@ -178,7 +178,7 @@ public class EventDetailsFragment extends Fragment {
         sendInviteButton.setOnClickListener(v -> showSendInviteDialog());
         signupOptOutButton.setOnClickListener(v -> handleSignupToggle(signupOptOutButton));
 
-        returnToBrowseButton.setOnClickListener(v -> {
+        returnButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putBoolean("yourEvents", cameFromYourEvents);
             args.putString(ARG_SEARCH_QUERY, browseSearchQuery);
@@ -221,6 +221,8 @@ public class EventDetailsFragment extends Fragment {
             deleteEventButton.setVisibility(View.GONE);
             exportToCsvButton.setVisibility(View.GONE);
             redrawButton.setVisibility(View.GONE);
+            viewWaitingListButton.setVisibility(View.GONE);
+            viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.VISIBLE);
             sendInviteButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN) {
@@ -230,9 +232,10 @@ public class EventDetailsFragment extends Fragment {
             deleteEventButton.setVisibility(View.VISIBLE);
             exportToCsvButton.setVisibility(View.VISIBLE);
             redrawButton.setVisibility(View.VISIBLE);
+            viewWaitingListButton.setVisibility(View.VISIBLE);
+            viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.GONE);
             
-            // Initial decision for sendInviteButton; refined in loadEventDetails
             if (currentEvent != null && currentEvent.isPrivate()) {
                 sendInviteButton.setVisibility(View.VISIBLE);
             } else {
@@ -258,9 +261,7 @@ public class EventDetailsFragment extends Fragment {
                         if (!isAdded() || waitingListCountTextView == null) {
                             return;
                         }
-                        waitingListCountTextView.setText(
-                                getString(R.string.waiting_list_count_text, count)
-                        );
+                        waitingListCountTextView.setText("Waiting List Size: " + count);
                     }
 
                     @Override
@@ -268,9 +269,7 @@ public class EventDetailsFragment extends Fragment {
                         if (!isAdded() || waitingListCountTextView == null) {
                             return;
                         }
-                        waitingListCountTextView.setText(
-                                getString(R.string.waiting_list_count_unavailable)
-                        );
+                        waitingListCountTextView.setText("Waiting List Size: --");
                     }
                 }
         );
@@ -302,7 +301,6 @@ public class EventDetailsFragment extends Fragment {
     private void showSendInviteDialog() {
         if (currentEvent == null || !currentEvent.isPrivate()) return;
 
-        // Requirement: check if event is still live
         if (System.currentTimeMillis() >= currentEvent.getRegistrationEndMillis()) {
             Toast.makeText(requireContext(), "Cannot send invites: Registration has already ended.", Toast.LENGTH_SHORT).show();
             return;
@@ -341,7 +339,6 @@ public class EventDetailsFragment extends Fragment {
                                 if (isAdded()) {
                                     sendPrivateInviteNotification(currentEvent, uid);
                                     Toast.makeText(requireContext(), "Invited " + profile.getName(), Toast.LENGTH_SHORT).show();
-                                    // Refresh local event if needed or just trust Firestore
                                 }
                             }
 
@@ -405,7 +402,6 @@ public class EventDetailsFragment extends Fragment {
                     return;
                 }
 
-                // Determine user role
                 if (event.getOrganizerId().equals(currentUserId)) {
                     userType = UserRole.ORGANIZER;
                 } else if (event.getCoOrganizerIds().contains(currentUserId)) {
@@ -432,7 +428,6 @@ public class EventDetailsFragment extends Fragment {
                     boolean isOrganizer = userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN;
                     if (isOrganizer) {
                         sendInviteButton.setVisibility(View.VISIBLE);
-                        // Disable button if registration has ended
                         if (System.currentTimeMillis() >= currentEvent.getRegistrationEndMillis()) {
                             sendInviteButton.setEnabled(false);
                             sendInviteButton.setAlpha(0.5f);
@@ -596,7 +591,7 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private String formatMillis(long millis) {
-        return DateFormat.format("yyyy-MM-dd HH:mm", millis).toString();
+        return DateFormat.format("MMMM d, yyyy | h:mm a", millis).toString();
     }
 
     private void showDeleteConfirmationDialog(View v) {
