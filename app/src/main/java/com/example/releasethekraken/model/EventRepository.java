@@ -80,6 +80,14 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    public void addInvitedUser(String eventId, String userId, CompletionCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .update("invitedUserIds", FieldValue.arrayUnion(userId))
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
     public void getEventById(String eventId, EventCallback callback) {
         if (eventId == null || eventId.isEmpty()) {
             callback.onError(new Exception("Invalid event ID"));

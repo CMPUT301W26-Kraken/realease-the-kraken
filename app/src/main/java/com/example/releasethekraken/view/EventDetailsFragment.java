@@ -31,6 +31,7 @@ import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.controller.WaitingListService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
+import com.example.releasethekraken.model.Notification;
 import com.example.releasethekraken.model.NotificationRepository;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.model.UserRole;
@@ -64,6 +65,7 @@ public class EventDetailsFragment extends Fragment {
     private TextView waitingListCountTextView;
     private ImageView posterImageView;
     private Button viewQrButton;
+    private Button sendInviteButton;
 
     private Button signupOptOutButton;
     private Button deleteEventButton;
@@ -76,6 +78,7 @@ public class EventDetailsFragment extends Fragment {
     private WaitingListRepository waitingListRepository;
     private WaitingListService waitingListService;
     private EventRepository eventRepository;
+    private NotificationRepository notificationRepository;
     private NotificationService notificationService;
     private Event currentEvent;
     private UserRole userType;
@@ -113,7 +116,8 @@ public class EventDetailsFragment extends Fragment {
         waitingListRepository = new WaitingListRepository();
         waitingListService = new WaitingListService(waitingListRepository);
         eventRepository = new EventRepository();
-        notificationService = new NotificationService(new NotificationRepository());
+        notificationRepository = new NotificationRepository();
+        notificationService = new NotificationService(notificationRepository);
 
         locationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
@@ -152,6 +156,7 @@ public class EventDetailsFragment extends Fragment {
         editEventButton = view.findViewById(R.id.edit_event_button);
         viewEntrantMapButton = view.findViewById(R.id.view_entrant_map_button);
         viewQrButton = view.findViewById(R.id.view_qr_button);
+        sendInviteButton = view.findViewById(R.id.send_invite_button);
         Button viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         Button viewCommentsButton = view.findViewById(R.id.view_comments_button);
         exportToCsvButton = view.findViewById(R.id.export_csv_button);
@@ -162,12 +167,15 @@ public class EventDetailsFragment extends Fragment {
         // Apply initial visibility based on arguments to prevent flicker/delay
         if (isPrivateFromArgs != null) {
             viewQrButton.setVisibility(isPrivateFromArgs ? View.GONE : View.VISIBLE);
+            // We only show sendInviteButton if it's private AND the user is an organizer, 
+            // but we'll refine this in loadEventDetails once we have the actual Event object and confirmed role.
         }
 
         loadEventDetails();
         startWaitingListCountListener();
 
         viewQrButton.setOnClickListener(v -> showQrCodeDialog());
+        sendInviteButton.setOnClickListener(v -> showSendInviteDialog());
         signupOptOutButton.setOnClickListener(v -> handleSignupToggle(signupOptOutButton));
 
         returnToBrowseButton.setOnClickListener(v -> {
@@ -214,6 +222,7 @@ public class EventDetailsFragment extends Fragment {
             exportToCsvButton.setVisibility(View.GONE);
             redrawButton.setVisibility(View.GONE);
             signupOptOutButton.setVisibility(View.VISIBLE);
+            sendInviteButton.setVisibility(View.GONE);
         } else if (userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN) {
             viewEntrantMapButton.setVisibility(View.VISIBLE);
             createNotificationButton.setVisibility(View.VISIBLE);
@@ -222,6 +231,13 @@ public class EventDetailsFragment extends Fragment {
             exportToCsvButton.setVisibility(View.VISIBLE);
             redrawButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.GONE);
+            
+            // Initial decision for sendInviteButton; refined in loadEventDetails
+            if (currentEvent != null && currentEvent.isPrivate()) {
+                sendInviteButton.setVisibility(View.VISIBLE);
+            } else {
+                sendInviteButton.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -283,6 +299,94 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    private void showSendInviteDialog() {
+        if (currentEvent == null || !currentEvent.isPrivate()) return;
+
+        // Requirement: check if event is still live
+        if (System.currentTimeMillis() >= currentEvent.getRegistrationEndMillis()) {
+            Toast.makeText(requireContext(), "Cannot send invites: Registration has already ended.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EditText input = new EditText(requireContext());
+        input.setHint("Enter user name or email");
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Send Private Invite")
+                .setMessage("Invite a user to this private event by their name or email.")
+                .setView(input)
+                .setPositiveButton("Invite", (dialog, which) -> {
+                    String query = input.getText().toString().trim();
+                    if (!TextUtils.isEmpty(query)) {
+                        searchAndInviteUser(query);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void searchAndInviteUser(String query) {
+        new ProfileRepository(requireContext()).searchProfiles(query, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+            @Override
+            public void onSuccess(Profile profile) {
+                if (!isAdded()) return;
+                if (profile != null && !TextUtils.isEmpty(profile.getUid())) {
+                    String uid = profile.getUid();
+                    if (currentEvent.getInvitedUserIds().contains(uid)) {
+                        Toast.makeText(requireContext(), profile.getName() + " is already invited.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        eventRepository.addInvitedUser(eventId, uid, new EventRepository.CompletionCallback() {
+                            @Override
+                            public void onSuccess() {
+                                if (isAdded()) {
+                                    sendPrivateInviteNotification(currentEvent, uid);
+                                    Toast.makeText(requireContext(), "Invited " + profile.getName(), Toast.LENGTH_SHORT).show();
+                                    // Refresh local event if needed or just trust Firestore
+                                }
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                if (isAdded()) {
+                                    Toast.makeText(requireContext(), "Failed to invite user.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "User not found.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception exception) {
+                if (isAdded()) {
+                    Toast.makeText(requireContext(), "Search failed.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void sendPrivateInviteNotification(Event event, String userId) {
+        long nowMillis = System.currentTimeMillis();
+        String message = "You have been invited to join the private event: " + event.getTitle();
+
+        Notification notification = new Notification(
+                userId,
+                event.getEventId(),
+                message,
+                "PRIVATE_INVITE",
+                nowMillis
+        );
+
+        notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
+            @Override
+            public void onSuccess() {}
+            @Override
+            public void onError(Exception e) {}
+        });
+    }
+
     private void loadEventDetails() {
         if (eventId == null) {
             return;
@@ -325,8 +429,23 @@ public class EventDetailsFragment extends Fragment {
                 currentEvent = event;
                 if (currentEvent.isPrivate()) {
                     viewQrButton.setVisibility(View.GONE);
+                    boolean isOrganizer = userType == UserRole.ORGANIZER || userType == UserRole.CO_ORGANIZER || userType == UserRole.ADMIN;
+                    if (isOrganizer) {
+                        sendInviteButton.setVisibility(View.VISIBLE);
+                        // Disable button if registration has ended
+                        if (System.currentTimeMillis() >= currentEvent.getRegistrationEndMillis()) {
+                            sendInviteButton.setEnabled(false);
+                            sendInviteButton.setAlpha(0.5f);
+                        } else {
+                            sendInviteButton.setEnabled(true);
+                            sendInviteButton.setAlpha(1.0f);
+                        }
+                    } else {
+                        sendInviteButton.setVisibility(View.GONE);
+                    }
                 } else {
                     viewQrButton.setVisibility(View.VISIBLE);
+                    sendInviteButton.setVisibility(View.GONE);
                 }
                 
                 if (isAdded()) {

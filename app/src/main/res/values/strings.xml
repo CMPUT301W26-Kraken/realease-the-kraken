@@ -99,6 +99,7 @@
     <string name="create_notification_button">Notify Selected Entrants</string>
     <string name="post_notification_button">Send Notifications</string>
     <string name="view_qr_button">View QR Code</string>
+    <string name="send_invite_button">Send Invite</string>
     <string name="edit_event_button">Edit Event</string>
     <string name="delete_event_button">Delete Event</string>
     <string name="view_comments_button">View Comments</string>
