@@ -75,6 +75,8 @@ public class EventDetailsFragment extends Fragment {
     private View exportToCsvButton;
     private View redrawButton;
     private View viewWaitingListButton;
+    private View viewInvitedEntrantsButton;
+    private View viewCancelledEntrantsButton;
     private View viewCommentsButton;
 
     private WaitingListRepository waitingListRepository;
@@ -160,13 +162,14 @@ public class EventDetailsFragment extends Fragment {
         viewQrButton = view.findViewById(R.id.view_qr_button);
         sendInviteButton = view.findViewById(R.id.send_invite_button);
         viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
+        viewInvitedEntrantsButton = view.findViewById(R.id.view_invited_entrants_button);
+        viewCancelledEntrantsButton = view.findViewById(R.id.view_cancelled_entrants_button);
         viewCommentsButton = view.findViewById(R.id.view_comments_button);
         exportToCsvButton = view.findViewById(R.id.export_csv_button);
         redrawButton = view.findViewById(R.id.redraw_button);
 
         updateUIForRole();
 
-        // Apply initial visibility based on arguments to prevent flicker/delay
         if (isPrivateFromArgs != null) {
             viewQrButton.setVisibility(isPrivateFromArgs ? View.GONE : View.VISIBLE);
         }
@@ -197,13 +200,9 @@ public class EventDetailsFragment extends Fragment {
             Navigation.findNavController(v).navigate(R.id.action_eventDetailsFragment_to_entrantMapFragment, args);
         });
 
-        viewWaitingListButton.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putBoolean("adminView", false);
-            args.putString(ARG_EVENT_ID, eventId);
-            args.putSerializable("userRole", userType);
-            Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
-        });
+        viewWaitingListButton.setOnClickListener(v -> navigateToUserList(view, "waiting"));
+        viewInvitedEntrantsButton.setOnClickListener(v -> navigateToUserList(view, "invited"));
+        viewCancelledEntrantsButton.setOnClickListener(v -> navigateToUserList(view, "cancelled"));
 
         viewCommentsButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
@@ -211,6 +210,15 @@ public class EventDetailsFragment extends Fragment {
             args.putSerializable("userRole", userType);
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
+    }
+
+    private void navigateToUserList(View view, String listMode) {
+        Bundle args = new Bundle();
+        args.putBoolean("adminView", false);
+        args.putString(ARG_EVENT_ID, eventId);
+        args.putSerializable("userRole", userType);
+        args.putString("listMode", listMode);
+        Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
     }
 
     private void updateUIForRole() {
@@ -222,6 +230,8 @@ public class EventDetailsFragment extends Fragment {
             exportToCsvButton.setVisibility(View.GONE);
             redrawButton.setVisibility(View.GONE);
             viewWaitingListButton.setVisibility(View.GONE);
+            viewInvitedEntrantsButton.setVisibility(View.GONE);
+            viewCancelledEntrantsButton.setVisibility(View.GONE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.VISIBLE);
             sendInviteButton.setVisibility(View.GONE);
@@ -233,9 +243,11 @@ public class EventDetailsFragment extends Fragment {
             exportToCsvButton.setVisibility(View.VISIBLE);
             redrawButton.setVisibility(View.VISIBLE);
             viewWaitingListButton.setVisibility(View.VISIBLE);
+            viewInvitedEntrantsButton.setVisibility(View.VISIBLE);
+            viewCancelledEntrantsButton.setVisibility(View.VISIBLE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.GONE);
-            
+
             if (currentEvent != null && currentEvent.isPrivate()) {
                 sendInviteButton.setVisibility(View.VISIBLE);
             } else {
@@ -379,6 +391,7 @@ public class EventDetailsFragment extends Fragment {
         notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
             @Override
             public void onSuccess() {}
+
             @Override
             public void onError(Exception e) {}
         });
@@ -442,7 +455,7 @@ public class EventDetailsFragment extends Fragment {
                     viewQrButton.setVisibility(View.VISIBLE);
                     sendInviteButton.setVisibility(View.GONE);
                 }
-                
+
                 if (isAdded()) {
                     updateUIForRole();
                     bindEventToViews();

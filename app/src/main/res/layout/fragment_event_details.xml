@@ -258,6 +258,46 @@
                     android:drawableEnd="@drawable/ic_chevron_right" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_invited_entrants_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="View Invited Entrants"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_calendar"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/view_cancelled_entrants_button"
+                    style="@style/Widget.Material3.Button.ElevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="start|center_vertical"
+                    android:text="View Cancelled Entrants"
+                    android:textAllCaps="false"
+                    android:textColor="#001541"
+                    android:textSize="15sp"
+                    app:backgroundTint="@color/white"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_calendar"
+                    app:iconPadding="12dp"
+                    app:iconSize="24dp"
+                    app:iconTint="#001541"
+                    app:rippleColor="#1F000000"
+                    android:drawableEnd="@drawable/ic_chevron_right" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/create_notification_button"
                     style="@style/Widget.Material3.Button.ElevatedButton"
                     android:layout_width="match_parent"
