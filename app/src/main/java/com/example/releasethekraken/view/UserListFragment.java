@@ -43,6 +43,7 @@ public class UserListFragment extends Fragment {
     private static final String MODE_WAITING = "waiting";
     private static final String MODE_INVITED = "invited";
     private static final String MODE_CANCELLED = "cancelled";
+    private static final String MODE_FINAL = "final";
 
     private int mColumnCount = 1;
     private boolean adminView;
@@ -130,6 +131,9 @@ public class UserListFragment extends Fragment {
             } else if (MODE_CANCELLED.equals(listMode)) {
                 welcomeText.setText("Cancelled / Declined Entrants");
                 loadCancelledEntrants();
+            } else if (MODE_FINAL.equals(listMode)) {
+                welcomeText.setText("Final Attendees");
+                loadFinalAttendees();
             } else {
                 welcomeText.setText(getString(R.string.waiting_list_welcome));
                 loadWaitingList();
@@ -364,6 +368,60 @@ public class UserListFragment extends Fragment {
             public void onError(Exception e) {
                 if (!isAdded()) return;
                 Toast.makeText(requireContext(), "Failed to load cancelled entrants", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadFinalAttendees() {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        notificationRepository.getFinalAcceptedEntrantsForEvent(eventId, new NotificationRepository.EntrantIdsCallback() {
+            @Override
+            public void onSuccess(List<String> entrantIds) {
+                if (!isAdded()) return;
+
+                List<UserListItem> items = new ArrayList<>();
+                if (entrantIds.isEmpty()) {
+                    setItems(items);
+                    return;
+                }
+
+                fetchFinalAttendeeProfilesSequentially(entrantIds, 0, items);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Failed to load final attendees", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void fetchFinalAttendeeProfilesSequentially(List<String> entrantIds, int index, List<UserListItem> items) {
+        if (!isAdded()) return;
+
+        if (index >= entrantIds.size()) {
+            setItems(items);
+            return;
+        }
+
+        String entrantId = entrantIds.get(index);
+        profileRepository.getProfileById(entrantId, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+            @Override
+            public void onSuccess(Profile result) {
+                items.add(new UserListItem(result, "Attendance Status: Confirmed"));
+                fetchFinalAttendeeProfilesSequentially(entrantIds, index + 1, items);
+            }
+
+            @Override
+            public void onFailure(Exception exception) {
+                Profile placeholder = new Profile(entrantId, "", "", null);
+                placeholder.setUid(entrantId);
+                items.add(new UserListItem(placeholder, "Attendance Status: Confirmed"));
+                fetchFinalAttendeeProfilesSequentially(entrantIds, index + 1, items);
             }
         });
     }
