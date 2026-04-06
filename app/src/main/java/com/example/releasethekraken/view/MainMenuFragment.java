@@ -19,6 +19,7 @@ import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentMainMenuBinding;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 /**
  * This is the fragment that is responsible for displaying the main menu of the program and offering the
@@ -125,6 +126,7 @@ public class MainMenuFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_qrScanFragment)
         );
+       
 
         // Navigate to Admin Notification Logs
         binding.adminNotificationLogsButton.setOnClickListener(v ->
@@ -137,6 +139,8 @@ public class MainMenuFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_adminCommentsFragment)
         );
+      
+       AccessibilitySettingsHelper.applyAccessibility(view, requireContext());
     }
 
     @Override

@@ -59,8 +59,8 @@
                     android:layout_margin="4dp"
                     android:contentDescription="@string/profile_edit_button"
                     android:src="@android:drawable/ic_menu_edit"
-                    app:fabCustomSize="44dp"
                     app:backgroundTint="#2D7DEB"
+                    app:fabCustomSize="44dp"
                     app:tint="@color/white" />
             </FrameLayout>
 
@@ -68,8 +68,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="32dp">
+                android:layout_marginBottom="32dp"
+                android:orientation="vertical">
 
                 <!-- Name Section -->
                 <LinearLayout
@@ -206,6 +206,44 @@
                     android:layout_height="1dp"
                     android:background="#F1F5F9" />
 
+            </LinearLayout>
+
+            <!-- Accessibility Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:orientation="vertical"
+                android:paddingTop="4dp">
+
+                <TextView
+                    android:id="@+id/accessibility_settings_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:text="Accessibility Settings"
+                    android:textColor="@color/dark_blue_text"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchAccessibility"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:minHeight="48dp"
+                    android:text="Accessibility Mode"
+                    android:textColor="@color/dark_blue_text"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchColorblind"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="Color Blind Support"
+                    android:textColor="@color/dark_blue_text"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- Action Buttons -->
