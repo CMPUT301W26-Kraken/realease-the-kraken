@@ -103,6 +103,18 @@ public class MainMenuFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_qrScanFragment)
         );
+
+        // Navigate to Admin Notification Logs
+        binding.adminNotificationLogsButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_mainMenuFragment_to_adminNotificationLogFragment)
+        );
+
+        // Navigate to Admin Remove Comments
+        binding.adminRemoveCommentsButton.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_mainMenuFragment_to_adminCommentsFragment)
+        );
     }
 
     @Override

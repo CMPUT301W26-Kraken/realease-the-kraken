@@ -193,8 +193,32 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20sp"
                 android:layout_marginEnd="20sp"
+                android:layout_marginBottom="20sp"
                 android:backgroundTint="@color/dark_blue_text"
                 android:text="@string/admin_browse_images_button"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/admin_notification_logs_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:layout_marginBottom="20sp"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="Notification Logs"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/admin_remove_comments_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="Remove Comments"
                 android:textColor="@color/white"
                 android:textStyle="bold" />
 

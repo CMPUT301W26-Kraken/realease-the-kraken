@@ -150,7 +150,39 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1.5dp"
-                android:layout_marginBottom="48dp"
+                android:layout_marginBottom="24dp"
+                android:background="#EEEEEE" />
+
+            <!-- Admin Account Toggle (only shown on account creation, hidden in edit mode) -->
+            <LinearLayout
+                android:id="@+id/admin_toggle_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Register as Admin"
+                    android:textColor="@color/dark_blue_text"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/admin_toggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false" />
+
+            </LinearLayout>
+
+            <View
+                android:id="@+id/admin_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_marginBottom="24dp"
                 android:background="#EEEEEE" />
 
             <!-- Upload Picture Section -->
