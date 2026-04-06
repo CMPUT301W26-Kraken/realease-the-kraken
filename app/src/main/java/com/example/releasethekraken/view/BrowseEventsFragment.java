@@ -2,6 +2,8 @@ package com.example.releasethekraken.view;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +11,6 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,15 +20,14 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearSnapHelper;
-import androidx.recyclerview.widget.SnapHelper;
 
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.EventFilterService;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.EventRepository;
 import com.example.releasethekraken.model.UserRole;
-import com.example.releasethekraken.model.WaitingListRepository;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
@@ -67,9 +67,11 @@ public class BrowseEventsFragment extends Fragment {
     private final List<Event> visibleEvents = new ArrayList<>();
     private MyItemRecyclerViewAdapter adapter;
     private EditText searchEventsText;
+    private View searchBarContainer;
     private EditText filterAvailableAtText;
     private EditText filterCapacityText;
     private TextView emptyResultsText;
+    private TextView welcomeText;
     private String restoredSearchQuery = "";
     private String restoredAvailableAt = "";
     private String restoredCapacity = "";
@@ -92,9 +94,16 @@ public class BrowseEventsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             yourEvents = getArguments().getBoolean(ARG_YOUR_EVENTS, false);
-            restoredSearchQuery = getArguments().getString(ARG_SEARCH_QUERY, "");
-            restoredAvailableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT, "");
-            restoredCapacity = getArguments().getString(ARG_FILTER_CAPACITY, "");
+            
+            // Using a safer method for getString with defaults to support older API levels
+            String query = getArguments().getString(ARG_SEARCH_QUERY);
+            restoredSearchQuery = query != null ? query : "";
+            
+            String availableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT);
+            restoredAvailableAt = availableAt != null ? availableAt : "";
+            
+            String capacity = getArguments().getString(ARG_FILTER_CAPACITY);
+            restoredCapacity = capacity != null ? capacity : "";
         }
     }
 
@@ -107,7 +116,7 @@ public class BrowseEventsFragment extends Fragment {
 
         // The same fragment backs both "Browse Events" and "Your Events", so the title and create
         // button visibility are adjusted from the navigation argument instead of duplicating screens.
-        TextView welcomeText = view.findViewById(R.id.welcome_text);
+        welcomeText = view.findViewById(R.id.welcome_text);
         if (yourEvents) {
             welcomeText.setText(getString(R.string.your_events_welcome));
         } else {
@@ -118,6 +127,7 @@ public class BrowseEventsFragment extends Fragment {
         // already-filtered data set.
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
 
+        searchBarContainer = view.findViewById(R.id.search_bar_container);
         searchEventsText = view.findViewById(R.id.search_events_text);
         filterAvailableAtText = view.findViewById(R.id.filter_available_at_text);
         filterCapacityText = view.findViewById(R.id.filter_capacity_text);
@@ -130,14 +140,19 @@ public class BrowseEventsFragment extends Fragment {
         filterAvailableAtText.setOnClickListener(v -> showDateTimePicker(filterAvailableAtText));
 
         Button createEventButton = view.findViewById(R.id.create_event_button);
-        Switch toggleDetailedView = view.findViewById(R.id.toggle_detailed_switch);
+        MaterialSwitch toggleDetailedView = view.findViewById(R.id.toggle_detailed_switch);
         // Hide create button during normal event browsing, and vice versa with the detailed mode switch
         if (!yourEvents) {
             createEventButton.setVisibility(View.GONE);
             toggleDetailedView.setVisibility(View.VISIBLE);
+            // Hide the parent layout of the switch too if we want, but for now just the switch
+            View switchContainer = (View) toggleDetailedView.getParent();
+            if (switchContainer != null) switchContainer.setVisibility(View.VISIBLE);
         } else {
             createEventButton.setVisibility(View.VISIBLE);
             toggleDetailedView.setVisibility(View.GONE);
+            View switchContainer = (View) toggleDetailedView.getParent();
+            if (switchContainer != null) switchContainer.setVisibility(View.GONE);
         }
 
         // Navigate to Create Events
@@ -200,7 +215,7 @@ public class BrowseEventsFragment extends Fragment {
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
 
         // Following lines set the default behavior of the fragment to the default browsing mode
-        searchEventsText.setVisibility(View.VISIBLE);
+        searchBarContainer.setVisibility(View.VISIBLE);
         filterBar.setVisibility(View.VISIBLE);
         filterButtons.setVisibility(View.VISIBLE);
         adapter.setDetailed(false);
@@ -213,17 +228,29 @@ public class BrowseEventsFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    searchEventsText.setVisibility(View.GONE);
+                    searchBarContainer.setVisibility(View.GONE);
                     filterBar.setVisibility(View.GONE);
                     filterButtons.setVisibility(View.GONE);
+                    
+                    // Center and enlarge the title
+                    welcomeText.setGravity(Gravity.CENTER);
+                    welcomeText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+                    
                     recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
-                    snapHelper = new LinearSnapHelper();
+                    if (snapHelper == null) {
+                        snapHelper = new LinearSnapHelper();
+                    }
                     snapHelper.attachToRecyclerView(recyclerView);
                     adapter.setDetailed(true);
                 } else {
-                    searchEventsText.setVisibility(View.VISIBLE);
+                    searchBarContainer.setVisibility(View.VISIBLE);
                     filterBar.setVisibility(View.VISIBLE);
                     filterButtons.setVisibility(View.VISIBLE);
+                    
+                    // Restore original title style
+                    welcomeText.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                    welcomeText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+
                     recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
                     // Detach the snaphelper if we are coming back from a detailed view.
                     if (snapHelper != null) {
@@ -232,6 +259,7 @@ public class BrowseEventsFragment extends Fragment {
                     }
                     adapter.setDetailed(false);
                 }
+                adapter.notifyDataSetChanged();
             }
         });
 

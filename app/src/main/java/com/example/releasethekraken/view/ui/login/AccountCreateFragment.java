@@ -88,21 +88,25 @@ public class AccountCreateFragment extends Fragment {
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
             binding.createAccount.setText(R.string.action_update_profile);
             binding.cancelAccountCreation.setText(R.string.action_cancel_account_edits);
-            
-            // In edit mode, password field is usually hidden or handled differently
-            if (binding.passwordCreate != null) binding.passwordCreate.setVisibility(View.GONE);
+
+            // In edit mode, hide the password field container and divider
+            binding.passwordLayout.setVisibility(View.GONE);
+            binding.passwordDivider.setVisibility(View.GONE);
 
             Profile p = repo.getProfile();
             binding.nameCreate.setText(p.getName());
             binding.emailCreate.setText(p.getEmail());
             binding.phoneCreate.setText(p.getPhone());
-            if (p.getProfileImageUrl() != null) {
+            if (p.getProfileImageUrl() != null && !p.getProfileImageUrl().isEmpty()) {
                 Glide.with(this).load(p.getProfileImageUrl()).circleCrop().into(binding.imageButton);
             }
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             binding.createAccount.setText("Register Account");
-            if (binding.passwordCreate != null) binding.passwordCreate.setVisibility(View.VISIBLE);
+
+            // Show password field container and divider
+            binding.passwordLayout.setVisibility(View.VISIBLE);
+            binding.passwordDivider.setVisibility(View.VISIBLE);
         }
     }
 
@@ -168,7 +172,23 @@ public class AccountCreateFragment extends Fragment {
         p.setEmail(email);
         p.setPhone(phone);
 
-        saveProfileAndFinish(p, repo);
+        if (selectedImageUri != null) {
+            binding.loading.setVisibility(View.VISIBLE);
+            binding.createAccount.setEnabled(false);
+            repo.uploadProfileImage(selectedImageUri, p.getUid(), new ProfileRepository.ProfileRepositoryCallback<String>() {
+                @Override
+                public void onSuccess(String url) {
+                    p.setProfileImageUrl(url);
+                    saveProfileAndFinish(p, repo);
+                }
+                @Override
+                public void onFailure(Exception e) {
+                    saveProfileAndFinish(p, repo);
+                }
+            });
+        } else {
+            saveProfileAndFinish(p, repo);
+        }
     }
 
     private void saveProfileAndFinish(Profile profile, ProfileRepository repo) {

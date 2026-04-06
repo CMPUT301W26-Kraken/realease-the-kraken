@@ -1,226 +1,346 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:theme="@style/ThemeOverlay.ReleaseTheKraken.FullscreenContainer"
     tools:context=".view.ViewProfileFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- Header -->
+    <TextView
+        android:id="@+id/profile_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/profile_welcome"
+        android:textColor="@color/dark_blue_text"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
+        app:layout_constraintTop_toBottomOf="@id/profile_title">
 
         <LinearLayout
-            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:padding="24dp">
 
-            <TextView
-                android:id="@+id/profile_title"
+            <!-- Profile Picture with Edit Button -->
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/profile_welcome"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="32dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/profile_picture"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:background="@color/black"
+                    android:padding="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_launcher_foreground"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Large" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/profile_pic_edit_fab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="4dp"
+                    android:contentDescription="@string/profile_edit_button"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:fabCustomSize="44dp"
+                    app:backgroundTint="#2D7DEB"
+                    app:tint="@color/white" />
+            </FrameLayout>
+
+            <!-- Profile Info Section (No Card Frame) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <!-- Name Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingVertical="16dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@android:drawable/ic_menu_myplaces"
+                        app:tint="#94A3B8" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_name_text"
+                            android:textColor="@color/dark_blue_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/profile_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="John Doe"
+                            android:textColor="#475569"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F1F5F9" />
+
+                <!-- Email Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingVertical="16dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@android:drawable/ic_dialog_email"
+                        app:tint="#94A3B8" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_email_text"
+                            android:textColor="@color/dark_blue_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/profile_email"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="john@email.com"
+                            android:textColor="#475569"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F1F5F9" />
+
+                <!-- Phone Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingVertical="16dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@android:drawable/ic_menu_call"
+                        app:tint="#94A3B8" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_phone_text"
+                            android:textColor="@color/dark_blue_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/profile_phone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="(000) 123-4567"
+                            android:textColor="#475569"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F1F5F9" />
+
+            </LinearLayout>
+
+            <!-- Action Buttons -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/profile_edit_button"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/profile_edit_button"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="#2D7DEB"
+                app:cornerRadius="28dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/profile_signout_button"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/sign_out_button"
+                android:textAllCaps="false"
                 android:textColor="@color/dark_blue_text"
-                android:textSize="32sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="#F1F5F9"
+                app:cornerRadius="28dp" />
 
-            <ImageView
-                android:id="@+id/profile_picture"
-                android:layout_width="125dp"
-                android:layout_height="125dp"
-                android:layout_marginTop="25dp"
-                android:layout_marginBottom="25dp"
-                android:background="@color/black"
-                android:src="@drawable/ic_launcher_foreground" />
-
-            <TextView
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/profile_account_delete_button"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/profile_name_text"
-                android:textAlignment="viewStart"
-                android:textColor="@color/dark_blue_text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/profile_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:text="John Doe"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/profile_email_text"
-                android:textAlignment="viewStart"
-                android:textColor="@color/dark_blue_text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/profile_email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:text="john@email.com"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/profile_phone_text"
-                android:textColor="@color/dark_blue_text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/profile_phone"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="(000) 123-4567"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
+                android:layout_height="56dp"
+                android:layout_marginBottom="32dp"
+                android:text="@string/profile_account_delete_button"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="#DC2626"
+                app:cornerRadius="28dp" />
 
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-        <Button
-            android:id="@+id/profile_edit_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/profile_edit_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/profile_account_delete_button"
-            app:layout_constraintEnd_toStartOf="@+id/profile_signout_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
-
-        <Button
-            android:id="@+id/profile_signout_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/light_grey_button"
-            android:text="@string/sign_out_button"
-            android:textColor="@color/dark_blue_text"
-            android:textStyle="bold"
-            app:layout_constraintBaseline_toBaselineOf="@id/profile_edit_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/profile_edit_button" />
-
-        <Button
-            android:id="@+id/profile_account_delete_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/delete_cancel_button"
-            android:text="@string/profile_account_delete_button"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/profile_edit_button" />
+    <!-- Bottom Toolbar -->
+    <LinearLayout
+        android:id="@+id/fullscreen_content_controls"
+        style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="@style/Widget.Theme.ReleaseTheKraken.ButtonBar.Fullscreen"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/white"
-            android:orientation="horizontal"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            tools:ignore="UselessParent">
+            android:id="@+id/NotificationLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/NotificationLayout"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
+            <ImageButton
+                android:id="@+id/notifications_toolbar_button"
+                android:layout_width="match_parent"
+                android:layout_height="57dp"
+                android:background="@color/white"
+                android:scaleType="center"
+                android:src="@android:drawable/ic_popup_reminder"
+                app:tint="@color/dark_blue_text" />
 
-                <ImageButton
-                    android:id="@+id/notifications_toolbar_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="57dp"
-                    android:background="@color/white"
-                    android:src="@android:drawable/ic_popup_reminder"
-                    app:tint="@color/dark_blue_text" />
-
-                <TextView
-                    android:id="@+id/notifications_toolbar_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/notifications_toolbar"
-                    android:textAlignment="center"
-                    android:textColor="@color/dark_blue_text" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/HomeLayout"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/home_toolbar_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="57dp"
-                    android:background="@color/white"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/hometoolbar"
-                    app:tint="@color/dark_blue_text" />
-
-                <TextView
-                    android:id="@+id/home_toolbar_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_toolbar"
-                    android:textAlignment="center"
-                    android:textColor="@color/dark_blue_text" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/ProfileLayout"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <ImageButton
-                    android:id="@+id/profile_toolbar_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="57dp"
-                    android:background="@color/white"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/profiletoolbar"
-                    app:tint="@color/light_blue_600" />
-
-                <TextView
-                    android:id="@+id/profile_toolbar_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/profile_toolbar"
-                    android:textAlignment="center"
-                    android:textColor="@color/dark_blue_text" />
-            </LinearLayout>
-
+            <TextView
+                android:id="@+id/notifications_toolbar_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/notifications_toolbar"
+                android:textAlignment="center"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="12sp" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/HomeLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-</FrameLayout>
+            <ImageButton
+                android:id="@+id/home_toolbar_button"
+                android:layout_width="match_parent"
+                android:layout_height="57dp"
+                android:background="@color/white"
+                android:scaleType="fitCenter"
+                android:src="@drawable/hometoolbar"
+                app:tint="@color/dark_blue_text" />
+
+            <TextView
+                android:id="@+id/home_toolbar_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/home_toolbar"
+                android:textAlignment="center"
+                android:textColor="@color/dark_blue_text"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/ProfileLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/profile_toolbar_button"
+                android:layout_width="match_parent"
+                android:layout_height="57dp"
+                android:background="@color/white"
+                android:scaleType="fitCenter"
+                android:src="@drawable/profiletoolbar"
+                app:tint="#2D7DEB" />
+
+            <TextView
+                android:id="@+id/profile_toolbar_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_toolbar"
+                android:textAlignment="center"
+                android:textColor="#2D7DEB"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
