@@ -10,6 +10,7 @@ public class Comment {
     private String commentId;
     private String eventId;
     private String userId; // Will be whatever we use as the document ID for the users
+    private String authorProfileImageUrl;
     private String authorName;
     private String content;
     private long postDateMillis;
@@ -26,12 +27,13 @@ public class Comment {
      *
      * @param eventId the unique ID for the event
      * @param userId the unique ID for the author
+     * @param authorProfileImageUrl the url for the author's profile image on firestore
      * @param authorName the display name of the author
      * @param content the actual content of the comment stored as a string
      * @param postDateMillis the time when the comment was posted stored as a long in milliseconds
      */
-    public Comment(String eventId, String userId, String authorName, String content, long postDateMillis) {
-        this(eventId, userId, authorName, content, postDateMillis, false, false);
+    public Comment(String eventId, String userId, String authorProfileImageUrl, String authorName, String content, long postDateMillis) {
+        this(eventId, userId, authorProfileImageUrl, authorName, content, postDateMillis, false, false);
     }
 
     /**
@@ -39,15 +41,17 @@ public class Comment {
      *
      * @param eventId the unique ID for the event
      * @param userId the unique ID for the author
+     * @param authorProfileImageUrl the url for the author's profile image on firestore
      * @param authorName the display name of the author
      * @param content the actual content of the comment stored as a string
      * @param postDateMillis the time when the comment was posted stored as a long in milliseconds
      * @param isOrganizer whether the author is the organizer of the event
      * @param isCoOrganizer whether the author is a co-organizer of the event
      */
-    public Comment(String eventId, String userId, String authorName, String content, long postDateMillis, boolean isOrganizer, boolean isCoOrganizer) {
+    public Comment(String eventId, String userId, String authorProfileImageUrl, String authorName, String content, long postDateMillis, boolean isOrganizer, boolean isCoOrganizer) {
         this.eventId = eventId;
         this.userId = userId;
+        this.authorProfileImageUrl = authorProfileImageUrl;
         this.authorName = authorName;
         this.content = content;
         this.postDateMillis = postDateMillis;
@@ -90,6 +94,10 @@ public class Comment {
     public boolean isCoOrganizer() {
         return isCoOrganizer;
     }
+
+    public String getAuthorProfileImageUrl() { return authorProfileImageUrl; }
+
+    public void setAuthorProfileImageUrl(String authorProfileImageUrl) { this.authorProfileImageUrl = authorProfileImageUrl; }
 
     public void setEventId(String eventId) {
         this.eventId = eventId;

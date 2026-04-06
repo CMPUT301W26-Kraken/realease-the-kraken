@@ -576,9 +576,6 @@ public class UserListFragment extends Fragment {
             imageParams.setMargins(0, 0, 32, 0);
             profilePicture.setLayoutParams(imageParams);
             profilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
-
-            TextView nameView = new TextView(parent.getContext());
-            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
             textContainer.setLayoutParams(textContainerParams);
             textContainer.setOrientation(LinearLayout.VERTICAL);
 
@@ -612,7 +609,7 @@ public class UserListFragment extends Fragment {
             row.addView(textContainer);
             row.addView(deleteBtn);
 
-            return new ProfileViewHolder(row, nameView, subtitleView, deleteBtn);
+            return new ProfileViewHolder(row, profilePicture, nameView, subtitleView, deleteBtn);
         }
 
         @Override
@@ -624,14 +621,13 @@ public class UserListFragment extends Fragment {
             holder.nameView.setText((name != null && !name.isEmpty()) ? name : profile.getUid());
 
             String imageUrl = profile.getProfileImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                Glide.with(holder.profilePicture.getContext())
-                        .load(imageUrl)
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .error(R.drawable.ic_launcher_foreground)
-                        .into(holder.profilePicture);
-            }
+            Glide.with(holder.profilePicture.getContext())
+                    .load(imageUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .error(R.drawable.ic_launcher_foreground)
+                    .fallback(R.drawable.ic_launcher_foreground)
+                    .into(holder.profilePicture);
 
             if (TextUtils.isEmpty(item.subtitle)) {
                 holder.subtitleView.setVisibility(View.GONE);
@@ -664,7 +660,7 @@ public class UserListFragment extends Fragment {
             ImageButton deleteButton;
 
             ProfileViewHolder(@NonNull View itemView,
-                              ImageView profilePicture
+                              ImageView profilePicture,
                               TextView nameView,
                               TextView subtitleView,
                               ImageButton deleteButton) {
