@@ -98,7 +98,7 @@ public class Profile {
             return UserRole.ENTRANT;
         }
         try {
-            return UserRole.valueOf(role);
+            return UserRole.valueOf(role.trim().toUpperCase(java.util.Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return UserRole.ENTRANT;
         }
