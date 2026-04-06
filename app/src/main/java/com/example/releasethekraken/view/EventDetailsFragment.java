@@ -113,9 +113,16 @@ public class EventDetailsFragment extends Fragment {
             }
             userType = (UserRole) getArguments().getSerializable("UserType");
             cameFromYourEvents = getArguments().getBoolean("cameFromYourEvents");
-            browseSearchQuery = getArguments().getString(ARG_SEARCH_QUERY, "");
-            browseFilterAvailableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT, "");
-            browseFilterCapacity = getArguments().getString(ARG_FILTER_CAPACITY, "");
+            
+            // Using safer getString calls for backward compatibility
+            String query = getArguments().getString(ARG_SEARCH_QUERY);
+            browseSearchQuery = query != null ? query : "";
+            
+            String availableAt = getArguments().getString(ARG_FILTER_AVAILABLE_AT);
+            browseFilterAvailableAt = availableAt != null ? availableAt : "";
+            
+            String capacity = getArguments().getString(ARG_FILTER_CAPACITY);
+            browseFilterCapacity = capacity != null ? capacity : "";
         }
 
         waitingListRepository = new WaitingListRepository();

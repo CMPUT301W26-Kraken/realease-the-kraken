@@ -88,7 +88,9 @@ public class UserListFragment extends Fragment {
             adminView = getArguments().getBoolean("adminView", false);
             eventId = getArguments().getString("eventId");
             userRole = (UserRole) getArguments().getSerializable("userRole");
-            listMode = getArguments().getString(ARG_LIST_MODE, MODE_WAITING);
+            
+            String mode = getArguments().getString(ARG_LIST_MODE);
+            listMode = mode != null ? mode : MODE_WAITING;
         }
     }
 
