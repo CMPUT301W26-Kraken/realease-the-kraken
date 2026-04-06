@@ -257,8 +257,12 @@ public class AdminCommentsFragment extends Fragment {
             holder.contentView.setText(comment.getContent());
             holder.timeView.setText(dateFormat.format(new Date(comment.getPostDateMillis())));
 
-            holder.deleteBtn.setOnClickListener(v ->
-                    deleteListener.onDelete(item, holder.getAdapterPosition()));
+            holder.deleteBtn.setOnClickListener(v -> {
+                int adapterPosition = holder.getAdapterPosition();
+                if (adapterPosition != RecyclerView.NO_POSITION) {
+                    deleteListener.onDelete(item, adapterPosition);
+                }
+            });
         }
 
         @Override

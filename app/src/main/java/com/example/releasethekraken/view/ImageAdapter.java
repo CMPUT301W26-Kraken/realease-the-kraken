@@ -59,7 +59,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                         int adapterPosition = holder.getAdapterPosition();
                         if (adapterPosition != RecyclerView.NO_POSITION) {
                             String urlToDelete = imageUrls.get(adapterPosition);
-                            deleteFromFirebaseStorage(urlToDelete, adapterPosition);
+                            deleteFromFirebaseStorage(urlToDelete);
                         }
                         dialog.dismiss();
                     })
@@ -71,16 +71,17 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     /**
      * Deletes the image from Firebase Storage using its download URL,
      * then removes it from the local list on success.
+     * Uses URL-based lookup on success to avoid stale index issues from async operations.
      */
-    private void deleteFromFirebaseStorage(String downloadUrl, int adapterPosition) {
+    private void deleteFromFirebaseStorage(String downloadUrl) {
         try {
             StorageReference ref = FirebaseStorage.getInstance().getReferenceFromUrl(downloadUrl);
             ref.delete()
                     .addOnSuccessListener(unused -> {
-                        if (adapterPosition < imageUrls.size()) {
-                            imageUrls.remove(adapterPosition);
-                            notifyItemRemoved(adapterPosition);
-                            notifyItemRangeChanged(adapterPosition, imageUrls.size());
+                        int currentIndex = imageUrls.indexOf(downloadUrl);
+                        if (currentIndex != -1) {
+                            imageUrls.remove(currentIndex);
+                            notifyItemRemoved(currentIndex);
                         }
                         Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
                     })
