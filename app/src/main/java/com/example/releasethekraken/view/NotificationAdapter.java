@@ -53,7 +53,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             if (type.equalsIgnoreCase("CO_ORGANIZER")) {
                 formattedType = "Co-organizer Invite";
             } else if (type.equalsIgnoreCase("PRIVATE_INVITE")) {
-                formattedType = "Private Invite";
+                formattedType = "Waitlist Invite";
             } else if (type.equalsIgnoreCase("WIN") || type.equalsIgnoreCase("SELECTED")) {
                 formattedType = "Event Win !";
             } else if (type.equalsIgnoreCase("LOSS")) {
@@ -70,7 +70,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         if (eventName == null || eventName.trim().isEmpty()) {
             eventName = notification.getEventId();
         }
-        
+
         if (eventName != null) {
             // Remove trailing underscore followed by numbers (common in generated IDs)
             eventName = eventName.replaceAll("_\\d+$", "");
@@ -105,12 +105,14 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             holder.binding.textInvitationStatus.setVisibility(View.VISIBLE);
             String statusText = responseStatus.substring(0, 1).toUpperCase() + responseStatus.substring(1).toLowerCase();
             holder.binding.textInvitationStatus.setText(statusText);
-            
-            // Set Pill Color: Green for Accepted, Red for Declined
+
+            // Set pill color based on response state.
             if (responseStatus.equalsIgnoreCase("accepted")) {
-                 holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#27AE60"));
+                holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#27AE60"));
             } else if (responseStatus.equalsIgnoreCase("declined")) {
-                 holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#E74C3C"));
+                holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#E74C3C"));
+            } else if (responseStatus.equalsIgnoreCase("expired") || responseStatus.equalsIgnoreCase("cancelled")) {
+                holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#7F8C8D"));
             }
         }
 
