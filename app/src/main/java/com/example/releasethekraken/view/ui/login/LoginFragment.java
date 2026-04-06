@@ -3,7 +3,6 @@ package com.example.releasethekraken.view.ui.login;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import android.os.Bundle;
@@ -16,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentLoginBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
@@ -96,6 +96,12 @@ public class LoginFragment extends Fragment {
             @Override
             public void onSuccess(Profile profile) {
                 if (!isAdded()) return;
+
+                // Restore the user's role from Firestore into SessionManager so it's
+                // available immediately across the app without another Firestore round-trip.
+                SessionManager sessionManager = new SessionManager(requireContext());
+                sessionManager.setRole(profile.getUserRole());
+
                 Navigation.findNavController(requireView())
                         .navigate(R.id.action_global_mainMenuFragment);
             }
