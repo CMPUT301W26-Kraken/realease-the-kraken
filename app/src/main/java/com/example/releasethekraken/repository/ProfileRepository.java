@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.model.UserRole;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -33,6 +34,7 @@ public class ProfileRepository {
     private static final String KEY_EMAIL = "profile_email";
     private static final String KEY_PHONE = "profile_phone";
     private static final String KEY_IMAGE_URL = "profile_image_url"; // Firebase Storage download URL
+    private static final String KEY_ROLE = "profile_role"; // User role cached locally
 
     private static final String COLLECTION_PROFILES = "profiles";
     private static final String STORAGE_PROFILE_IMAGES = "profile_images";
@@ -63,6 +65,7 @@ public class ProfileRepository {
                 .putString(KEY_EMAIL, profile.getEmail())
                 .putString(KEY_PHONE, profile.getPhone())
                 .putString(KEY_IMAGE_URL, profile.getProfileImageUrl())
+                .putString(KEY_ROLE, profile.getRole())
                 .apply();
     }
 
@@ -83,6 +86,7 @@ public class ProfileRepository {
         profileData.put("email", profile.getEmail());
         profileData.put("phone", profile.getPhone());
         profileData.put("profileImageUrl", profile.getProfileImageUrl());
+        profileData.put("role", profile.getRole() != null ? profile.getRole() : UserRole.ENTRANT.name());
 
         Log.d("ProfileRepository", "Saving profile to Firestore with doc id: " + documentId);
 
@@ -110,8 +114,10 @@ public class ProfileRepository {
         String email    = sharedPreferences.getString(KEY_EMAIL, "");
         String phone    = sharedPreferences.getString(KEY_PHONE, "");
         String imageUrl = sharedPreferences.getString(KEY_IMAGE_URL, null);
+        String role     = sharedPreferences.getString(KEY_ROLE, UserRole.ENTRANT.name());
         Profile profile = new Profile(name, email, phone, imageUrl);
         profile.setUid(uid);
+        profile.setRole(role);
         return profile;
     }
 
@@ -230,6 +236,7 @@ public class ProfileRepository {
         profileData.put("email", profile.getEmail());
         profileData.put("phone", profile.getPhone());
         profileData.put("profileImageUrl", profile.getProfileImageUrl());
+        profileData.put("role", profile.getRole() != null ? profile.getRole() : UserRole.ENTRANT.name());
 
         firestore.collection(COLLECTION_PROFILES)
                 .document(documentId)
@@ -256,9 +263,9 @@ public class ProfileRepository {
                 .remove(KEY_EMAIL)
                 .remove(KEY_PHONE)
                 .remove(KEY_IMAGE_URL)
+                .remove(KEY_ROLE)
                 .apply();
     }
-
 
     /**
      * Fetches all profiles from Firestore.
@@ -284,6 +291,52 @@ public class ProfileRepository {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    /**
+     * Fetches all profiles from Firestore that have the ORGANIZER role.
+     *
+     * @param callback Callback returning a list of organizer profiles on success
+     */
+    public void getAllOrganizers(ProfileRepositoryCallback<List<Profile>> callback) {
+        firestore.collection(COLLECTION_PROFILES)
+                .whereEqualTo("role", UserRole.ORGANIZER.name())
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Profile> profiles = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Profile profile = doc.toObject(Profile.class);
+                        if (profile != null) {
+                            if (profile.getUid() == null || profile.getUid().trim().isEmpty()) {
+                                profile.setUid(doc.getId());
+                            }
+                            profiles.add(profile);
+                        }
+                    }
+                    callback.onSuccess(profiles);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Updates only the role field for a given user in Firestore.
+     * Used by admin to revoke organizer privileges.
+     *
+     * @param uid       Firebase Auth UID of the target user
+     * @param role      The new role to assign
+     * @param callback  Callback for success/failure
+     */
+    public void updateUserRole(String uid, UserRole role, ProfileRepositoryCallback<Void> callback) {
+        firestore.collection(COLLECTION_PROFILES)
+                .document(uid)
+                .update("role", role.name())
+                .addOnSuccessListener(unused -> {
+                    Log.d("ProfileRepository", "Role updated to " + role.name() + " for uid: " + uid);
+                    callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileRepository", "Role update failed", e);
+                    callback.onFailure(e);
+                });
+    }
 
     /**
      * Deletes the profile from Firestore using Firebase Auth UID as the document ID.
