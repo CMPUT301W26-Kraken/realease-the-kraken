@@ -17,7 +17,7 @@ public class Event {
     private final long registrationStartMillis;
     private final long registrationEndMillis;
     private final int capacity;
-    private final String posterUrl;
+    private String posterUrl;
     private final boolean isPrivate;
     private final ArrayList<String> invitedUserIds;
     private final ArrayList<String> coOrganizerIds;
@@ -117,6 +117,10 @@ public class Event {
 
     public String getPosterUrl() {
         return posterUrl;
+    }
+
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl == null ? "" : posterUrl;
     }
 
     public boolean isPrivate() {

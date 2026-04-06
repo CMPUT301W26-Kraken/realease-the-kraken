@@ -72,6 +72,37 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Updates or inserts an event into Firestore.
+     * @param event The event to save.
+     * @param callback Callback for success or error.
+     */
+    public void upsertEvent(Event event, EventCallback callback) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("eventId", event.getEventId());
+        data.put("title", event.getTitle());
+        data.put("description", event.getDescription());
+        data.put("registrationStartMillis", event.getRegistrationStartMillis());
+        data.put("registrationEndMillis", event.getRegistrationEndMillis());
+        data.put("capacity", event.getCapacity());
+        data.put("isPrivate", event.isPrivate());
+        data.put("invitedUserIds", event.getInvitedUserIds());
+        data.put("coOrganizerIds", event.getCoOrganizerIds());
+        data.put("organizerId", event.getOrganizerId());
+        data.put("posterImageUrl", event.getPosterUrl());
+        data.put("posterUrl", event.getPosterUrl());
+        data.put("geolocationRequired", event.isGeolocationRequired());
+
+        // Use set with merge to avoid overwriting createdAt if we just want to update
+        // However, if it's a new event, we might want createdAt. 
+        // For simplicity and matching the existing createEvent pattern:
+        db.collection("events")
+                .document(event.getEventId())
+                .set(data, com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener(unused -> callback.onSuccess(event))
+                .addOnFailureListener(callback::onError);
+    }
+
     public void addCoOrganizer(String eventId, String userId, CompletionCallback callback) {
         db.collection("events")
                 .document(eventId)

@@ -107,20 +107,20 @@ public class CreateEventFragment extends Fragment {
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
             if (activity.getSupportActionBar() != null) {
-                activity.getSupportActionBar().show();
+                activity.getSupportActionBar().hide(); // Hide toolbar for full screen feel
             }
         }
 
         if (editEvent) {
-            binding.eventCreateWelcome.setText(R.string.edit_event_welcome);
-            binding.createEvent.setText(R.string.edit_event_confirm_button);
+            binding.eventCreateWelcome.setText("Edit Event");
+            binding.createEvent.setText("Update Event");
             loadEventForEditing();
         } else {
             updatePreviews();
         }
 
         binding.imageButton.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
-        binding.uploadPosterText.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        binding.uploadPosterContainer.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
         binding.privateEventSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             binding.invitedGuestsLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -209,7 +209,7 @@ public class CreateEventFragment extends Fragment {
         binding.registrationStartDate.setOnClickListener(v -> showDateTimePicker(binding.registrationStartDate));
         binding.registrationEndDate.setOnClickListener(v -> showDateTimePicker(binding.registrationEndDate));
 
-        binding.cancelEventCreation.setOnClickListener(v -> {
+        View.OnClickListener cancelListener = v -> {
             if (editEvent) {
                 Bundle args = new Bundle();
                 args.putSerializable("UserType", UserRole.ORGANIZER);
@@ -221,7 +221,10 @@ public class CreateEventFragment extends Fragment {
                 args.putBoolean("yourEvents", true);
                 Navigation.findNavController(v).navigate(R.id.action_createEventFragment_to_browseEventsFragment, args);
             }
-        });
+        };
+
+        binding.cancelEventCreation.setOnClickListener(cancelListener);
+        binding.cancelEventCreationDummy.setOnClickListener(cancelListener);
 
         binding.createEvent.setOnClickListener(v -> createEventAndSave());
     }
@@ -264,15 +267,15 @@ public class CreateEventFragment extends Fragment {
     }
 
     private void updatePreviews() {
-        String coOrgText = "Co-Organizers added: " + coOrganizerIds.size();
+        String coOrgText = "No co-organizers added";
         if (!coOrganizerNames.isEmpty()) {
-            coOrgText += " [" + TextUtils.join(", ", coOrganizerNames) + "]";
+            coOrgText = "Co-Organizers added: " + coOrganizerIds.size() + " [" + TextUtils.join(", ", coOrganizerNames) + "]";
         }
         binding.coOrganizersPreview.setText(coOrgText);
 
-        String guestText = "Guests invited: " + invitedUserIds.size();
+        String guestText = "No guests invited";
         if (!invitedUserNames.isEmpty()) {
-            guestText += " [" + TextUtils.join(", ", invitedUserNames) + "]";
+            guestText = "Guests invited: " + invitedUserIds.size() + " [" + TextUtils.join(", ", invitedUserNames) + "]";
         }
         binding.invitedGuestsPreview.setText(guestText);
     }
@@ -333,6 +336,11 @@ public class CreateEventFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private String formatMillisForInput(long millis) {
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH);
+        return sdf.format(new java.util.Date(millis));
     }
 
     private void createEventAndSave() {
@@ -406,11 +414,6 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
-        // According to requirement: we become co-organizer or guest on ACCEPTANCE.
-        // So during creation, we only save the organizer.
-        // HOWEVER, for private events, people MUST be in invitedUserIds to even see it.
-        // So we add guests to invitedUserIds immediately, but co-organizers will be added on acceptance.
-        
         Event event = new Event(
                 eventId,
                 title,
@@ -420,8 +423,8 @@ public class CreateEventFragment extends Fragment {
                 capacity,
                 existingPosterUrl,
                 isPrivate,
-                invitedUserIds, // Guests allowed to see private event
-                coOrganizerIds, // Maintain existing co-organizers
+                invitedUserIds,
+                coOrganizerIds,
                 organizerId,
                 geolocationRequired
         );
@@ -443,114 +446,80 @@ public class CreateEventFragment extends Fragment {
                 .child(event.getEventId() + ".jpg");
 
         ref.putFile(selectedPosterUri)
-                .addOnSuccessListener(taskSnapshot ->
-                        ref.getDownloadUrl()
-                                .addOnSuccessListener(uri -> saveEventToFirestore(event, registrationEndMillis, uri.toString()))
-                                .addOnFailureListener(this::handleSaveError))
-                .addOnFailureListener(this::handleSaveError);
+                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl().addOnSuccessListener(uri -> {
+                    saveEventToFirestore(event, registrationEndMillis, uri.toString());
+                }))
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        binding.loading.setVisibility(View.GONE);
+                        binding.createEvent.setEnabled(true);
+                        Toast.makeText(getContext(), "Failed to upload poster: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    private void saveEventToFirestore(Event event, long registrationEndMillis, @Nullable String posterUrl) {
-        new EventRepository().createEvent(event, posterUrl, new EventRepository.CompletionCallback() {
+    private void saveEventToFirestore(Event event, long registrationEndMillis, String posterUrl) {
+        event.setPosterUrl(posterUrl);
+        new EventRepository().upsertEvent(event, new EventRepository.EventCallback() {
             @Override
-            public void onSuccess() {
-                if (!isAdded()) {
-                    return;
+            public void onSuccess(Event savedEvent) {
+                if (!isAdded()) return;
+                binding.loading.setVisibility(View.GONE);
+                Toast.makeText(getContext(), editEvent ? "Event updated!" : "Event created!", Toast.LENGTH_SHORT).show();
+
+                // Send notifications to new co-organizers/invited users
+                for (String uid : coOrganizerIds) {
+                    if (!initialCoOrganizerIds.contains(uid)) {
+                        notificationService.sendCoOrganizerInvite(uid, savedEvent.getEventId(), savedEvent.getTitle());
+                    }
+                }
+                if (savedEvent.isPrivate()) {
+                    for (String uid : invitedUserIds) {
+                        if (!initialInvitedUserIds.contains(uid)) {
+                            notificationService.sendPrivateEventInvite(uid, savedEvent.getEventId(), savedEvent.getTitle());
+                        }
+                    }
                 }
 
-                binding.loading.setVisibility(View.GONE);
-                binding.createEvent.setEnabled(true);
-                
-                // Send invitations now that event is created
-                sendInvitations(event);
-
-                long delay = registrationEndMillis - System.currentTimeMillis();
-                Data inputData = new Data.Builder()
-                        .putString("eventId", event.getEventId())
-                        .build();
-
-                OneTimeWorkRequest drawRequest =
-                        new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
-                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                                .setInputData(inputData)
-                                .build();
-                WorkManager.getInstance(requireContext()).enqueue(drawRequest);
-
-                Toast.makeText(getContext(), editEvent ? "Event updated successfully" : "Event created successfully", Toast.LENGTH_SHORT).show();
+                if (!editEvent) {
+                    scheduleLottery(savedEvent.getEventId(), registrationEndMillis);
+                }
 
                 Bundle args = new Bundle();
-                args.putString("eventId", event.getEventId());
                 args.putSerializable("UserType", UserRole.ORGANIZER);
-                args.putBoolean("cameFromYourEvents", true);
-                Navigation.findNavController(requireView()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
+                args.putString("eventId", savedEvent.getEventId());
+                args.putBoolean("cameFromYourEvents", cameFromYourEvents);
+                Navigation.findNavController(binding.getRoot()).navigate(R.id.action_createEventFragment_to_eventDetailsFragment, args);
             }
 
             @Override
             public void onError(Exception e) {
-                handleSaveError(e);
+                if (!isAdded()) return;
+                binding.loading.setVisibility(View.GONE);
+                binding.createEvent.setEnabled(true);
+                Toast.makeText(getContext(), "Error saving event: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
-    
-    private void sendInvitations(Event event) {
-        // Invite co-organizers - use specific type for acceptance flow
-        for (String coOrgId : coOrganizerIds) {
-            if (!editEvent || !initialCoOrganizerIds.contains(coOrgId)) {
-                notificationService.sendCoOrganizerNotification(event, coOrgId, null);
-            }
-        }
-        
-        // Invite private guests if applicable
-        if (event.isPrivate()) {
-            for (String guestId : invitedUserIds) {
-                if (!editEvent || !initialInvitedUserIds.contains(guestId)) {
-                    // Use a specific type for private invites
-                    sendPrivateInviteNotification(event, guestId);
-                }
-            }
-        }
-    }
 
-    private void sendPrivateInviteNotification(Event event, String userId) {
-        long nowMillis = System.currentTimeMillis();
-        String message = "You have been invited to join the private event: " + event.getTitle();
-        
-        com.example.releasethekraken.model.Notification notification = new com.example.releasethekraken.model.Notification(
-                userId,
-                event.getEventId(),
-                message,
-                "PRIVATE_INVITE",
-                nowMillis
-        );
-        
-        new NotificationRepository().sendNotification(notification, new NotificationRepository.CompletionCallback() {
-            @Override
-            public void onSuccess() {}
-            @Override
-            public void onError(Exception e) {}
-        });
-    }
+    private void scheduleLottery(String eventId, long endMillis) {
+        long delayMillis = endMillis - System.currentTimeMillis();
+        if (delayMillis < 0) delayMillis = 0;
 
-    private void handleSaveError(Exception e) {
-        if (!isAdded()) {
-            return;
-        }
-        binding.loading.setVisibility(View.GONE);
-        binding.createEvent.setEnabled(true);
-        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        Data data = new Data.Builder()
+                .putString("eventId", eventId)
+                .build();
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DrawEntrantsWorker.class)
+                .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+                .setInputData(data)
+                .addTag("lottery_" + eventId)
+                .build();
+
+        WorkManager.getInstance(requireContext()).enqueue(workRequest);
     }
 
     private String buildEventId(String title) {
-        String normalizedTitle = title.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9]+", "_")
-                .replaceAll("^_+|_+$", "");
-        if (normalizedTitle.isEmpty()) {
-            normalizedTitle = "event";
-        }
-        return normalizedTitle + "_" + System.currentTimeMillis();
-    }
-
-    private String formatMillisForInput(long millis) {
-        return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ENGLISH).format(millis);
+        return title.replaceAll("\\s+", "_").toLowerCase() + "_" + System.currentTimeMillis();
     }
 }
