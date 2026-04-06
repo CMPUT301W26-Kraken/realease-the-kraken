@@ -223,6 +223,64 @@ public class NotificationService {
         sendAndLogNotification(notification, callback);
     }
 
+    /**
+     * sends a co-organizer invitation.
+     * @param userId the user receiving the invitation
+     * @param eventId the ID of the event
+     * @param eventTitle the title of the event
+     */
+    public void sendCoOrganizerInvite(String userId, String eventId, String eventTitle) {
+        if (userId == null || userId.trim().isEmpty()) return;
+
+        long nowMillis = System.currentTimeMillis();
+        String displayTitle = (eventTitle == null || eventTitle.trim().isEmpty()) ? eventId : eventTitle;
+        String eventDisplayName = displayTitle.replace("_", " ");
+        String message = "You have been added as a co-organizer for the event: " + eventDisplayName;
+
+        Notification notification = new Notification(
+                null,
+                userId,
+                eventId,
+                eventTitle,
+                message,
+                "CO_ORGANIZER",
+                nowMillis,
+                false,
+                "pending"
+        );
+
+        sendAndLogNotification(notification, null);
+    }
+
+    /**
+     * sends a private event invitation.
+     * @param userId the user receiving the invitation
+     * @param eventId the ID of the event
+     * @param eventTitle the title of the event
+     */
+    public void sendPrivateEventInvite(String userId, String eventId, String eventTitle) {
+        if (userId == null || userId.trim().isEmpty()) return;
+
+        long nowMillis = System.currentTimeMillis();
+        String displayTitle = (eventTitle == null || eventTitle.trim().isEmpty()) ? eventId : eventTitle;
+        String eventDisplayName = displayTitle.replace("_", " ");
+        String message = "You have been invited to a private event: " + eventDisplayName;
+
+        Notification notification = new Notification(
+                null,
+                userId,
+                eventId,
+                eventTitle,
+                message,
+                "PRIVATE_INVITE",
+                nowMillis,
+                false,
+                "pending"
+        );
+
+        sendAndLogNotification(notification, null);
+    }
+
     private void sendAndLogNotification(Notification notification, NotificationCallback callback) {
         notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
             @Override
