@@ -1,9 +1,14 @@
 package com.example.releasethekraken.view;
 import com.example.releasethekraken.R;
 import com.bumptech.glide.Glide;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,20 +63,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
                         String deleteImageUrl = imageUrls.get(adapterPosition);
 
-                        StorageReference storageRef =
-                                FirebaseStorage.getInstance().getReferenceFromUrl(deleteImageUrl);
+                        String path = Uri.parse(deleteImageUrl).getPath();
 
-                        storageRef.delete()
-                                .addOnSuccessListener(aVoid -> {
+                        if (path.contains("event_posters")) {
+                            nullAndDeleteImage("events", "posterImageUrl", deleteImageUrl, adapterPosition);
+                        } else if (path.contains("profile_images")) {
+                            nullAndDeleteImage("profiles", "profileImageUrl", deleteImageUrl, adapterPosition);
+                        }
 
-                                    imageUrls.remove(adapterPosition);
-                                    notifyItemRemoved(adapterPosition);
-
-                                    Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(context, "Delete failed", Toast.LENGTH_SHORT).show();
-                                });
                         dialog.dismiss();
                     })
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
@@ -91,5 +90,50 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             super(itemView);
             imageView = itemView.findViewById(R.id.item_image_view);
         }
+    }
+
+    private void nullAndDeleteImage(String collection, String attribute, String url, int position) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // First set the image URL field to null so that it isn't referenced and found in Glide's cache
+        db.collection(collection)
+                .whereEqualTo(attribute, url)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        DocumentReference docRef = doc.getReference();
+                        docRef.update(attribute, null)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("FIRESTORE", "Field cleared successfully");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("FIRESTORE", "Failed to clear field", e);
+                                });
+                        // Because events for some reason have two fields pertaining to URLs and I haven't the time to get to the bottom of it
+                        if (collection.equals("events")) {
+                            docRef.update("posterUrl", null)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Log.d("FIRESTORE", "Field cleared successfully");
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("FIRESTORE", "Failed to clear field", e);
+                                    });
+                        }
+                    }
+
+                    // Delete from Storage after nulling the field
+                    StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(url);
+                    storageRef.delete()
+                            .addOnSuccessListener(aVoid -> {
+                                imageUrls.remove(position);
+                                notifyItemRemoved(position);
+                                Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(context, "Delete failed", Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Failed to find associated objects", Toast.LENGTH_SHORT).show();
+                });
     }
 }
