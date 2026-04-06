@@ -1,6 +1,8 @@
 package com.example.releasethekraken.view;
 import com.example.releasethekraken.R;
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,9 +22,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     private List<String> imageUrls = new ArrayList<>();
     private Context context;
 
-    public ImageAdapter(Context context) {
-        this.context = context;
-    }
+    public ImageAdapter(Context context) { this.context = context; }
 
     public void setImages(List<String> urls) {
         this.imageUrls = urls;
@@ -54,15 +54,24 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     .setMessage(R.string.delete_image_message)
                     .setPositiveButton("Yes", (dialog, which) -> {
                         int adapterPosition = holder.getAdapterPosition();
-                        if (adapterPosition != RecyclerView.NO_POSITION) {
-                            imageUrls.remove(adapterPosition);
-                            notifyItemRemoved(adapterPosition);
-                            notifyItemRangeChanged(adapterPosition, imageUrls.size());
+                        if (adapterPosition == RecyclerView.NO_POSITION) return;
 
-                            // TODO: ADD IMAGE DELETION ON DATABASE
+                        String deleteImageUrl = imageUrls.get(adapterPosition);
 
-                            Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
-                        }
+                        StorageReference storageRef =
+                                FirebaseStorage.getInstance().getReferenceFromUrl(deleteImageUrl);
+
+                        storageRef.delete()
+                                .addOnSuccessListener(aVoid -> {
+
+                                    imageUrls.remove(adapterPosition);
+                                    notifyItemRemoved(adapterPosition);
+
+                                    Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(context, "Delete failed", Toast.LENGTH_SHORT).show();
+                                });
                         dialog.dismiss();
                     })
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
