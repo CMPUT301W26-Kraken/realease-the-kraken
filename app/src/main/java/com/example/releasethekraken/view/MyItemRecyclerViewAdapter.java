@@ -5,6 +5,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -19,6 +20,8 @@ import com.example.releasethekraken.databinding.ItemEventDetailedBinding;
 import com.example.releasethekraken.model.Event;
 import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.model.WaitingListRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.List;
@@ -78,6 +81,39 @@ public class MyItemRecyclerViewAdapter
             
             holder.detailedBinding.eventOpenBadgeDetailed.setVisibility(isOpen ? View.VISIBLE : View.GONE);
 
+            // Private event logic
+            if (event.isPrivate()) {
+                holder.detailedBinding.eventPrivateBadgeDetailed.setVisibility(View.VISIBLE);
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                String currentUserId = currentUser != null ? currentUser.getUid() : "";
+                
+                boolean isOrganizer = event.getOrganizerId().equals(currentUserId);
+                boolean isCoOrganizer = event.getCoOrganizerIds().contains(currentUserId);
+                boolean isInvited = event.getInvitedUserIds().contains(currentUserId);
+
+                if (isOrganizer || isCoOrganizer || isInvited) {
+                    // Invited/Organizer view
+                    holder.detailedBinding.browseEventActionButtonDetailed.setText("View Event");
+                    holder.detailedBinding.browseEventActionButtonDetailed.setEnabled(true);
+                    holder.detailedBinding.browseEventActionButtonDetailed.setBackgroundResource(R.drawable.bg_capsule);
+                    holder.detailedBinding.browseEventActionButtonDetailed.getBackground().setTint(holder.itemView.getContext().getColor(R.color.dark_blue_text));
+                    holder.detailedBinding.browseEventActionButtonDetailed.setTextColor(Color.WHITE);
+                } else {
+                    // Not invited view
+                    holder.detailedBinding.browseEventActionButtonDetailed.setText("Invite Only");
+                    holder.detailedBinding.browseEventActionButtonDetailed.setEnabled(false);
+                    holder.detailedBinding.browseEventActionButtonDetailed.setBackgroundResource(R.drawable.bg_capsule);
+                    holder.detailedBinding.browseEventActionButtonDetailed.getBackground().setTint(Color.parseColor("#F1F5F9"));
+                    holder.detailedBinding.browseEventActionButtonDetailed.setTextColor(Color.parseColor("#475569"));
+                }
+            } else {
+                holder.detailedBinding.eventPrivateBadgeDetailed.setVisibility(View.GONE);
+                holder.detailedBinding.browseEventActionButtonDetailed.setText("View Event");
+                holder.detailedBinding.browseEventActionButtonDetailed.setEnabled(true);
+                holder.detailedBinding.browseEventActionButtonDetailed.getBackground().setTint(holder.itemView.getContext().getColor(R.color.dark_blue_text));
+                holder.detailedBinding.browseEventActionButtonDetailed.setTextColor(Color.WHITE);
+            }
+
             // Fetch waitlist count
             new WaitingListRepository().getAllEntrants(event.getEventId(), new WaitingListRepository.EntrantsCallback() {
                 @Override
@@ -85,8 +121,6 @@ public class MyItemRecyclerViewAdapter
                     int currentPos = holder.getBindingAdapterPosition();
                     if (currentPos == RecyclerView.NO_POSITION) return;
                     
-                    // Since position can change if items are moved/deleted, we compare currentPos
-                    // But in a simple list where position is passed, we check if holder still represents same data
                     if (holder.getBindingAdapterPosition() == position) {
                         holder.detailedBinding.browseEventWaitlistCountDetailed.setText(
                                 String.format(Locale.getDefault(), "%d people", entrants.size()));
@@ -106,6 +140,10 @@ public class MyItemRecyclerViewAdapter
                 Navigation.findNavController(v).navigate(R.id.action_browseEventsFragment_to_commentsFragment, args);
             });
 
+            holder.detailedBinding.browseEventActionButtonDetailed.setOnClickListener(v -> {
+                if (listener != null) listener.onEventClick(event);
+            });
+
             holder.detailedBinding.getRoot().setOnClickListener(v -> {
                 if (listener != null) listener.onEventClick(event);
             });
@@ -118,6 +156,7 @@ public class MyItemRecyclerViewAdapter
             holder.binding.eventBrowseRegEnd.setText(dateText);
             
             holder.binding.eventOpenBadge.setVisibility(isOpen ? View.VISIBLE : View.GONE);
+            holder.binding.eventPrivateBadge.setVisibility(event.isPrivate() ? View.VISIBLE : View.GONE);
 
             holder.binding.getRoot().setOnClickListener(v -> {
                 if (listener != null) listener.onEventClick(event);
