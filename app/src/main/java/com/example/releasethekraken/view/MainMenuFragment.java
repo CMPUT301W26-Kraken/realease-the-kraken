@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentMainMenuBinding;
 import com.example.releasethekraken.model.UserRole;
 
@@ -42,6 +44,9 @@ public class MainMenuFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Needed to check the User's role for toggling admin button visibility
+        SessionManager sessionManager = new SessionManager(requireContext());
+
         // Animate the tentacles sliding into the fragment
         ImageView tentacles = view.findViewById(R.id.mainmenu_tentacles);
 
@@ -62,6 +67,12 @@ public class MainMenuFragment extends Fragment {
             if (activity.getSupportActionBar() != null) {
                 activity.getSupportActionBar().show();
             }
+        }
+
+        // Toggle the visibility of the admin buttons
+        LinearLayout adminButtonLayout = view.findViewById(R.id.AdminButtonLayout);
+        if (sessionManager.getRole() == UserRole.ADMIN) {
+            adminButtonLayout.setVisibility(View.GONE);
         }
 
         // Navigate to View Profile
@@ -102,12 +113,6 @@ public class MainMenuFragment extends Fragment {
             Navigation.findNavController(v)
                     .navigate(R.id.action_mainMenuFragment_to_imageListFragment);
         });
-
-        // Navigate to Ticket Test (role access, filtering, history)
-        binding.ticketTestButton.setOnClickListener(v ->
-                Navigation.findNavController(v)
-                        .navigate(R.id.action_mainMenuFragment_to_ticketTestFragment)
-        );
 
         // Navigate to Notifications
         binding.notificationsToolbarButton.setOnClickListener(v ->
