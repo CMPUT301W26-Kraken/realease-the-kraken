@@ -10,8 +10,20 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/mainmenu_tentacles"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:scaleType="fitStart"
+            android:src="@drawable/mainmenutentacles"
+            app:tint="@color/dark_blue_text"
+            android:tintMode="src_in"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
@@ -114,41 +126,25 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/your_events_button"
+                style="@style/StandardMaterialButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:layout_marginBottom="20sp"
-                android:layout_weight="1"
                 android:backgroundTint="@color/light_grey_button"
                 android:text="@string/your_events_button"
                 android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@color/dark_blue_text" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/browse_events_button"
+                style="@style/StandardMaterialButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
                 android:backgroundTint="@color/light_grey_button"
                 android:text="@string/browse_events_button"
                 android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/ticket_test_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginTop="20sp"
-                android:layout_marginEnd="20sp"
-                android:backgroundTint="@color/light_grey_button"
-                android:text="@string/ticket_test_button"
-                android:textColor="@color/dark_blue_text"
-                android:textStyle="bold" />
+                app:icon="@android:drawable/ic_search_category_default"
+                app:iconTint="@color/dark_blue_text" />
 
         </LinearLayout>
 
@@ -156,7 +152,6 @@
             android:id="@+id/qr_scan_button"
             android:layout_width="125dp"
             android:layout_height="125dp"
-            android:layout_marginTop="20dp"
             android:backgroundTint="@color/dark_blue_text"
             android:scaleType="fitCenter"
             android:src="@drawable/qrscan"
@@ -171,32 +166,49 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:visibility="visible"
             app:layout_constraintBottom_toTopOf="@+id/fullscreen_content_controls"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/qr_scan_button">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/admin_browse_users_button"
+                style="@style/AdminMaterialButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
-                android:layout_marginBottom="20sp"
                 android:backgroundTint="@color/dark_blue_text"
                 android:text="@string/admin_browse_users_button"
-                android:textStyle="bold" />
+                android:textColor="@color/white"
+                app:icon="@drawable/profiletoolbar" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/admin_browse_images_button"
+                style="@style/AdminMaterialButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20sp"
-                android:layout_marginEnd="20sp"
                 android:backgroundTint="@color/dark_blue_text"
                 android:text="@string/admin_browse_images_button"
                 android:textColor="@color/white"
-                android:textStyle="bold" />
+                app:icon="@android:drawable/ic_menu_gallery"
+                app:iconTint="@color/white" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/admin_notification_logs_button"
+                style="@style/AdminMaterialButton"
+                android:layout_width="match_parent"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="Notification Logs"
+                android:textColor="@color/white"
+                app:icon="@android:drawable/ic_popup_reminder" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/admin_remove_comments_button"
+                style="@style/AdminMaterialButton"
+                android:layout_width="match_parent"
+                android:backgroundTint="@color/dark_blue_text"
+                android:text="Remove Comments"
+                android:textColor="@color/white"
+                app:icon="@drawable/ic_comments"
+                app:iconTint="@color/white" />
 
         </LinearLayout>
 

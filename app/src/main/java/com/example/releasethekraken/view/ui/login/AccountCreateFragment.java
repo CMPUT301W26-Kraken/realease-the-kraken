@@ -2,16 +2,11 @@ package com.example.releasethekraken.view.ui.login;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -23,15 +18,21 @@ import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
+import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentAccountCreateBinding;
 import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.model.UserRole;
 import com.example.releasethekraken.repository.ProfileRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 /**
- * Fragment where users provide their details (name, email, password, etc.) 
+ * Fragment where users provide their details (name, email, password, etc.)
  * to create a new account or edit an existing profile.
+ *
+ * On account creation, users can toggle "Register as Admin" to create
+ * an admin account. This role is saved to Firestore and cannot be changed
+ * after account creation.
  */
 public class AccountCreateFragment extends Fragment {
 
@@ -89,9 +90,11 @@ public class AccountCreateFragment extends Fragment {
             binding.createAccount.setText(R.string.action_update_profile);
             binding.cancelAccountCreation.setText(R.string.action_cancel_account_edits);
 
-            // In edit mode, hide the password field container and divider
+            // In edit mode, hide password fields and admin toggle — role is set at creation only
             binding.passwordLayout.setVisibility(View.GONE);
             binding.passwordDivider.setVisibility(View.GONE);
+            binding.adminToggleContainer.setVisibility(View.GONE);
+            binding.adminDivider.setVisibility(View.GONE);
 
             Profile p = repo.getProfile();
             binding.nameCreate.setText(p.getName());
@@ -104,9 +107,11 @@ public class AccountCreateFragment extends Fragment {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             binding.createAccount.setText("Register Account");
 
-            // Show password field container and divider
+            // Show password fields and admin toggle on new account creation
             binding.passwordLayout.setVisibility(View.VISIBLE);
             binding.passwordDivider.setVisibility(View.VISIBLE);
+            binding.adminToggleContainer.setVisibility(View.VISIBLE);
+            binding.adminDivider.setVisibility(View.VISIBLE);
         }
     }
 
@@ -128,11 +133,14 @@ public class AccountCreateFragment extends Fragment {
                 binding.passwordCreate.setError("Password must be at least 6 characters");
                 return;
             }
-            createNewAccount(name, email, password, phone, repo);
+            boolean isAdmin = binding.adminToggle.isChecked();
+            UserRole selectedRole = isAdmin ? UserRole.ADMIN : UserRole.ENTRANT;
+            createNewAccount(name, email, password, phone, selectedRole, repo);
         }
     }
 
-    private void createNewAccount(String name, String email, String password, String phone, ProfileRepository repo) {
+    private void createNewAccount(String name, String email, String password, String phone,
+                                  UserRole role, ProfileRepository repo) {
         binding.loading.setVisibility(View.VISIBLE);
         binding.createAccount.setEnabled(false);
 
@@ -142,26 +150,34 @@ public class AccountCreateFragment extends Fragment {
                         FirebaseUser user = mAuth.getCurrentUser();
                         Profile newProfile = new Profile(name, email, phone);
                         newProfile.setUid(user.getUid());
+                        newProfile.setRole(role.name());
+
+                        // Persist role to SessionManager so it's available immediately
+                        SessionManager sessionManager = new SessionManager(requireContext());
+                        sessionManager.setRole(role);
 
                         if (selectedImageUri != null) {
-                            repo.uploadProfileImage(selectedImageUri, user.getUid(), new ProfileRepository.ProfileRepositoryCallback<String>() {
-                                @Override
-                                public void onSuccess(String url) {
-                                    newProfile.setProfileImageUrl(url);
-                                    saveProfileAndFinish(newProfile, repo);
-                                }
-                                @Override
-                                public void onFailure(Exception e) {
-                                    saveProfileAndFinish(newProfile, repo);
-                                }
-                            });
+                            repo.uploadProfileImage(selectedImageUri, user.getUid(),
+                                    new ProfileRepository.ProfileRepositoryCallback<String>() {
+                                        @Override
+                                        public void onSuccess(String url) {
+                                            newProfile.setProfileImageUrl(url);
+                                            saveProfileAndFinish(newProfile, repo);
+                                        }
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            saveProfileAndFinish(newProfile, repo);
+                                        }
+                                    });
                         } else {
                             saveProfileAndFinish(newProfile, repo);
                         }
                     } else {
                         binding.loading.setVisibility(View.GONE);
                         binding.createAccount.setEnabled(true);
-                        Toast.makeText(getContext(), "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(),
+                                "Registration failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -175,17 +191,18 @@ public class AccountCreateFragment extends Fragment {
         if (selectedImageUri != null) {
             binding.loading.setVisibility(View.VISIBLE);
             binding.createAccount.setEnabled(false);
-            repo.uploadProfileImage(selectedImageUri, p.getUid(), new ProfileRepository.ProfileRepositoryCallback<String>() {
-                @Override
-                public void onSuccess(String url) {
-                    p.setProfileImageUrl(url);
-                    saveProfileAndFinish(p, repo);
-                }
-                @Override
-                public void onFailure(Exception e) {
-                    saveProfileAndFinish(p, repo);
-                }
-            });
+            repo.uploadProfileImage(selectedImageUri, p.getUid(),
+                    new ProfileRepository.ProfileRepositoryCallback<String>() {
+                        @Override
+                        public void onSuccess(String url) {
+                            p.setProfileImageUrl(url);
+                            saveProfileAndFinish(p, repo);
+                        }
+                        @Override
+                        public void onFailure(Exception e) {
+                            saveProfileAndFinish(p, repo);
+                        }
+                    });
         } else {
             saveProfileAndFinish(p, repo);
         }

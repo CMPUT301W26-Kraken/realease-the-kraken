@@ -22,7 +22,7 @@
     <string name="action_create_profile">Create Profile</string>
     <string name="action_update_profile">Update Profile</string>
     <string name="action_cancel_account_creation">Cancel Account Creation</string>
-    <string name="action_cancel_account_edits">Discard Account Edits</string>
+    <string name="action_cancel_account_edits">Discard Edits</string>
     <string name="prompt_name">Name</string>
     <string name="prompt_phone_optional">Phone Number (Optional)</string>
     <string name="upload_profile_image_text">Upload&#10;Profile Picture</string>
