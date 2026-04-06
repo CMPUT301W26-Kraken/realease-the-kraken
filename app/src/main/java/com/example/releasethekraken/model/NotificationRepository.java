@@ -23,6 +23,8 @@ public class NotificationRepository {
 
     private final FirebaseFirestore db;
 
+    private static final long UNRESPONSIVE_TIMEOUT_MILLIS = 48L * 60L * 60L * 1000L;
+
     public NotificationRepository() {
         this(FirebaseFirestore.getInstance());
     }
@@ -43,6 +45,11 @@ public class NotificationRepository {
 
     public interface EntrantIdsCallback {
         void onSuccess(List<String> entrantIds);
+        void onError(Exception e);
+    }
+
+    public interface CancelUnresponsiveCallback {
+        void onSuccess(int cancelledCount);
         void onError(Exception e);
     }
 
@@ -389,6 +396,169 @@ public class NotificationRepository {
                 })
                 .addOnFailureListener(callback::onError);
     }
+
+    public void cancelUnresponsiveEntrantsForEvent(String eventId, CancelUnresponsiveCallback callback) {
+        cancelUnresponsiveEntrantsForEvent(eventId, UNRESPONSIVE_TIMEOUT_MILLIS, callback);
+    }
+
+    public void cancelUnresponsiveEntrantsForEvent(String eventId,
+                                                   long timeoutMillis,
+                                                   CancelUnresponsiveCallback callback) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid event ID."));
+            return;
+        }
+
+        getInvitationNotificationsForEvent(eventId, new NotificationsCallback() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                long nowMillis = System.currentTimeMillis();
+                List<Notification> expiredPendingNotifications = new ArrayList<>();
+
+                for (Notification notification : notifications) {
+                    String status = normalizeStatus(notification.getResponseStatus());
+                    boolean isPending = "pending".equals(status);
+                    boolean isExpired = nowMillis - notification.getSentAtMillis() > timeoutMillis;
+
+                    if (isPending && isExpired) {
+                        expiredPendingNotifications.add(notification);
+                    }
+                }
+
+                if (expiredPendingNotifications.isEmpty()) {
+                    callback.onSuccess(0);
+                    return;
+                }
+
+                cancelUnresponsiveSequentially(
+                        eventId,
+                        expiredPendingNotifications,
+                        0,
+                        0,
+                        callback
+                );
+            }
+
+            @Override
+            public void onError(Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    private void cancelUnresponsiveSequentially(String eventId,
+                                            List<Notification> notifications,
+                                            int index,
+                                            int cancelledCount,
+                                            CancelUnresponsiveCallback callback) {
+    if (index >= notifications.size()) {
+        callback.onSuccess(cancelledCount);
+        return;
+    }
+
+    Notification notification = notifications.get(index);
+
+    cancelSingleUnresponsiveEntrant(
+            notification.getEntrantId(),
+            eventId,
+            notification.getNotificationId(),
+            new CompletionCallback() {
+                @Override
+                public void onSuccess() {
+                    cancelUnresponsiveSequentially(
+                            eventId,
+                            notifications,
+                            index + 1,
+                            cancelledCount + 1,
+                            callback
+                    );
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    cancelUnresponsiveSequentially(
+                            eventId,
+                            notifications,
+                            index + 1,
+                            cancelledCount,
+                            callback
+                    );
+                }
+            }
+    );
+}
+
+    private void cancelSingleUnresponsiveEntrant(String entrantId,
+                                                 String eventId,
+                                                 String notificationId,
+                                                 CompletionCallback callback) {
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid cancellation data."));
+            return;
+        }
+
+        db.collection("profiles")
+                .document(entrantId)
+                .collection("notifications")
+                .document(notificationId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) {
+                        callback.onSuccess();
+                        return;
+                    }
+
+                    String type = documentSnapshot.getString("type");
+                    processUnresponsiveCancellation(entrantId, eventId, notificationId, type, callback);
+                })
+                .addOnFailureListener(e -> callback.onError(e));
+    }
+
+    private void processUnresponsiveCancellation(String entrantId,
+                                                 String eventId,
+                                                 String notificationId,
+                                                 String type,
+                                                 CompletionCallback callback) {
+        long respondedAtMillis = System.currentTimeMillis();
+        WriteBatch batch = db.batch();
+
+        batch.update(
+                db.collection("profiles")
+                        .document(entrantId)
+                        .collection("notifications")
+                        .document(notificationId),
+                "read", true,
+                "responseStatus", "cancelled",
+                "respondedAtMillis", respondedAtMillis
+        );
+
+        if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+            batch.update(
+                    db.collection("events").document(eventId),
+                    "invitedUserIds", FieldValue.arrayRemove(entrantId)
+            );
+        } else if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+            batch.delete(
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("accepted")
+                            .document(entrantId)
+            );
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+                        triggerReplacementSelection(eventId, entrantId, callback);
+                    } else {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> callback.onError(e));
+    }
+
 
     private void triggerReplacementSelection(String eventId,
                                              String declinedEntrantId,

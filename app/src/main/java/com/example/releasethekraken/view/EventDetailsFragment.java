@@ -77,6 +77,7 @@ public class EventDetailsFragment extends Fragment {
     private View viewWaitingListButton;
     private View viewInvitedEntrantsButton;
     private View viewCancelledEntrantsButton;
+    private View viewCancelUnresponsiveButton;
     private View viewFinalAttendeesButton;
     private View viewCommentsButton;
 
@@ -165,6 +166,7 @@ public class EventDetailsFragment extends Fragment {
         viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         viewInvitedEntrantsButton = view.findViewById(R.id.view_invited_entrants_button);
         viewCancelledEntrantsButton = view.findViewById(R.id.view_cancelled_entrants_button);
+        viewCancelUnresponsiveButton = view.findViewById(R.id.view_cancel_unresponsive_button);
         viewFinalAttendeesButton = view.findViewById(R.id.view_final_attendees_button);
         viewCommentsButton = view.findViewById(R.id.view_comments_button);
         exportToCsvButton = view.findViewById(R.id.export_csv_button);
@@ -229,6 +231,8 @@ public class EventDetailsFragment extends Fragment {
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
         });
 
+        viewCancelUnresponsiveButton.setOnClickListener(v -> showCancelUnresponsiveDialog());
+
         viewFinalAttendeesButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putBoolean("adminView", false);
@@ -257,6 +261,7 @@ public class EventDetailsFragment extends Fragment {
             viewWaitingListButton.setVisibility(View.GONE);
             viewInvitedEntrantsButton.setVisibility(View.GONE);
             viewCancelledEntrantsButton.setVisibility(View.GONE);
+            viewCancelUnresponsiveButton.setVisibility(View.GONE);
             viewFinalAttendeesButton.setVisibility(View.GONE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.VISIBLE);
@@ -271,6 +276,7 @@ public class EventDetailsFragment extends Fragment {
             viewWaitingListButton.setVisibility(View.VISIBLE);
             viewInvitedEntrantsButton.setVisibility(View.VISIBLE);
             viewCancelledEntrantsButton.setVisibility(View.VISIBLE);
+            viewCancelUnresponsiveButton.setVisibility(View.VISIBLE);
             viewFinalAttendeesButton.setVisibility(View.VISIBLE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.GONE);
@@ -360,6 +366,56 @@ public class EventDetailsFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showCancelUnresponsiveDialog() {
+        if (TextUtils.isEmpty(eventId)) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Cancel Unresponsive Entrants")
+                .setMessage("This will cancel invited entrants who have not responded within 48 hours and trigger replacement draws where possible.")
+                .setPositiveButton("Continue", (dialog, which) -> cancelUnresponsiveEntrants())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void cancelUnresponsiveEntrants() {
+        notificationRepository.cancelUnresponsiveEntrantsForEvent(
+                eventId,
+                new NotificationRepository.CancelUnresponsiveCallback() {
+                    @Override
+                    public void onSuccess(int cancelledCount) {
+                        if (!isAdded()) return;
+
+                        if (cancelledCount == 0) {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "No unresponsive entrants found.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        } else {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Cancelled " + cancelledCount + " unresponsive entrant(s).",
+                                    Toast.LENGTH_LONG
+                            ).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (!isAdded()) return;
+                        Toast.makeText(
+                                requireContext(),
+                                "Failed to cancel unresponsive entrants.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
     }
 
     private void searchAndInviteUser(String query) {
