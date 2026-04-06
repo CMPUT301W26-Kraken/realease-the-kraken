@@ -250,12 +250,12 @@
                     android:textStyle="bold"
                     android:textSize="15sp" />
 
-                <Switch
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/enable_geolocation_switch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:thumbTint="#2D7DEB"
-                    app:trackTint="#D0E3FF" />
+                    app:thumbTint="@color/white"
+                    app:trackTint="@color/switch_track_selector" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -281,12 +281,12 @@
                         android:textSize="15sp" />
                 </LinearLayout>
 
-                <Switch
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/private_event_switch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:thumbTint="#2D7DEB"
-                    app:trackTint="#D0E3FF" />
+                    app:thumbTint="@color/white"
+                    app:trackTint="@color/switch_track_selector" />
             </LinearLayout>
 
             <TextView
