@@ -4,10 +4,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -38,6 +41,20 @@ public class MainMenuFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Animate the tentacles sliding into the fragment
+        ImageView tentacles = view.findViewById(R.id.mainmenu_tentacles);
+
+        requireActivity().getWindow().setStatusBarColor(
+                ContextCompat.getColor(requireContext(), R.color.dark_blue_text)
+        );
+
+        tentacles.setTranslationY(-500f);
+        tentacles.animate()
+                .translationY(0f)
+                .setDuration(1250)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
 
         // Ensure ActionBar is visible
         if (getActivity() instanceof AppCompatActivity) {
