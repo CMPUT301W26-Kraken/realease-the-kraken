@@ -24,6 +24,22 @@
                 app:srcCompat="@drawable/krakenlogov1" />
 
             <TextView
+                android:id="@+id/event_private_badge_detailed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                android:layout_margin="12dp"
+                android:background="@drawable/bg_private_pill"
+                android:text="Private"
+                android:textColor="#475569"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:drawableStart="@android:drawable/ic_lock_lock"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/event_open_badge_detailed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -147,10 +163,22 @@
             </LinearLayout>
 
             <Button
-                android:id="@+id/browse_view_comments_button_detailed"
+                android:id="@+id/browse_event_action_button_detailed"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="20dp"
+                android:background="@drawable/bg_capsule"
+                android:text="View Event"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                app:backgroundTint="@color/dark_blue_text" />
+
+            <Button
+                android:id="@+id/browse_view_comments_button_detailed"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_capsule"
                 android:text="@string/view_comments_button"
                 android:textAllCaps="false"
