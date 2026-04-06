@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.model.Event;
@@ -88,7 +90,7 @@ public class UserListFragment extends Fragment {
             adminView = getArguments().getBoolean("adminView", false);
             eventId = getArguments().getString("eventId");
             userRole = (UserRole) getArguments().getSerializable("userRole");
-            
+
             String mode = getArguments().getString(ARG_LIST_MODE);
             listMode = mode != null ? mode : MODE_WAITING;
         }
@@ -569,6 +571,11 @@ public class UserListFragment extends Fragment {
             LinearLayout textContainer = new LinearLayout(parent.getContext());
             LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            ImageView profilePicture = new ImageView(parent.getContext());
+            LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(100, 100);
+            imageParams.setMargins(0, 0, 32, 0);
+            profilePicture.setLayoutParams(imageParams);
+            profilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
             textContainer.setLayoutParams(textContainerParams);
             textContainer.setOrientation(LinearLayout.VERTICAL);
 
@@ -598,10 +605,11 @@ public class UserListFragment extends Fragment {
 
             textContainer.addView(nameView);
             textContainer.addView(subtitleView);
+            row.addView(profilePicture);
             row.addView(textContainer);
             row.addView(deleteBtn);
 
-            return new ProfileViewHolder(row, nameView, subtitleView, deleteBtn);
+            return new ProfileViewHolder(row, profilePicture, nameView, subtitleView, deleteBtn);
         }
 
         @Override
@@ -611,6 +619,15 @@ public class UserListFragment extends Fragment {
 
             String name = profile.getName();
             holder.nameView.setText((name != null && !name.isEmpty()) ? name : profile.getUid());
+
+            String imageUrl = profile.getProfileImageUrl();
+            Glide.with(holder.profilePicture.getContext())
+                    .load(imageUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .error(R.drawable.ic_launcher_foreground)
+                    .fallback(R.drawable.ic_launcher_foreground)
+                    .into(holder.profilePicture);
 
             if (TextUtils.isEmpty(item.subtitle)) {
                 holder.subtitleView.setVisibility(View.GONE);
@@ -637,15 +654,18 @@ public class UserListFragment extends Fragment {
         }
 
         static class ProfileViewHolder extends RecyclerView.ViewHolder {
+            ImageView profilePicture;
             TextView nameView;
             TextView subtitleView;
             ImageButton deleteButton;
 
             ProfileViewHolder(@NonNull View itemView,
+                              ImageView profilePicture,
                               TextView nameView,
                               TextView subtitleView,
                               ImageButton deleteButton) {
                 super(itemView);
+                this.profilePicture = profilePicture;
                 this.nameView = nameView;
                 this.subtitleView = subtitleView;
                 this.deleteButton = deleteButton;
