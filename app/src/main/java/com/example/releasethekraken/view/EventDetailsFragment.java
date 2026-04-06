@@ -396,22 +396,35 @@ public class EventDetailsFragment extends Fragment {
         String fileName = "final_attendees_" + System.currentTimeMillis() + ".csv";
 
         try {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                //API 29+
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
 
-            Uri uri = requireContext().getContentResolver().insert(
-                    MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                Uri uri = requireContext().getContentResolver().insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
 
-            if (uri != null) {
-                OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
-                outputStream.write(csvData.getBytes());
-                outputStream.close();
+                if (uri != null) {
+                    OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+                    if (outputStream != null) {
+                        outputStream.write(csvData.getBytes());
+                        outputStream.close();
+                    }
+                    Toast.makeText(requireContext(), "CSV saved to Downloads", Toast.LENGTH_LONG).show();
+                }
+
+            } else {
+                //API < 29 (legacy way)
+                java.io.File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                java.io.File file = new java.io.File(downloadsDir, fileName);
+
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+                fos.write(csvData.getBytes());
+                fos.close();
 
                 Toast.makeText(requireContext(), "CSV saved to Downloads", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(requireContext(), "Failed to create file", Toast.LENGTH_SHORT).show();
             }
 
         } catch (Exception e) {
