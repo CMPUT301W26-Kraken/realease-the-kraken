@@ -32,6 +32,7 @@ import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -283,6 +284,8 @@ public class BrowseEventsFragment extends Fragment {
                         Navigation.findNavController(v)
                                 .navigate(R.id.action_global_notificationFragment)
                 );
+
+        AccessibilitySettingsHelper.applyAccessibility(view, requireContext());
 
         return view;
     }

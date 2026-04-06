@@ -14,6 +14,7 @@ import androidx.navigation.Navigation;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.FragmentMainMenuBinding;
 import com.example.releasethekraken.model.UserRole;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 /**
  * This is the fragment that is responsible for displaying the main menu of the program and offering the
@@ -103,6 +104,7 @@ public class MainMenuFragment extends Fragment {
                 Navigation.findNavController(v)
                         .navigate(R.id.action_mainMenuFragment_to_qrScanFragment)
         );
+        AccessibilitySettingsHelper.applyAccessibility(view, requireContext());
     }
 
     @Override

@@ -47,6 +47,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.storage.FirebaseStorage;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 import java.io.OutputStream;
 import java.util.List;
@@ -262,6 +263,7 @@ public class EventDetailsFragment extends Fragment {
         });
 
         exportToCsvButton.setOnClickListener(v -> exportFinalAttendeesToCsv());
+        AccessibilitySettingsHelper.applyAccessibility(view, requireContext());
 
     }
 
