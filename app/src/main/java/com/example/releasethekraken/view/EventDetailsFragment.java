@@ -2,10 +2,14 @@ package com.example.releasethekraken.view;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.Gravity;
@@ -44,6 +48,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.storage.FirebaseStorage;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,6 +82,7 @@ public class EventDetailsFragment extends Fragment {
     private View viewWaitingListButton;
     private View viewInvitedEntrantsButton;
     private View viewCancelledEntrantsButton;
+    private View viewCancelUnresponsiveButton;
     private View viewFinalAttendeesButton;
     private View viewCommentsButton;
 
@@ -172,6 +178,7 @@ public class EventDetailsFragment extends Fragment {
         viewWaitingListButton = view.findViewById(R.id.view_waiting_list_button);
         viewInvitedEntrantsButton = view.findViewById(R.id.view_invited_entrants_button);
         viewCancelledEntrantsButton = view.findViewById(R.id.view_cancelled_entrants_button);
+        viewCancelUnresponsiveButton = view.findViewById(R.id.view_cancel_unresponsive_button);
         viewFinalAttendeesButton = view.findViewById(R.id.view_final_attendees_button);
         viewCommentsButton = view.findViewById(R.id.view_comments_button);
         exportToCsvButton = view.findViewById(R.id.export_csv_button);
@@ -236,6 +243,8 @@ public class EventDetailsFragment extends Fragment {
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_userListFragment, args);
         });
 
+        viewCancelUnresponsiveButton.setOnClickListener(v -> showCancelUnresponsiveDialog());
+
         viewFinalAttendeesButton.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putBoolean("adminView", false);
@@ -251,7 +260,11 @@ public class EventDetailsFragment extends Fragment {
             args.putSerializable("userRole", userType);
             Navigation.findNavController(view).navigate(R.id.action_eventDetailsFragment_to_commentsFragment, args);
         });
+
+        exportToCsvButton.setOnClickListener(v -> exportFinalAttendeesToCsv());
+
     }
+
 
     private void updateUIForRole() {
         if (userType == UserRole.ENTRANT) {
@@ -264,6 +277,7 @@ public class EventDetailsFragment extends Fragment {
             viewWaitingListButton.setVisibility(View.GONE);
             viewInvitedEntrantsButton.setVisibility(View.GONE);
             viewCancelledEntrantsButton.setVisibility(View.GONE);
+            viewCancelUnresponsiveButton.setVisibility(View.GONE);
             viewFinalAttendeesButton.setVisibility(View.GONE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.VISIBLE);
@@ -278,6 +292,7 @@ public class EventDetailsFragment extends Fragment {
             viewWaitingListButton.setVisibility(View.VISIBLE);
             viewInvitedEntrantsButton.setVisibility(View.VISIBLE);
             viewCancelledEntrantsButton.setVisibility(View.VISIBLE);
+            viewCancelUnresponsiveButton.setVisibility(View.VISIBLE);
             viewFinalAttendeesButton.setVisibility(View.VISIBLE);
             viewCommentsButton.setVisibility(View.VISIBLE);
             signupOptOutButton.setVisibility(View.GONE);
@@ -319,6 +334,109 @@ public class EventDetailsFragment extends Fragment {
                     }
                 }
         );
+    }
+
+    private void exportFinalAttendeesToCsv() {
+        if (TextUtils.isEmpty(eventId)) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        notificationRepository.getFinalAcceptedEntrantsForEvent(eventId,
+                new NotificationRepository.EntrantIdsCallback() {
+                    @Override
+                    public void onSuccess(List<String> entrantIds) {
+                        if (!isAdded()) return;
+
+                        if (entrantIds.isEmpty()) {
+                            Toast.makeText(requireContext(), "No final attendees", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        StringBuilder csvBuilder = new StringBuilder();
+                        csvBuilder.append("Name,Email\n");
+
+                        ProfileRepository profileRepo = new ProfileRepository(requireContext());
+
+                        AtomicInteger processed = new AtomicInteger(0);
+                        int total = entrantIds.size();
+
+                        for (String uid : entrantIds) {
+                            profileRepo.getProfileById(uid, new ProfileRepository.ProfileRepositoryCallback<Profile>() {
+                                @Override
+                                public void onSuccess(Profile profile) {
+                                    if (profile != null) {
+                                        csvBuilder.append("\"")
+                                                .append(profile.getName())
+                                                .append("\",\"")
+                                                .append(profile.getEmail())
+                                                .append("\"\n");
+                                    }
+                                    finish();
+                                }
+
+                                @Override
+                                public void onFailure(Exception exception) {
+                                    finish();
+                                }
+
+                                private void finish() {
+                                    if (processed.incrementAndGet() == total) {
+                                        saveCsvToDownloads(csvBuilder.toString());
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), "Failed to fetch final attendees", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void saveCsvToDownloads(String csvData) {
+        String fileName = "final_attendees_" + System.currentTimeMillis() + ".csv";
+
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                //API 29+
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+                Uri uri = requireContext().getContentResolver().insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+                if (uri != null) {
+                    OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+                    if (outputStream != null) {
+                        outputStream.write(csvData.getBytes());
+                        outputStream.close();
+                    }
+                    Toast.makeText(requireContext(), "CSV saved to Downloads", Toast.LENGTH_LONG).show();
+                }
+
+            } else {
+                //API < 29 (legacy way)
+                java.io.File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                java.io.File file = new java.io.File(downloadsDir, fileName);
+
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+                fos.write(csvData.getBytes());
+                fos.close();
+
+                Toast.makeText(requireContext(), "CSV saved to Downloads", Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(requireContext(), "Error saving CSV", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showQrCodeDialog() {
@@ -367,6 +485,56 @@ public class EventDetailsFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showCancelUnresponsiveDialog() {
+        if (TextUtils.isEmpty(eventId)) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Cancel Unresponsive Entrants")
+                .setMessage("This will cancel invited entrants who have not responded within 48 hours and trigger replacement draws where possible.")
+                .setPositiveButton("Continue", (dialog, which) -> cancelUnresponsiveEntrants())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void cancelUnresponsiveEntrants() {
+        notificationRepository.cancelUnresponsiveEntrantsForEvent(
+                eventId,
+                new NotificationRepository.CancelUnresponsiveCallback() {
+                    @Override
+                    public void onSuccess(int cancelledCount) {
+                        if (!isAdded()) return;
+
+                        if (cancelledCount == 0) {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "No unresponsive entrants found.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                        } else {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Cancelled " + cancelledCount + " unresponsive entrant(s).",
+                                    Toast.LENGTH_LONG
+                            ).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (!isAdded()) return;
+                        Toast.makeText(
+                                requireContext(),
+                                "Failed to cancel unresponsive entrants.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+        );
     }
 
     private void searchAndInviteUser(String query) {

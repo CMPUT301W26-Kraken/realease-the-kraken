@@ -87,7 +87,8 @@ public class AccountCreateFragment extends Fragment {
         if (isEditMode) {
             binding.accountCreationWelcome.setText(R.string.action_update_profile);
             binding.createAccount.setText(R.string.action_update_profile);
-            
+            binding.cancelAccountCreation.setText(R.string.action_cancel_account_edits);
+
             // In edit mode, hide the password field container and divider
             binding.passwordLayout.setVisibility(View.GONE);
             binding.passwordDivider.setVisibility(View.GONE);
@@ -102,7 +103,7 @@ public class AccountCreateFragment extends Fragment {
         } else {
             binding.accountCreationWelcome.setText(R.string.action_create_welcome);
             binding.createAccount.setText("Register Account");
-            
+
             // Show password field container and divider
             binding.passwordLayout.setVisibility(View.VISIBLE);
             binding.passwordDivider.setVisibility(View.VISIBLE);
@@ -170,7 +171,7 @@ public class AccountCreateFragment extends Fragment {
         p.setName(name);
         p.setEmail(email);
         p.setPhone(phone);
-        
+
         if (selectedImageUri != null) {
             binding.loading.setVisibility(View.VISIBLE);
             binding.createAccount.setEnabled(false);

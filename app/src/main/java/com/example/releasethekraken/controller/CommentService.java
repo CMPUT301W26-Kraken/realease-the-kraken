@@ -60,6 +60,7 @@ public class CommentService {
      *
      * @param eventId the event id
      * @param userId the user id
+     * @param authorProfileImageUrl the Url to the author's profile image on firestore
      * @param authorName the user's display name
      * @param content the comment text
      * @param isOrganizer whether the author is the organizer of the event
@@ -68,6 +69,7 @@ public class CommentService {
      */
     public void submitComment(String eventId,
                               String userId,
+                              String authorProfileImageUrl,
                               String authorName,
                               String content,
                               boolean isOrganizer,
@@ -91,6 +93,7 @@ public class CommentService {
         Comment comment = new Comment(
                 eventId,
                 userId,
+                authorProfileImageUrl,
                 authorName,
                 trimmed,
                 timestamp,
