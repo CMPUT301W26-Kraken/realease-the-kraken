@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,7 +19,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.releasethekraken.R;
 import com.example.releasethekraken.controller.NotificationService;
 import com.example.releasethekraken.model.Event;
@@ -113,13 +111,19 @@ public class UserListFragment extends Fragment {
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), mColumnCount));
         }
 
-        adapter = new ProfileListAdapter(visibleItems, adminView, (item, position) -> {
-            if (adminView) {
-                onDeleteClicked(item.profile);
-            } else if (MODE_WAITING.equals(listMode) && userRole == UserRole.ORGANIZER) {
-                showCoOrganizerInviteDialog(item.profile);
-            }
-        });
+        adapter = new ProfileListAdapter(visibleItems, adminView,
+                (item, position) -> {
+                    if (adminView) {
+                        onDeleteClicked(item.profile);
+                    } else if (MODE_WAITING.equals(listMode) && userRole == UserRole.ORGANIZER) {
+                        showCoOrganizerInviteDialog(item.profile);
+                    }
+                },
+                (item, position) -> {
+                    if (adminView) {
+                        onRevokeOrganizerClicked(item.profile);
+                    }
+                });
         recyclerView.setAdapter(adapter);
 
         TextView welcomeText = view.findViewById(R.id.welcome_text);
@@ -202,6 +206,50 @@ public class UserListFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Shows a confirmation dialog and revokes organizer role for the given profile,
+     * resetting it to ENTRANT in Firestore.
+     */
+    private void onRevokeOrganizerClicked(Profile profile) {
+        String displayName = (profile.getName() != null && !profile.getName().isEmpty())
+                ? profile.getName() : profile.getUid();
+
+        UserRole currentRole = profile.getUserRole();
+        if (currentRole != UserRole.ORGANIZER) {
+            Toast.makeText(requireContext(), displayName + " is not an organizer.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Revoke Organizer")
+                .setMessage("Remove organizer privileges from " + displayName + "? They will become an Entrant.")
+                .setPositiveButton("Revoke", (dialog, which) -> {
+                    profileRepository.updateUserRole(profile.getUid(), UserRole.ENTRANT,
+                            new ProfileRepository.ProfileRepositoryCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    if (!isAdded()) return;
+                                    profile.setRole(UserRole.ENTRANT.name());
+                                    // Refresh the subtitle in the list to reflect the new role
+                                    updateSubtitleInLists(profile.getUid(), "Role: Entrant");
+                                    Toast.makeText(requireContext(),
+                                            displayName + "'s organizer role revoked.",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onFailure(Exception exception) {
+                                    if (!isAdded()) return;
+                                    Toast.makeText(requireContext(),
+                                            "Failed to revoke role: " + exception.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
     private void removeProfileFromLists(String uid) {
         for (int i = allItems.size() - 1; i >= 0; i--) {
             if (uid.equals(allItems.get(i).profile.getUid())) {
@@ -218,6 +266,23 @@ public class UserListFragment extends Fragment {
         adapter.notifyDataSetChanged();
     }
 
+    /**
+     * Updates the subtitle text for a specific user in both allItems and visibleItems.
+     */
+    private void updateSubtitleInLists(String uid, String newSubtitle) {
+        for (UserListItem item : allItems) {
+            if (uid.equals(item.profile.getUid())) {
+                item.subtitle = newSubtitle;
+            }
+        }
+        for (UserListItem item : visibleItems) {
+            if (uid.equals(item.profile.getUid())) {
+                item.subtitle = newSubtitle;
+            }
+        }
+        adapter.notifyDataSetChanged();
+    }
+
     private void loadAllProfiles() {
         profileRepository.getAllProfiles(new ProfileRepository.ProfileRepositoryCallback<List<Profile>>() {
             @Override
@@ -226,7 +291,9 @@ public class UserListFragment extends Fragment {
 
                 List<UserListItem> items = new ArrayList<>();
                 for (Profile profile : result) {
-                    items.add(new UserListItem(profile, ""));
+                    // Show role as subtitle so admin can see who is an organizer
+                    String roleLabel = "Role: " + profile.getUserRole().getLabel();
+                    items.add(new UserListItem(profile, roleLabel));
                 }
                 setItems(items);
             }
@@ -536,9 +603,9 @@ public class UserListFragment extends Fragment {
         void onProfileClick(UserListItem item, int position);
     }
 
-    private static class UserListItem {
-        private final Profile profile;
-        private final String subtitle;
+    static class UserListItem {
+        final Profile profile;
+        String subtitle;
 
         UserListItem(Profile profile, String subtitle) {
             this.profile = profile;
@@ -549,13 +616,17 @@ public class UserListFragment extends Fragment {
     private static class ProfileListAdapter extends RecyclerView.Adapter<ProfileListAdapter.ProfileViewHolder> {
 
         private final List<UserListItem> items;
-        private final boolean showDeleteButton;
-        private final OnProfileClickListener clickListener;
+        private final boolean showAdminButtons;
+        private final OnProfileClickListener deleteListener;
+        private final OnProfileClickListener revokeListener;
 
-        ProfileListAdapter(List<UserListItem> items, boolean showDeleteButton, OnProfileClickListener clickListener) {
+        ProfileListAdapter(List<UserListItem> items, boolean showAdminButtons,
+                           OnProfileClickListener deleteListener,
+                           OnProfileClickListener revokeListener) {
             this.items = items;
-            this.showDeleteButton = showDeleteButton;
-            this.clickListener = clickListener;
+            this.showAdminButtons = showAdminButtons;
+            this.deleteListener = deleteListener;
+            this.revokeListener = revokeListener;
         }
 
         @NonNull
@@ -571,11 +642,6 @@ public class UserListFragment extends Fragment {
             LinearLayout textContainer = new LinearLayout(parent.getContext());
             LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            ImageView profilePicture = new ImageView(parent.getContext());
-            LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(100, 100);
-            imageParams.setMargins(0, 0, 32, 0);
-            profilePicture.setLayoutParams(imageParams);
-            profilePicture.setScaleType(ImageView.ScaleType.CENTER_CROP);
             textContainer.setLayoutParams(textContainerParams);
             textContainer.setOrientation(LinearLayout.VERTICAL);
 
@@ -593,6 +659,18 @@ public class UserListFragment extends Fragment {
             subtitleView.setTextSize(13);
             subtitleView.setPadding(0, 0, 0, 8);
 
+            // Revoke organizer button (shield/block icon — only shown in admin view)
+            ImageButton revokeBtn = new ImageButton(parent.getContext());
+            LinearLayout.LayoutParams revokeBtnParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            revokeBtn.setLayoutParams(revokeBtnParams);
+            revokeBtn.setImageDrawable(
+                    parent.getContext().getDrawable(android.R.drawable.ic_menu_close_clear_cancel));
+            revokeBtn.setBackground(null);
+            revokeBtn.setContentDescription("Revoke organizer role");
+
+            // Delete button
             ImageButton deleteBtn = new ImageButton(parent.getContext());
             LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -605,11 +683,11 @@ public class UserListFragment extends Fragment {
 
             textContainer.addView(nameView);
             textContainer.addView(subtitleView);
-            row.addView(profilePicture);
             row.addView(textContainer);
+            row.addView(revokeBtn);
             row.addView(deleteBtn);
 
-            return new ProfileViewHolder(row, profilePicture, nameView, subtitleView, deleteBtn);
+            return new ProfileViewHolder(row, nameView, subtitleView, revokeBtn, deleteBtn);
         }
 
         @Override
@@ -620,15 +698,6 @@ public class UserListFragment extends Fragment {
             String name = profile.getName();
             holder.nameView.setText((name != null && !name.isEmpty()) ? name : profile.getUid());
 
-            String imageUrl = profile.getProfileImageUrl();
-            Glide.with(holder.profilePicture.getContext())
-                    .load(imageUrl)
-                    .circleCrop()
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_foreground)
-                    .fallback(R.drawable.ic_launcher_foreground)
-                    .into(holder.profilePicture);
-
             if (TextUtils.isEmpty(item.subtitle)) {
                 holder.subtitleView.setVisibility(View.GONE);
             } else {
@@ -636,15 +705,26 @@ public class UserListFragment extends Fragment {
                 holder.subtitleView.setText(item.subtitle);
             }
 
-            if (showDeleteButton) {
+            if (showAdminButtons) {
                 holder.deleteButton.setVisibility(View.VISIBLE);
                 holder.deleteButton.setOnClickListener(v ->
-                        clickListener.onProfileClick(item, holder.getAdapterPosition()));
+                        deleteListener.onProfileClick(item, holder.getAdapterPosition()));
+
+                // Only show revoke button if the user is an organizer
+                if (profile.getUserRole() == UserRole.ORGANIZER) {
+                    holder.revokeButton.setVisibility(View.VISIBLE);
+                    holder.revokeButton.setOnClickListener(v ->
+                            revokeListener.onProfileClick(item, holder.getAdapterPosition()));
+                } else {
+                    holder.revokeButton.setVisibility(View.GONE);
+                }
+
                 holder.itemView.setOnClickListener(null);
             } else {
                 holder.deleteButton.setVisibility(View.GONE);
+                holder.revokeButton.setVisibility(View.GONE);
                 holder.itemView.setOnClickListener(v ->
-                        clickListener.onProfileClick(item, holder.getAdapterPosition()));
+                        deleteListener.onProfileClick(item, holder.getAdapterPosition()));
             }
         }
 
@@ -654,20 +734,20 @@ public class UserListFragment extends Fragment {
         }
 
         static class ProfileViewHolder extends RecyclerView.ViewHolder {
-            ImageView profilePicture;
             TextView nameView;
             TextView subtitleView;
+            ImageButton revokeButton;
             ImageButton deleteButton;
 
             ProfileViewHolder(@NonNull View itemView,
-                              ImageView profilePicture,
                               TextView nameView,
                               TextView subtitleView,
+                              ImageButton revokeButton,
                               ImageButton deleteButton) {
                 super(itemView);
-                this.profilePicture = profilePicture;
                 this.nameView = nameView;
                 this.subtitleView = subtitleView;
+                this.revokeButton = revokeButton;
                 this.deleteButton = deleteButton;
             }
         }
