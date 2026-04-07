@@ -182,17 +182,18 @@ public class NotificationRepository {
         });
     }
 
-    public void getSelectedEntrantIdsForEvent(String eventId, EntrantIdsCallback callback) {
-        db.collection("events")
-                .document(eventId)
-                .collection("accepted")
+    public void getEntrantsByStatus(String eventId, String status, NotificationsCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("notifications")
+                .whereEqualTo("eventId", eventId)
+                .whereEqualTo("responseStatus", status)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<String> entrantIds = new ArrayList<>();
-                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                        entrantIds.add(document.getId());
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Notification> notifications = new ArrayList<>();
+                    for (var doc : querySnapshot.getDocuments()) {
+                        notifications.add(doc.toObject(Notification.class));
                     }
-                    callback.onSuccess(entrantIds);
+                    callback.onSuccess(notifications);
                 })
                 .addOnFailureListener(callback::onError);
     }
@@ -286,6 +287,7 @@ public class NotificationRepository {
                                              String notificationId,
                                              CompletionCallback callback) {
         db.runTransaction(transaction -> {
+                    // 1. ALL READS FIRST
                     DocumentSnapshot notificationSnapshot = transaction.get(
                             db.collection("profiles")
                                     .document(entrantId)
@@ -293,11 +295,24 @@ public class NotificationRepository {
                                     .document(notificationId)
                     );
 
+                    DocumentSnapshot eventSnapshot = transaction.get(db.collection("events").document(eventId));
+
+                    String type = notificationSnapshot.getString("type");
+                    DocumentSnapshot waitingListSnapshot = null;
+                    if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+                        waitingListSnapshot = transaction.get(
+                                db.collection("events")
+                                        .document(eventId)
+                                        .collection("waitingList")
+                                        .document(entrantId)
+                        );
+                    }
+
+                    // 2. LOGIC AND VALIDATION
                     if (!notificationSnapshot.exists()) {
                         throw new IllegalStateException("This invitation is no longer available.");
                     }
 
-                    String type = notificationSnapshot.getString("type");
                     String currentStatus = normalizeStatus(notificationSnapshot.getString("responseStatus"));
 
                     if (!isInvitationType(type)) {
@@ -314,6 +329,7 @@ public class NotificationRepository {
                     notificationUpdates.put("responseStatus", "accepted");
                     notificationUpdates.put("respondedAtMillis", respondedAtMillis);
 
+                    // 3. ALL WRITES AFTER READS
                     transaction.update(
                             db.collection("profiles")
                                     .document(entrantId)
@@ -330,36 +346,12 @@ public class NotificationRepository {
                         return null;
                     }
 
-                    DocumentSnapshot eventSnapshot = transaction.get(db.collection("events").document(eventId));
                     if (!eventSnapshot.exists()) {
                         throw new IllegalStateException("This event no longer exists.");
                     }
 
-                    Long registrationEndMillis = eventSnapshot.getLong("registrationEndMillis");
-                    if (registrationEndMillis != null && System.currentTimeMillis() > registrationEndMillis) {
-                        Map<String, Object> expiredUpdates = new HashMap<>();
-                        expiredUpdates.put("read", true);
-                        expiredUpdates.put("responseStatus", "expired");
-                        expiredUpdates.put("respondedAtMillis", respondedAtMillis);
-                        transaction.update(
-                                db.collection("profiles")
-                                        .document(entrantId)
-                                        .collection("notifications")
-                                        .document(notificationId),
-                                expiredUpdates
-                        );
-                        throw new IllegalStateException("This invitation has expired.");
-                    }
-
                     if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
-                        DocumentSnapshot waitingListSnapshot = transaction.get(
-                                db.collection("events")
-                                        .document(eventId)
-                                        .collection("waitingList")
-                                        .document(entrantId)
-                        );
-
-                        if (!waitingListSnapshot.exists()) {
+                        if (waitingListSnapshot == null || !waitingListSnapshot.exists()) {
                             Map<String, Object> waitingListData = new HashMap<>();
                             waitingListData.put("eventId", eventId);
                             waitingListData.put("entrantId", entrantId);

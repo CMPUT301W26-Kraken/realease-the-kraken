@@ -704,18 +704,21 @@ public class EventDetailsFragment extends Fragment {
                 joinWaitingListWithCoords(button, 0.0, 0.0);
             }
         } else {
-            waitingListService.leaveWaitingList(currentEvent, entrantId, new WaitingListService.LeaveCallback() {
-                @Override
-                public void onResult(WaitingListService.LeaveResult result) {
-                    if (result == WaitingListService.LeaveResult.SUCCESS) {
-                        isJoined = false;
-                        button.setText(R.string.signup_button);
-                    }
-                }
+            waitingListService.handleWaitingListLeaveAndReplacement(
+                    currentEvent,
+                    entrantId,
+                    new WaitingListService.LeaveCallback() {
+                        @Override
+                        public void onResult(WaitingListService.LeaveResult result) {
+                            // Update UI (e.g., show "left waiting list")
+                        }
 
-                @Override
-                public void onError(Exception e) {}
-            });
+                        @Override
+                        public void onError(Exception e) {
+                            // Show error message
+                        }
+                    }
+            );
         }
     }
 

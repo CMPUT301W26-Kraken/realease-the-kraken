@@ -438,7 +438,7 @@ public class UserListFragment extends Fragment {
             @Override
             public void onError(Exception e) {
                 if (!isAdded()) return;
-                Toast.makeText(requireContext(), "Failed to load cancelled entrants", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Failed to load cancelled / declined entrants", Toast.LENGTH_SHORT).show();
             }
         });
     }
