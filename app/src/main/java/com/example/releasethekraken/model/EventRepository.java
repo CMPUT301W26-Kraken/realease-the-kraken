@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Repository class responsible for creating and retrieving Event objects from Firestore.
+ * Repository class responsible for creating, retrieving, and deleting Event objects from Firestore.
  * This class handles all direct interactions with the "events" collection in the database.
  */
 public class EventRepository {
@@ -123,8 +124,32 @@ public class EventRepository {
     }
 
     /**
-     * Updates or inserts an event into Firestore using a merge operation.
-     * This preserves fields not included in the update, such as 'createdAt'.
+     * Deletes an event from the Firebase database and also deletes its corresponding poster image
+     * from the image storage.
+     *
+     * @param event The event that we are deleting.
+     * @param posterImageUrl The url of the poster that is being deleted.
+     * @param callback The callback being used to notify the caller of success or failure.
+     */
+    public void deleteEvent(Event event, String posterImageUrl, CompletionCallback callback) {
+        String finalPosterUrl = posterImageUrl != null ? posterImageUrl : event.getPosterUrl();
+
+        db.collection("events")
+                .document(event.getEventId())
+                .delete()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+
+        if (finalPosterUrl != null && !finalPosterUrl.isEmpty()) {
+            FirebaseStorage.getInstance()
+                    .getReferenceFromUrl(finalPosterUrl)
+                    .delete();
+
+        }
+    }
+
+    /**
+     * Updates or inserts an event into Firestore.
      * @param event The event to save.
      * @param callback Callback for success or error.
      */
