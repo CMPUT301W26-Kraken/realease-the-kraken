@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +71,31 @@ public class EventRepository {
                 .set(data)
                 .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Deletes an event from the Firebase database and also deletes its corresponding poster image
+     * from the image storage
+     *
+     * @param event The event that we are deleting
+     * @param posterImageUrl The url of the poster that is being deleted
+     * @param callback The callback being used to notify the caller of success or failure
+     */
+    public void deleteEvent(Event event, String posterImageUrl, CompletionCallback callback) {
+        String finalPosterUrl = posterImageUrl != null ? posterImageUrl : event.getPosterUrl();
+
+        db.collection("events")
+                .document(event.getEventId())
+                .delete()
+                .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+
+        if (finalPosterUrl != null && !finalPosterUrl.isEmpty()) {
+            FirebaseStorage.getInstance()
+                    .getReferenceFromUrl(finalPosterUrl)
+                    .delete();
+
+        }
     }
 
     /**
