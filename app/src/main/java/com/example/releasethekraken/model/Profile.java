@@ -18,6 +18,10 @@ public class Profile {
     // Firebase Storage download URL for the user's profile picture.
     private String profileImageUrl;
 
+    // User's current role stored as a string (e.g. "ENTRANT", "ORGANIZER", "ADMIN").
+    // Defaults to ENTRANT for backward compatibility with existing Firestore documents.
+    private String role;
+
     /**
      * Required empty constructor for Firestore deserialization.
      */
@@ -76,5 +80,27 @@ public class Profile {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * Returns the role as a UserRole enum, defaulting to ENTRANT if unset or unrecognized.
+     */
+    public UserRole getUserRole() {
+        if (role == null || role.trim().isEmpty()) {
+            return UserRole.ENTRANT;
+        }
+        try {
+            return UserRole.valueOf(role.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return UserRole.ENTRANT;
+        }
     }
 }

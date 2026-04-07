@@ -4,12 +4,18 @@ import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.ItemCommentBinding;
 import com.example.releasethekraken.model.Comment;
+import com.example.releasethekraken.model.Profile;
+import com.example.releasethekraken.repository.ProfileRepository;
 
 import java.util.List;
 
@@ -51,6 +57,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     public void onBindViewHolder(@NonNull CommentAdapter.ViewHolder holder, int position) {
 
         Comment comment = comments.get(position);
+
+        Glide.with(holder.binding.imageCommentUserProfile.getContext())
+                .load(comment.getAuthorProfileImageUrl())
+                .circleCrop()
+                .placeholder(R.drawable.ic_launcher_foreground)
+                .error(R.drawable.ic_launcher_foreground)
+                .fallback(R.drawable.ic_launcher_foreground)
+                .into(holder.binding.imageCommentUserProfile);
 
         holder.binding.textCommentUser.setText(comment.getAuthorName());
         holder.binding.textCommentContent.setText(comment.getContent());

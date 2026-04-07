@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -19,6 +20,7 @@ import com.example.releasethekraken.controller.SessionManager;
 import com.example.releasethekraken.databinding.FragmentViewProfileBinding;
 import com.example.releasethekraken.model.Profile;
 import com.example.releasethekraken.repository.ProfileRepository;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class ViewProfileFragment extends Fragment {
@@ -53,7 +55,6 @@ public class ViewProfileFragment extends Fragment {
         binding.profileEmail.setText(getDisplayValue(profile.getEmail(), getString(R.string.profile_not_set)));
         binding.profilePhone.setText(getDisplayValue(profile.getPhone(), getString(R.string.profile_phone_not_provided)));
 
-        // Load profile picture
         String imageUrl = profile.getProfileImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(this)
@@ -82,17 +83,12 @@ public class ViewProfileFragment extends Fragment {
         });
 
         binding.profileSignoutButton.setOnClickListener(v -> {
-            // 1. Clear profile cache
             ProfileRepository repo = new ProfileRepository(requireContext());
             repo.deleteLocalProfile();
 
-            // 2. Clear session manager
             new SessionManager(requireContext()).clearSession();
-
-            // 3. Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
 
-            // 4. Return to Login
             Navigation.findNavController(v)
                     .navigate(R.id.action_viewProfileFragment_to_loginFragment);
         });
@@ -100,6 +96,42 @@ public class ViewProfileFragment extends Fragment {
         binding.profileAccountDeleteButton.setOnClickListener(v ->
                 showDeleteConfirmationDialog(profile, profileRepository, v)
         );
+
+        SwitchCompat accessibilitySwitch = binding.switchAccessibility;
+        SwitchCompat colorBlindSwitch = binding.switchColorblind;
+
+        accessibilitySwitch.setChecked(
+                AccessibilitySettingsHelper.isAccessibilityMode(requireContext())
+        );
+
+        colorBlindSwitch.setChecked(
+                AccessibilitySettingsHelper.isColorBlindMode(requireContext())
+        );
+
+        accessibilitySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            AccessibilitySettingsHelper.setAccessibilityMode(requireContext(), isChecked);
+            AccessibilitySettingsHelper.applyAccessibility(requireView(), requireContext());
+
+            Toast.makeText(
+                    requireContext(),
+                    isChecked ? "Accessibility Mode Enabled" : "Accessibility Mode Disabled",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+
+        colorBlindSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            AccessibilitySettingsHelper.setColorBlindMode(requireContext(), isChecked);
+
+            Toast.makeText(
+                    requireContext(),
+                    isChecked ? "Alternative Color Palette Enabled" : "Alternative Color Palette Disabled",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            requireActivity().recreate();
+        });
+
+        AccessibilitySettingsHelper.applyAccessibility(view, requireContext());
     }
 
     private void showDeleteConfirmationDialog(Profile profile, ProfileRepository profileRepository, View view) {

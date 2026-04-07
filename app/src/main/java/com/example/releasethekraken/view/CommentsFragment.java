@@ -206,6 +206,7 @@ public class CommentsFragment extends Fragment {
                     
                     String userId = (profile != null) ? profile.getUid() : "";
                     String authorName = (profile != null) ? profile.getName() : "";
+                    String authorProfileImage = (profile != null) ? profile.getProfileImageUrl() : "";
 
                     // Fallback to FirebaseAuth if local profile UID is empty
                     if (TextUtils.isEmpty(userId)) {
@@ -223,7 +224,7 @@ public class CommentsFragment extends Fragment {
                     boolean isOrganizer = currentEvent != null && userId.equals(currentEvent.getOrganizerId());
                     boolean isCoOrganizer = currentEvent != null && currentEvent.getCoOrganizerIds().contains(userId);
 
-                    commentService.submitComment(eventId, userId, authorName, commentText, isOrganizer, isCoOrganizer, result -> {
+                    commentService.submitComment(eventId, userId, authorProfileImage, authorName, commentText, isOrganizer, isCoOrganizer, result -> {
                         if (!isAdded()) return;
                         
                         switch (result) {

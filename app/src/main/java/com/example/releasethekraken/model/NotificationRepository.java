@@ -23,6 +23,8 @@ public class NotificationRepository {
 
     private final FirebaseFirestore db;
 
+    private static final long UNRESPONSIVE_TIMEOUT_MILLIS = 48L * 60L * 60L * 1000L;
+
     public NotificationRepository() {
         this(FirebaseFirestore.getInstance());
     }
@@ -43,6 +45,11 @@ public class NotificationRepository {
 
     public interface EntrantIdsCallback {
         void onSuccess(List<String> entrantIds);
+        void onError(Exception e);
+    }
+
+    public interface CancelUnresponsiveCallback {
+        void onSuccess(int cancelledCount);
         void onError(Exception e);
     }
 
@@ -191,35 +198,10 @@ public class NotificationRepository {
                 .addOnFailureListener(callback::onError);
     }
 
-    public void getFinalAcceptedEntrantsForEvent(String eventId, EntrantIdsCallback callback) {
-        if (eventId == null || eventId.trim().isEmpty()) {
-            callback.onError(new IllegalArgumentException("Invalid event ID."));
-            return;
-        }
-
-        db.collection("events")
-                .document(eventId)
-                .collection("accepted")
-                .whereEqualTo("status", "accepted")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<String> entrantIds = new ArrayList<>();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        entrantIds.add(document.getId());
-                    }
-                    callback.onSuccess(entrantIds);
-                })
-                .addOnFailureListener(callback::onError);
-    }
-
     private void getInvitationNotificationsForEvent(String eventId, NotificationsCallback callback) {
-        if (eventId == null || eventId.trim().isEmpty()) {
-            callback.onError(new IllegalArgumentException("Invalid event ID."));
-            return;
-        }
-
         db.collectionGroup("notifications")
                 .whereEqualTo("eventId", eventId)
+                .orderBy("sentAtMillis", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Notification> notifications = new ArrayList<>();
@@ -233,18 +215,15 @@ public class NotificationRepository {
                         Boolean read = document.getBoolean("read");
                         String responseStatus = document.getString("responseStatus");
 
-                        if (entrantId == null || entrantId.trim().isEmpty()) {
-                            continue;
-                        }
-
-                        if (!isSignupInvitationType(type)) {
-                            continue;
-                        }
-
+                        if (entrantId == null) entrantId = "";
                         if (message == null) message = "";
                         if (type == null) type = "";
                         if (sentAtMillis == null) sentAtMillis = 0L;
                         if (read == null) read = false;
+
+                        if (!isSignupInvitationType(type) && !"CO_ORGANIZER".equalsIgnoreCase(type)) {
+                            continue;
+                        }
 
                         Notification notification = new Notification(
                                 document.getId(),
@@ -289,60 +268,127 @@ public class NotificationRepository {
                                  String eventId,
                                  String notificationId,
                                  CompletionCallback callback) {
-        if (entrantId == null || eventId == null || notificationId == null) {
+        if (callback == null) {
+            return;
+        }
+
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
             callback.onError(new IllegalArgumentException("Invalid invitation data."));
             return;
         }
 
-        db.collection("profiles")
-                .document(entrantId)
-                .collection("notifications")
-                .document(notificationId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    String type = documentSnapshot.getString("type");
-                    processAcceptance(entrantId, eventId, notificationId, type, callback);
-                })
-                .addOnFailureListener(callback::onError);
+        validateAndAcceptInvitation(entrantId, eventId, notificationId, callback);
     }
 
-    private void processAcceptance(String entrantId, String eventId, String notificationId, String type, CompletionCallback callback) {
-        long respondedAtMillis = System.currentTimeMillis();
-        WriteBatch batch = db.batch();
+    private void validateAndAcceptInvitation(String entrantId,
+                                             String eventId,
+                                             String notificationId,
+                                             CompletionCallback callback) {
+        db.runTransaction(transaction -> {
+                    // 1. ALL READS FIRST
+                    DocumentSnapshot notificationSnapshot = transaction.get(
+                            db.collection("profiles")
+                                    .document(entrantId)
+                                    .collection("notifications")
+                                    .document(notificationId)
+                    );
 
-        batch.update(
-                db.collection("profiles")
-                        .document(entrantId)
-                        .collection("notifications")
-                        .document(notificationId),
-                "read", true,
-                "responseStatus", "accepted",
-                "respondedAtMillis", respondedAtMillis
-        );
+                    DocumentSnapshot eventSnapshot = transaction.get(db.collection("events").document(eventId));
 
-        if ("CO_ORGANIZER".equalsIgnoreCase(type)) {
-            batch.update(
-                    db.collection("events").document(eventId),
-                    "coOrganizerIds", FieldValue.arrayUnion(entrantId)
-            );
-        } else if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
-            Map<String, Object> acceptedData = new HashMap<>();
-            acceptedData.put("selected", true);
-            acceptedData.put("status", "accepted");
-            acceptedData.put("respondedAtMillis", respondedAtMillis);
+                    String type = notificationSnapshot.getString("type");
+                    DocumentSnapshot waitingListSnapshot = null;
+                    if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+                        waitingListSnapshot = transaction.get(
+                                db.collection("events")
+                                        .document(eventId)
+                                        .collection("waitingList")
+                                        .document(entrantId)
+                        );
+                    }
 
-            batch.set(
-                    db.collection("events")
-                            .document(eventId)
-                            .collection("accepted")
-                            .document(entrantId),
-                    acceptedData,
-                    SetOptions.merge()
-            );
-        }
+                    // 2. LOGIC AND VALIDATION
+                    if (!notificationSnapshot.exists()) {
+                        throw new IllegalStateException("This invitation is no longer available.");
+                    }
 
-        batch.commit()
-                .addOnSuccessListener(unused -> callback.onSuccess())
+                    String currentStatus = normalizeStatus(notificationSnapshot.getString("responseStatus"));
+
+                    if (!isInvitationType(type)) {
+                        throw new IllegalStateException("This notification cannot be responded to.");
+                    }
+
+                    if (!"pending".equals(currentStatus)) {
+                        throw new IllegalStateException("This invitation has already been responded to.");
+                    }
+
+                    long respondedAtMillis = System.currentTimeMillis();
+                    Map<String, Object> notificationUpdates = new HashMap<>();
+                    notificationUpdates.put("read", true);
+                    notificationUpdates.put("responseStatus", "accepted");
+                    notificationUpdates.put("respondedAtMillis", respondedAtMillis);
+
+                    // 3. ALL WRITES AFTER READS
+                    transaction.update(
+                            db.collection("profiles")
+                                    .document(entrantId)
+                                    .collection("notifications")
+                                    .document(notificationId),
+                            notificationUpdates
+                    );
+
+                    if ("CO_ORGANIZER".equalsIgnoreCase(type)) {
+                        transaction.update(
+                                db.collection("events").document(eventId),
+                                "coOrganizerIds", FieldValue.arrayUnion(entrantId)
+                        );
+                        return null;
+                    }
+
+                    if (!eventSnapshot.exists()) {
+                        throw new IllegalStateException("This event no longer exists.");
+                    }
+
+                    if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+                        if (waitingListSnapshot == null || !waitingListSnapshot.exists()) {
+                            Map<String, Object> waitingListData = new HashMap<>();
+                            waitingListData.put("eventId", eventId);
+                            waitingListData.put("entrantId", entrantId);
+                            waitingListData.put("joinedAtMillis", respondedAtMillis);
+                            waitingListData.put("latitude", 0.0);
+                            waitingListData.put("longitude", 0.0);
+
+                            transaction.set(
+                                    db.collection("events")
+                                            .document(eventId)
+                                            .collection("waitingList")
+                                            .document(entrantId),
+                                    waitingListData,
+                                    SetOptions.merge()
+                            );
+                        }
+                        return null;
+                    }
+
+                    if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+                        Map<String, Object> acceptedData = new HashMap<>();
+                        acceptedData.put("selected", true);
+                        acceptedData.put("status", "accepted");
+                        acceptedData.put("respondedAtMillis", respondedAtMillis);
+
+                        transaction.set(
+                                db.collection("events")
+                                        .document(eventId)
+                                        .collection("accepted")
+                                        .document(entrantId),
+                                acceptedData,
+                                SetOptions.merge()
+                        );
+                    }
+
+                    return null;
+                }).addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
 
@@ -350,7 +396,13 @@ public class NotificationRepository {
                                   String eventId,
                                   String notificationId,
                                   CompletionCallback callback) {
-        if (entrantId == null || eventId == null || notificationId == null) {
+        if (callback == null) {
+            return;
+        }
+
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
             callback.onError(new IllegalArgumentException("Invalid invitation data."));
             return;
         }
@@ -361,7 +413,24 @@ public class NotificationRepository {
                 .document(notificationId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) {
+                        callback.onError(new IllegalStateException("This invitation is no longer available."));
+                        return;
+                    }
+
                     String type = documentSnapshot.getString("type");
+                    String currentStatus = normalizeStatus(documentSnapshot.getString("responseStatus"));
+
+                    if (!isInvitationType(type)) {
+                        callback.onError(new IllegalStateException("This notification cannot be responded to."));
+                        return;
+                    }
+
+                    if (!"pending".equals(currentStatus)) {
+                        callback.onError(new IllegalStateException("This invitation has already been responded to."));
+                        return;
+                    }
+
                     processDecline(entrantId, eventId, notificationId, type, callback);
                 })
                 .addOnFailureListener(callback::onError);
@@ -405,6 +474,200 @@ public class NotificationRepository {
                 })
                 .addOnFailureListener(callback::onError);
     }
+
+    private boolean isInvitationType(String type) {
+        return type != null && (
+                type.equalsIgnoreCase("WIN")
+                        || type.equalsIgnoreCase("SELECTED")
+                        || type.equalsIgnoreCase("PRIVATE_INVITE")
+                        || type.equalsIgnoreCase("INVITATION")
+                        || type.equalsIgnoreCase("CO_ORGANIZER")
+        );
+    }
+
+    public void cancelUnresponsiveEntrantsForEvent(String eventId, CancelUnresponsiveCallback callback) {
+        cancelUnresponsiveEntrantsForEvent(eventId, UNRESPONSIVE_TIMEOUT_MILLIS, callback);
+    }
+
+    public void cancelUnresponsiveEntrantsForEvent(String eventId,
+                                                   long timeoutMillis,
+                                                   CancelUnresponsiveCallback callback) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid event ID."));
+            return;
+        }
+
+        getInvitationNotificationsForEvent(eventId, new NotificationsCallback() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                long nowMillis = System.currentTimeMillis();
+                List<Notification> expiredPendingNotifications = new ArrayList<>();
+
+                for (Notification notification : notifications) {
+                    String status = normalizeStatus(notification.getResponseStatus());
+                    boolean isPending = "pending".equals(status);
+                    boolean isExpired = nowMillis - notification.getSentAtMillis() > timeoutMillis;
+
+                    if (isPending && isExpired) {
+                        expiredPendingNotifications.add(notification);
+                    }
+                }
+
+                if (expiredPendingNotifications.isEmpty()) {
+                    callback.onSuccess(0);
+                    return;
+                }
+
+                cancelUnresponsiveSequentially(
+                        eventId,
+                        expiredPendingNotifications,
+                        0,
+                        0,
+                        callback
+                );
+            }
+
+            @Override
+            public void onError(Exception e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    public void getFinalAcceptedEntrantsForEvent(String eventId, EntrantIdsCallback callback) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid event ID."));
+            return;
+        }
+
+        db.collection("events")
+                .document(eventId)
+                .collection("accepted")
+                .whereEqualTo("status", "accepted")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> entrantIds = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        entrantIds.add(document.getId());
+                    }
+                    callback.onSuccess(entrantIds);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    private void cancelUnresponsiveSequentially(String eventId,
+                                                List<Notification> notifications,
+                                                int index,
+                                                int cancelledCount,
+                                                CancelUnresponsiveCallback callback) {
+        if (index >= notifications.size()) {
+            callback.onSuccess(cancelledCount);
+            return;
+        }
+
+        Notification notification = notifications.get(index);
+
+        cancelSingleUnresponsiveEntrant(
+                notification.getEntrantId(),
+                eventId,
+                notification.getNotificationId(),
+                new CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        cancelUnresponsiveSequentially(
+                                eventId,
+                                notifications,
+                                index + 1,
+                                cancelledCount + 1,
+                                callback
+                        );
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        cancelUnresponsiveSequentially(
+                                eventId,
+                                notifications,
+                                index + 1,
+                                cancelledCount,
+                                callback
+                        );
+                    }
+                }
+        );
+    }
+
+    private void cancelSingleUnresponsiveEntrant(String entrantId,
+                                                 String eventId,
+                                                 String notificationId,
+                                                 CompletionCallback callback) {
+        if (entrantId == null || entrantId.trim().isEmpty()
+                || eventId == null || eventId.trim().isEmpty()
+                || notificationId == null || notificationId.trim().isEmpty()) {
+            callback.onError(new IllegalArgumentException("Invalid cancellation data."));
+            return;
+        }
+
+        db.collection("profiles")
+                .document(entrantId)
+                .collection("notifications")
+                .document(notificationId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) {
+                        callback.onSuccess();
+                        return;
+                    }
+
+                    String type = documentSnapshot.getString("type");
+                    processUnresponsiveCancellation(entrantId, eventId, notificationId, type, callback);
+                })
+                .addOnFailureListener(e -> callback.onError(e));
+    }
+
+    private void processUnresponsiveCancellation(String entrantId,
+                                                 String eventId,
+                                                 String notificationId,
+                                                 String type,
+                                                 CompletionCallback callback) {
+        long respondedAtMillis = System.currentTimeMillis();
+        WriteBatch batch = db.batch();
+
+        batch.update(
+                db.collection("profiles")
+                        .document(entrantId)
+                        .collection("notifications")
+                        .document(notificationId),
+                "read", true,
+                "responseStatus", "cancelled",
+                "respondedAtMillis", respondedAtMillis
+        );
+
+        if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+            batch.update(
+                    db.collection("events").document(eventId),
+                    "invitedUserIds", FieldValue.arrayRemove(entrantId)
+            );
+        } else if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+            batch.delete(
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("accepted")
+                            .document(entrantId)
+            );
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    if ("WIN".equalsIgnoreCase(type) || "SELECTED".equalsIgnoreCase(type)) {
+                        triggerReplacementSelection(eventId, entrantId, callback);
+                    } else {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> callback.onError(e));
+    }
+
 
     private void triggerReplacementSelection(String eventId,
                                              String declinedEntrantId,

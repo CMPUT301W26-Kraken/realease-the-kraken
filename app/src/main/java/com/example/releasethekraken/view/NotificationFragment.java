@@ -128,7 +128,13 @@ public class NotificationFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        Toast.makeText(requireContext(), "Invitation accepted.", Toast.LENGTH_SHORT).show();
+
+                        String type = notification.getType();
+                        if ("PRIVATE_INVITE".equalsIgnoreCase(type)) {
+                            Toast.makeText(requireContext(), "Invitation accepted. Added to waiting list.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), "Invitation accepted.", Toast.LENGTH_SHORT).show();
+                        }
                         loadNotifications();
                     }
 
@@ -137,7 +143,7 @@ public class NotificationFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        Toast.makeText(requireContext(), "Could not accept invitation.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), getReadableError(e, "Could not accept invitation."), Toast.LENGTH_SHORT).show();
                         loadNotifications();
                     }
                 }
@@ -172,11 +178,18 @@ public class NotificationFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        Toast.makeText(requireContext(), "Could not decline invitation.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), getReadableError(e, "Could not decline invitation."), Toast.LENGTH_SHORT).show();
                         loadNotifications();
                     }
                 }
         );
+    }
+
+    private String getReadableError(Exception e, String fallback) {
+        if (e == null || e.getMessage() == null || e.getMessage().trim().isEmpty()) {
+            return fallback;
+        }
+        return e.getMessage();
     }
 
     @Override

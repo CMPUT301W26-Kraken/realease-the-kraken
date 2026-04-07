@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,19 +58,39 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                     .setPositiveButton("Yes", (dialog, which) -> {
                         int adapterPosition = holder.getAdapterPosition();
                         if (adapterPosition != RecyclerView.NO_POSITION) {
-                            imageUrls.remove(adapterPosition);
-                            notifyItemRemoved(adapterPosition);
-                            notifyItemRangeChanged(adapterPosition, imageUrls.size());
-
-                            // TODO: ADD IMAGE DELETION ON DATABASE
-
-                            Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
+                            String urlToDelete = imageUrls.get(adapterPosition);
+                            deleteFromFirebaseStorage(urlToDelete);
                         }
                         dialog.dismiss();
                     })
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                     .show();
         });
+    }
+
+    /**
+     * Deletes the image from Firebase Storage using its download URL,
+     * then removes it from the local list on success.
+     * Uses URL-based lookup on success to avoid stale index issues from async operations.
+     */
+    private void deleteFromFirebaseStorage(String downloadUrl) {
+        try {
+            StorageReference ref = FirebaseStorage.getInstance().getReferenceFromUrl(downloadUrl);
+            ref.delete()
+                    .addOnSuccessListener(unused -> {
+                        int currentIndex = imageUrls.indexOf(downloadUrl);
+                        if (currentIndex != -1) {
+                            imageUrls.remove(currentIndex);
+                            notifyItemRemoved(currentIndex);
+                        }
+                        Toast.makeText(context, "Image deleted", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Failed to delete image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(context, "Invalid image reference", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

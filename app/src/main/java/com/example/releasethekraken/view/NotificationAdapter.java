@@ -9,9 +9,9 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.releasethekraken.R;
 import com.example.releasethekraken.databinding.ItemNotificationBinding;
 import com.example.releasethekraken.model.Notification;
+import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 import java.util.List;
 import java.util.Locale;
@@ -46,14 +46,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Notification notification = notifications.get(position);
 
-        // 1. Set Notification Category (Type)
         String type = notification.getType();
         if (type != null) {
             String formattedType = "Notification";
             if (type.equalsIgnoreCase("CO_ORGANIZER")) {
                 formattedType = "Co-organizer Invite";
             } else if (type.equalsIgnoreCase("PRIVATE_INVITE")) {
-                formattedType = "Private Invite";
+                formattedType = "Waitlist Invite";
             } else if (type.equalsIgnoreCase("WIN") || type.equalsIgnoreCase("SELECTED")) {
                 formattedType = "Event Win !";
             } else if (type.equalsIgnoreCase("LOSS")) {
@@ -65,24 +64,19 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             holder.binding.textNotificationType.setText(formattedType);
         }
 
-        // 2. Set Clean Event Name (Remove unique ID numbers)
         String eventName = notification.getEventTitle();
         if (eventName == null || eventName.trim().isEmpty()) {
             eventName = notification.getEventId();
         }
-        
+
         if (eventName != null) {
-            // Remove trailing underscore followed by numbers (common in generated IDs)
             eventName = eventName.replaceAll("_\\d+$", "");
-            // Replace remaining underscores with spaces
             eventName = eventName.replace("_", " ");
         }
         holder.binding.textNotificationEventId.setText(eventName);
 
-        // 3. Set Clean Message (Remove redundant event name repetition)
         String message = notification.getMessage();
         if (message != null) {
-            // Cut off the message before ": [event name]" or "for event [event name]"
             if (message.contains(":")) {
                 message = message.substring(0, message.indexOf(":")).trim();
             } else if (message.toLowerCase().contains("for event")) {
@@ -92,29 +86,39 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
         holder.binding.textNotificationMessage.setText(message);
 
-        // 4. Format Time (e.g., Apr 2 · 3:06 PM)
         holder.binding.textNotificationTime.setText(
                 DateFormat.format("MMM d · h:mm a", notification.getSentAtMillis()).toString()
         );
 
-        // 5. Status Pill Styling
         String responseStatus = notification.getResponseStatus();
+        boolean altPalette = AccessibilitySettingsHelper.isColorBlindMode(holder.itemView.getContext());
+
         if (responseStatus == null || responseStatus.trim().isEmpty() || responseStatus.equalsIgnoreCase("pending")) {
             holder.binding.textInvitationStatus.setVisibility(View.GONE);
         } else {
             holder.binding.textInvitationStatus.setVisibility(View.VISIBLE);
-            String statusText = responseStatus.substring(0, 1).toUpperCase() + responseStatus.substring(1).toLowerCase();
-            holder.binding.textInvitationStatus.setText(statusText);
-            
-            // Set Pill Color: Green for Accepted, Red for Declined
+
             if (responseStatus.equalsIgnoreCase("accepted")) {
-                 holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#27AE60"));
+                holder.binding.textInvitationStatus.setText(altPalette ? "Accepted ✓" : "Accepted");
+                holder.binding.textInvitationStatus.getBackground().setTint(
+                        Color.parseColor(altPalette ? "#1565C0" : "#27AE60")
+                );
             } else if (responseStatus.equalsIgnoreCase("declined")) {
-                 holder.binding.textInvitationStatus.getBackground().setTint(Color.parseColor("#E74C3C"));
+                holder.binding.textInvitationStatus.setText(altPalette ? "Declined ✗" : "Declined");
+                holder.binding.textInvitationStatus.getBackground().setTint(
+                        Color.parseColor(altPalette ? "#8D6E63" : "#E74C3C")
+                );
+            } else if (responseStatus.equalsIgnoreCase("expired") || responseStatus.equalsIgnoreCase("cancelled")) {
+                holder.binding.textInvitationStatus.setText("Unavailable");
+                holder.binding.textInvitationStatus.getBackground().setTint(
+                        Color.parseColor("#7F8C8D")
+                );
+            } else {
+                String statusText = responseStatus.substring(0, 1).toUpperCase() + responseStatus.substring(1).toLowerCase();
+                holder.binding.textInvitationStatus.setText(statusText);
             }
         }
 
-        // 6. Action Buttons logic
         if (notification.canAcceptInvitation()) {
             holder.binding.layoutActionButtons.setVisibility(View.VISIBLE);
             holder.binding.buttonAcceptInvitation.setEnabled(true);
