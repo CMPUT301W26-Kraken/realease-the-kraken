@@ -23,6 +23,13 @@ import com.example.releasethekraken.repository.ProfileRepository;
 import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 import com.google.firebase.auth.FirebaseAuth;
 
+/**
+ * Fragment responsible for displaying the user's profile information.
+ * Retrieves and presents user data such as name, email, and phone number,
+ * and allows navigation to profile editing or other related actions.
+ *
+ */
+
 public class ViewProfileFragment extends Fragment {
 
     private FragmentViewProfileBinding binding;

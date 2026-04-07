@@ -18,6 +18,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+/**
+ * Main entry point of the application.
+ * Hosts all fragments and manages global navigation using the Navigation Component.
+ * Also initializes core services such as Firebase and handles app-wide configurations.
+ *
+ *
+ */
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
