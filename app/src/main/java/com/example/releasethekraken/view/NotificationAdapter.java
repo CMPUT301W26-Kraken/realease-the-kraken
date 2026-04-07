@@ -16,6 +16,13 @@ import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter for displaying a list of notifications.
+ * Binds notification data to UI components and handles user interactions
+ * such as accepting or declining event invitations.
+ *
+ */
+
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
 
     public interface NotificationActionListener {

@@ -18,6 +18,9 @@ import java.util.Random;
  * repository responsible for sending, logging, and retrieving notifications
  * from Firestore
  * This class belongs to the model layer and contains no UI logic
+ *  Repository class responsible for managing notification data.
+ *  Handles fetching, updating, and storing notifications from Firebase Firestore,
+ *  acting as an abstraction layer between the data source and UI components.
  */
 public class NotificationRepository {
 

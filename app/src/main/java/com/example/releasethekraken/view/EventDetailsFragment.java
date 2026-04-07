@@ -53,6 +53,13 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Fragment that displays detailed information about a selected event.
+ * Shows event attributes such as title, description, and participant status,
+ * and allows users to interact with event-related actions (e.g., join, view attendees).
+ *
+ */
+
 public class EventDetailsFragment extends Fragment {
 
     public static final String ARG_EVENT_ID = "eventId";

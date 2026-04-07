@@ -19,6 +19,14 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+
+/**
+ * Helper class responsible for managing accessibility settings across the app.
+ * Handles toggling features such as increased font size and alternative color themes,
+ * and ensures these settings persist across different screens using shared preferences.
+ *
+ */
+
 public class AccessibilitySettingsHelper {
 
     private static final String PREF_NAME = "accessibility_prefs";

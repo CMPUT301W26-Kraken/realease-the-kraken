@@ -35,6 +35,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Fragment that displays a list of users, such as event participants or attendees.
+ * Retrieves user data from the repository and presents it using a RecyclerView.
+ *
+ */
+
 public class UserListFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
