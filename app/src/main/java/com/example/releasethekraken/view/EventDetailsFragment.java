@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.example.releasethekraken.R;
@@ -819,10 +820,23 @@ public class EventDetailsFragment extends Fragment {
                 .setTitle("Delete Event")
                 .setMessage("Are you sure you want to delete this event?")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    Toast.makeText(requireContext(), "Event Deleted", Toast.LENGTH_SHORT).show();
-                    Bundle args = new Bundle();
-                    args.putBoolean("yourEvents", cameFromYourEvents);
-                    Navigation.findNavController(v).navigate(R.id.action_eventDetailsFragment_to_browseEventsFragment, args);
+                    EventRepository eventRepository = new EventRepository();
+                    eventRepository.deleteEvent(currentEvent, currentEvent.getPosterUrl(), new EventRepository.CompletionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(requireContext(), "Event Deleted", Toast.LENGTH_SHORT).show();
+
+                            Bundle args = new Bundle();
+                            args.putBoolean("yourEvents", cameFromYourEvents);
+
+                            Navigation.findNavController(v).navigate(R.id.action_eventDetailsFragment_to_browseEventsFragment, args);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(requireContext(), "Failed to delete event: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

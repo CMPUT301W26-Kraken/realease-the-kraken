@@ -134,7 +134,7 @@ public class AccountCreateFragment extends Fragment {
                 return;
             }
             boolean isAdmin = binding.adminToggle.isChecked();
-            UserRole selectedRole = isAdmin ? UserRole.ADMIN : UserRole.ENTRANT;
+            UserRole selectedRole = isAdmin ? UserRole.ENTRANT : UserRole.ADMIN;
             createNewAccount(name, email, password, phone, selectedRole, repo);
         }
     }
