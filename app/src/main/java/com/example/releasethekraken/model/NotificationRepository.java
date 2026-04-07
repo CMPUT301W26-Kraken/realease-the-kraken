@@ -175,6 +175,22 @@ public class NotificationRepository {
         });
     }
 
+    public void getEntrantsByStatus(String eventId, String status, NotificationsCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("notifications")
+                .whereEqualTo("eventId", eventId)
+                .whereEqualTo("responseStatus", status)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Notification> notifications = new ArrayList<>();
+                    for (var doc : querySnapshot.getDocuments()) {
+                        notifications.add(doc.toObject(Notification.class));
+                    }
+                    callback.onSuccess(notifications);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
     public void getFinalAcceptedEntrantsForEvent(String eventId, EntrantIdsCallback callback) {
         if (eventId == null || eventId.trim().isEmpty()) {
             callback.onError(new IllegalArgumentException("Invalid event ID."));

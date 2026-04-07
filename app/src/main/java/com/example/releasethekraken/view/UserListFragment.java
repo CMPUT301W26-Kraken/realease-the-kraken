@@ -353,17 +353,38 @@ public class UserListFragment extends Fragment {
         });
     }
 
+    private void loadDeclinedEntrants() {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        notificationRepository.getEntrantsByStatus(eventId, "declined", new NotificationRepository.NotificationsCallback() {
+            @Override
+            public void onSuccess(List<Notification> notifications) {
+                if (!isAdded()) return;
+                loadProfilesFromNotifications(notifications); // your existing profile loader
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Failed to load declined entrants", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void loadCancelledEntrants() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(requireContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        notificationRepository.getCancelledEntrantsForEvent(eventId, new NotificationRepository.NotificationsCallback() {
+        notificationRepository.getEntrantsByStatus(eventId, "cancelled", new NotificationRepository.NotificationsCallback() {
             @Override
             public void onSuccess(List<Notification> notifications) {
                 if (!isAdded()) return;
-                loadProfilesFromNotifications(notifications);
+                loadProfilesFromNotifications(notifications); // same loader
             }
 
             @Override
