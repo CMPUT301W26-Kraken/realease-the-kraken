@@ -17,8 +17,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,7 +52,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.example.releasethekraken.util.AccessibilitySettingsHelper;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class EventDetailsFragment extends Fragment {
@@ -829,18 +834,155 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void showCreateNotificationDialog() {
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 20);
+
         EditText input = new EditText(requireContext());
         input.setHint(getString(R.string.notify_selected_entrants_hint));
-        input.setMinLines(7);
+        input.setMinLines(5);
         input.setGravity(Gravity.TOP);
+        layout.addView(input);
+
+        TextView targetLabel = new TextView(requireContext());
+        targetLabel.setText("Send to:");
+        targetLabel.setPadding(0, 20, 0, 10);
+        layout.addView(targetLabel);
+
+        CheckBox checkWaiting = new CheckBox(requireContext());
+        checkWaiting.setText("Waiting List");
+        checkWaiting.setChecked(true);
+        layout.addView(checkWaiting);
+
+        CheckBox checkInvited = new CheckBox(requireContext());
+        checkInvited.setText("Invited/Selected Entrants");
+        layout.addView(checkInvited);
+
+        CheckBox checkFinal = new CheckBox(requireContext());
+        checkFinal.setText("Final Attendees");
+        layout.addView(checkFinal);
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.create_notification_button)
-                .setView(input)
-                .setPositiveButton(R.string.post_notification_button, (dialog, which) ->
-                        notifySelectedEntrants(input.getText().toString().trim()))
+                .setView(layout)
+                .setPositiveButton(R.string.post_notification_button, (dialog, which) -> {
+                    String message = input.getText().toString().trim();
+                    if (TextUtils.isEmpty(message)) {
+                        Toast.makeText(requireContext(), "Please enter a message", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    Set<String> targetGroups = new HashSet<>();
+                    if (checkWaiting.isChecked()) targetGroups.add("waiting");
+                    if (checkInvited.isChecked()) targetGroups.add("invited");
+                    if (checkFinal.isChecked()) targetGroups.add("final");
+
+                    if (targetGroups.isEmpty()) {
+                        Toast.makeText(requireContext(), "Please select at least one recipient group", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    notifyCustomTargetGroups(message, targetGroups);
+                })
                 .setNegativeButton(R.string.cancel_button, (dialog, which) -> dialog.dismiss())
                 .show();
+    }
+
+    private void notifyCustomTargetGroups(String message, Set<String> targetGroups) {
+        if (currentEvent == null || TextUtils.isEmpty(eventId)) return;
+
+        Set<String> allTargetIds = new HashSet<>();
+        AtomicInteger fetchCount = new AtomicInteger(targetGroups.size());
+
+        if (targetGroups.contains("waiting")) {
+            waitingListRepository.getAllEntrants(eventId, new WaitingListRepository.EntrantsCallback() {
+                @Override
+                public void onResult(List<String> result) {
+                    allTargetIds.addAll(result);
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+            });
+        }
+
+        if (targetGroups.contains("invited")) {
+            notificationRepository.getInvitedEntrantsForEvent(eventId, new NotificationRepository.NotificationsCallback() {
+                @Override
+                public void onSuccess(List<Notification> notifications) {
+                    for (Notification n : notifications) allTargetIds.add(n.getEntrantId());
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+                @Override
+                public void onError(Exception e) {
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+            });
+        }
+
+        if (targetGroups.contains("final")) {
+            notificationRepository.getFinalAcceptedEntrantsForEvent(eventId, new NotificationRepository.EntrantIdsCallback() {
+                @Override
+                public void onSuccess(List<String> entrantIds) {
+                    allTargetIds.addAll(entrantIds);
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+                @Override
+                public void onError(Exception e) {
+                    maybeSendCustomNotifications(message, allTargetIds, fetchCount);
+                }
+            });
+        }
+    }
+
+    private void maybeSendCustomNotifications(String message, Set<String> allTargetIds, AtomicInteger fetchCount) {
+        if (fetchCount.decrementAndGet() == 0) {
+            if (allTargetIds.isEmpty()) {
+                if (isAdded()) Toast.makeText(requireContext(), "No recipients found in selected groups", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            List<String> recipientIds = new ArrayList<>(allTargetIds);
+            AtomicInteger completedCount = new AtomicInteger(0);
+            AtomicInteger successCount = new AtomicInteger(0);
+            int total = recipientIds.size();
+
+            for (String entrantId : recipientIds) {
+                Notification notification = new Notification(
+                        null,
+                        entrantId,
+                        eventId,
+                        currentEvent.getTitle(),
+                        message,
+                        "ORGANIZER_MESSAGE",
+                        System.currentTimeMillis(),
+                        false,
+                        "pending"
+                );
+
+                notificationRepository.sendNotification(notification, new NotificationRepository.CompletionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        successCount.incrementAndGet();
+                        finishBatch();
+                    }
+                    @Override
+                    public void onError(Exception e) {
+                        finishBatch();
+                    }
+                    private void finishBatch() {
+                        if (completedCount.incrementAndGet() == total && isAdded()) {
+                            Toast.makeText(requireContext(), 
+                                    "Sent message to " + successCount.get() + " of " + total + " entrants", 
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }
     }
 
     private void notifySelectedEntrants(String organizerMessage) {
