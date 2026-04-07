@@ -12,40 +12,90 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * repository class responsible for creating and retrieving Event objects
- * from Firestore
+ * Repository class responsible for creating and retrieving Event objects from Firestore.
+ * This class handles all direct interactions with the "events" collection in the database.
  */
 public class EventRepository {
 
     private final FirebaseFirestore db;
 
+    /**
+     * Default constructor that initializes the repository with the default Firestore instance.
+     */
     public EventRepository() {
         this(FirebaseFirestore.getInstance());
     }
 
+    /**
+     * Constructor that allows providing a specific Firestore instance, useful for testing.
+     * @param db The Firestore database instance to use.
+     */
     public EventRepository(FirebaseFirestore db) {
         this.db = db;
     }
 
+    /**
+     * Callback interface for operations that return a single Event.
+     */
     public interface EventCallback {
+        /**
+         * Called when the event is successfully retrieved or processed.
+         * @param event The Event object.
+         */
         void onSuccess(Event event);
+        /**
+         * Called when the operation fails.
+         * @param e The exception that occurred.
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Callback interface for operations that return a list of Events.
+     */
     public interface EventsCallback {
+        /**
+         * Called when the events are successfully retrieved.
+         * @param events The list of Event objects.
+         */
         void onSuccess(List<Event> events);
+        /**
+         * Called when the operation fails.
+         * @param e The exception that occurred.
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Callback interface for simple success/error operations.
+     */
     public interface CompletionCallback {
+        /**
+         * Called when the operation completes successfully.
+         */
         void onSuccess();
+        /**
+         * Called when the operation fails.
+         * @param e The exception that occurred.
+         */
         void onError(Exception e);
     }
 
+    /**
+     * Creates a new event in Firestore using the event's internal data.
+     * @param event The event to create.
+     * @param callback Callback to handle success or error.
+     */
     public void createEvent(Event event, CompletionCallback callback) {
         createEvent(event, null, callback);
     }
 
+    /**
+     * Creates a new event in Firestore with an optional poster image URL.
+     * @param event The event to create.
+     * @param posterImageUrl The URL of the poster image. If null, the URL from the event object is used.
+     * @param callback Callback to handle success or error.
+     */
     public void createEvent(Event event, String posterImageUrl, CompletionCallback callback) {
         String finalPosterUrl = posterImageUrl != null ? posterImageUrl : event.getPosterUrl();
 
@@ -73,7 +123,8 @@ public class EventRepository {
     }
 
     /**
-     * Updates or inserts an event into Firestore.
+     * Updates or inserts an event into Firestore using a merge operation.
+     * This preserves fields not included in the update, such as 'createdAt'.
      * @param event The event to save.
      * @param callback Callback for success or error.
      */
@@ -103,6 +154,12 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Adds a user as a co-organizer to a specific event.
+     * @param eventId The ID of the event.
+     * @param userId The ID of the user to add.
+     * @param callback Callback to handle success or error.
+     */
     public void addCoOrganizer(String eventId, String userId, CompletionCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -111,6 +168,12 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Adds a user to the invited list of a specific event.
+     * @param eventId The ID of the event.
+     * @param userId The ID of the user to add.
+     * @param callback Callback to handle success or error.
+     */
     public void addInvitedUser(String eventId, String userId, CompletionCallback callback) {
         db.collection("events")
                 .document(eventId)
@@ -119,6 +182,11 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Retrieves an event from Firestore by its unique ID.
+     * @param eventId The ID of the event.
+     * @param callback Callback to return the Event object.
+     */
     public void getEventById(String eventId, EventCallback callback) {
         if (eventId == null || eventId.isEmpty()) {
             callback.onError(new Exception("Invalid event ID"));
@@ -138,6 +206,10 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Retrieves all events currently stored in the "events" collection.
+     * @param callback Callback to return the list of Event objects.
+     */
     public void getAllEvents(EventsCallback callback) {
         db.collection("events")
                 .get()
@@ -151,6 +223,10 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Retrieves the single most recently created event.
+     * @param callback Callback to return the Event object.
+     */
     public void getMostRecentEvent(EventCallback callback) {
         db.collection("events")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -167,6 +243,12 @@ public class EventRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    /**
+     * Helper method to map a Firestore DocumentSnapshot into an Event object.
+     * Provides default values for null fields to ensure robustness.
+     * @param document The Firestore document snapshot.
+     * @return A populated Event object.
+     */
     @SuppressWarnings("unchecked")
     private Event buildEventFromDocument(DocumentSnapshot document) {
         String title = document.getString("title");
